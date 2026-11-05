@@ -14,9 +14,9 @@ export default function LobbyView({
 
   // Configuration state
   const [basePurse, setBasePurse] = useState(room.config.basePurse || 120);
-  const [timerDuration, setTimerDuration] = useState(room.config.timerDuration || 30);
-  const [minSquadSize, setMinSquadSize] = useState(room.config.minSquadSize || 15);
-  const [maxSquadSize, setMaxSquadSize] = useState(room.config.maxSquadSize || 25);
+  const [timerDuration, setTimerDuration] = useState(room.config.timerDuration || 15);
+  const [minSquadSize, setMinSquadSize] = useState(room.config.minSquadSize || 11);
+  const [maxSquadSize, setMaxSquadSize] = useState(room.config.maxSquadSize || 15);
   const [maxOverseas, setMaxOverseas] = useState(room.config.maxOverseas || 8);
 
   const copyRoomCode = () => {
@@ -39,7 +39,7 @@ export default function LobbyView({
 
   const activeFranchises = Object.values(room.franchises).filter(f => f.isClaimed);
   const activeCount = activeFranchises.length;
-  const currentPurse = activeCount > 0 ? activeFranchises[0].initialPurse : (room.config.basePurse * (Math.max(1, activeCount) / 10));
+  const currentPurse = activeCount > 0 ? activeFranchises[0].initialPurse : (room.config.basePurse || 120);
   const canStart = participant?.isHost && activeCount >= room.config.minParticipants;
 
   return (

@@ -145,7 +145,7 @@ io.on('connection', (socket) => {
     if (result.success) {
       const room = roomManager.getRoom(roomCode);
       roomManager.broadcastRoomState(room, 'state_updated');
-      if (callback) callback({ success: true });
+      if (callback) callback({ success: true, room: result.room });
     } else {
       if (callback) callback({ success: false, error: result.error });
     }
@@ -157,7 +157,7 @@ io.on('connection', (socket) => {
     if (result.success) {
       const room = roomManager.getRoom(roomCode);
       roomManager.broadcastRoomState(room, 'state_updated');
-      if (callback) callback({ success: true });
+      if (callback) callback({ success: true, room: result.room });
     } else {
       if (callback) callback({ success: false, error: result.error });
     }

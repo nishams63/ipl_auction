@@ -9,7 +9,7 @@ export const DEFAULT_CONFIG = {
   maxOverseas: 8,
   minWKs: 1,
   minPlayerPrice: 0.20, // ₹0.20 Cr floor for uncapped candidate
-  timerDuration: 30, // seconds
+  timerDuration: 15, // seconds (15-second bidding countdown)
   autoAdvanceDelay: 4, // seconds between players
 };
 

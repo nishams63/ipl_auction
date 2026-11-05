@@ -81,10 +81,10 @@ export default function LiveAuctionView({
   const [customBidAmount, setCustomBidAmount] = useState('');
   const [customBidError, setCustomBidError] = useState(null);
 
-  // Sound triggers based on hammer and countdown
+  // Sound triggers based on hammer and countdown (15s timer)
   useEffect(() => {
     if (!lot) return;
-    if (lot.countdown === 10 || lot.countdown === 5) {
+    if (lot.countdown === 5 || lot.countdown === 3 || lot.countdown === 2 || lot.countdown === 1) {
       playTick();
     }
   }, [lot?.countdown]);
@@ -212,13 +212,14 @@ export default function LiveAuctionView({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // Countdown timer calculations
+  // Countdown timer calculations (15-second authoritative auction timer)
   const timerRadius = 40;
   const timerCircumference = 2 * Math.PI * timerRadius;
-  const timerPct = Math.max(0, lot.countdown / room.config.timerDuration);
+  const timerDuration = room.config.timerDuration || 15;
+  const timerPct = Math.max(0, lot.countdown / timerDuration);
   const strokeDashoffset = timerCircumference - timerPct * timerCircumference;
-  const isUrgent = lot.countdown <= 10;
-  const isCritical = lot.countdown <= 5;
+  const isUrgent = lot.countdown <= 6;
+  const isCritical = lot.countdown <= 3;
   const timerColor = isCritical ? "#EF4444" : isUrgent ? "#F59E0B" : "#10B981";
 
   // Marquee list extraction (showing upcoming and currently active players from catalogue)

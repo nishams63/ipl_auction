@@ -443,10 +443,10 @@ export class RoomManager {
 
       lot.countdown--;
 
-      // Hammer callouts at thresholds
+      // Hammer callouts at thresholds for 15-second countdown
       if (lot.highestBid > 0) {
-        if (lot.countdown === 10) lot.hammerStatus = 'GOING_ONCE';
-        if (lot.countdown === 5) lot.hammerStatus = 'GOING_TWICE';
+        if (lot.countdown === 7) lot.hammerStatus = 'GOING_ONCE';
+        if (lot.countdown === 3) lot.hammerStatus = 'GOING_TWICE';
       }
 
       if (lot.countdown <= 0) {

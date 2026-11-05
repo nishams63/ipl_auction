@@ -79,10 +79,12 @@ async function runMultiplayerSimulation() {
   assert.strictEqual(startRes.success, true);
 
   const lotState = await startPromise;
-  console.log(`  🎯 Auction Started! Presented Lot #1: ${lotState.currentLot.player.name} (Base Price ₹${lotState.currentLot.player.basePrice} Cr)`);
+  console.log(`  🎯 Auction Started! Presented Lot #1: ${lotState.currentLot.player.name} (${lotState.currentLot.setName})`);
   assert.strictEqual(lotState.currentLot.player.name, 'Virat Kohli');
+  assert.strictEqual(lotState.currentLot.countdown, 15);
+  console.log(`  ⏱️ Verified 15-second initial countdown on Lot #1`);
 
-  // 7. Dhoni places opening bid (₹2.00 Cr)
+  // 7. Dhoni places opening bid (₹2.00 Cr) - resets timer to 15s
   const bid1Promise = new Promise((res) => {
     socket2.on('bid_accepted', (payload) => res(payload));
   });
@@ -102,8 +104,25 @@ async function runMultiplayerSimulation() {
   console.log(`  🔨 Bid #1 Accepted: CSK bid ₹${bid1Payload.bid.bidAmount} Cr on ${bid1Payload.bid.playerName}`);
   assert.strictEqual(bid1Payload.currentLot.highestBid, 2.0);
   assert.strictEqual(bid1Payload.nextValidBid, 2.25);
+  assert.strictEqual(bid1Payload.currentLot.countdown, 15);
+  console.log(`  ⏱️ Verified countdown reset to 15 seconds after bid #1`);
 
-  // 8. Gambhir places automatic increment bid (+₹0.25 Cr -> ₹2.25 Cr)
+  // 8. Test Pause and Resume preserving timer accuracy
+  const pauseRes = await new Promise((res) => {
+    socket1.emit('pause_auction', { roomCode, hostToken }, res);
+  });
+  assert.strictEqual(pauseRes.success, true);
+  assert.strictEqual(pauseRes.room.status, 'paused');
+  console.log(`  ⏸️ Auction Paused successfully`);
+
+  const resumeRes = await new Promise((res) => {
+    socket1.emit('resume_auction', { roomCode, hostToken }, res);
+  });
+  assert.strictEqual(resumeRes.success, true);
+  assert.strictEqual(resumeRes.room.status, 'active');
+  console.log(`  ▶️ Auction Resumed successfully`);
+
+  // 9. Gambhir places automatic increment bid (+₹0.25 Cr -> ₹2.25 Cr)
   const bid2Promise = new Promise((res) => {
     socket1.on('bid_accepted', (payload) => res(payload));
   });
@@ -123,8 +142,10 @@ async function runMultiplayerSimulation() {
   console.log(`  🔨 Bid #2 Accepted: KKR outbid with automatic increment ₹${bid2Payload.bid.bidAmount} Cr`);
   assert.strictEqual(bid2Payload.currentLot.highestBid, 2.25);
   assert.strictEqual(bid2Payload.nextValidBid, 2.50);
+  assert.strictEqual(bid2Payload.currentLot.countdown, 15);
+  console.log(`  ⏱️ Verified countdown reset to 15 seconds after bid #2`);
 
-  // 9. Host closes/advances lot to sell to KKR
+  // 10. Host closes/advances lot to sell to KKR
   const soldPromise = new Promise((res) => {
     socket1.on('lot_completed', (payload) => res(payload));
   });

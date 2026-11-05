@@ -631,11 +631,11 @@ const countryFlags = {
 };
 
 const categoryDefinitions = [
-  { key: "BAT", rawKey: "BAT", title: "Specialist Batters", setPrefix: "BATTER SET" },
-  { key: "BOWL", rawKey: "FAST", title: "Specialist Fast Bowlers", setPrefix: "BOWL SET" },
-  { key: "AR", rawKey: "AR", title: "All-rounders", setPrefix: "AR SET" },
-  { key: "SP", rawKey: "SPIN", title: "Specialist Spinners", setPrefix: "SP SET" },
-  { key: "WK", rawKey: "WK", title: "Wicketkeepers", setPrefix: "WK SET" }
+  { key: "BAT", rawKey: "BAT", title: "Specialist Batters", setPrefix: "Batter Set" },
+  { key: "BOWL", rawKey: "FAST", title: "Specialist Fast Bowlers", setPrefix: "Bowler Set" },
+  { key: "AR", rawKey: "AR", title: "All-rounders", setPrefix: "All-rounder Set" },
+  { key: "SP", rawKey: "SPIN", title: "Specialist Spinners", setPrefix: "Spinner Set" },
+  { key: "WK", rawKey: "WK", title: "Wicketkeepers", setPrefix: "Wicketkeeper Set" }
 ];
 
 // Extract players in their original relative sequence per category
@@ -672,27 +672,52 @@ for (const roundData of rawRounds) {
   }
 }
 
-// Now chunk each category into sets of exactly 8 players,
-// allowing the final set to contain remaining players without dummy players.
+// 1. Chunk each category into sets of up to 8 players
 const SET_SIZE = 8;
-const finalCatalog = [];
-let overallLotCounter = 1;
+const categorySets = {};
+let maxRounds = 0;
 
 for (const catDef of categoryDefinitions) {
   const catList = categorizedPlayers[catDef.key];
   const totalInCat = catList.length;
   const numSets = Math.ceil(totalInCat / SET_SIZE);
+  if (numSets > maxRounds) maxRounds = numSets;
 
-  console.log(`Category ${catDef.key} (${catDef.title}): ${totalInCat} players across ${numSets} sets`);
-
+  categorySets[catDef.key] = [];
   for (let s = 0; s < numSets; s++) {
-    const setNumber = s + 1;
-    const setName = `${catDef.setPrefix} ${setNumber}`;
     const chunk = catList.slice(s * SET_SIZE, (s + 1) * SET_SIZE);
+    categorySets[catDef.key].push({
+      setNumber: s + 1,
+      setName: `${catDef.setPrefix} ${s + 1}`,
+      players: chunk
+    });
+  }
+  console.log(`Category ${catDef.key} (${catDef.title}): ${totalInCat} players across ${numSets} sets`);
+}
 
-    chunk.forEach((p, index) => {
+// 2. Assemble catalog in Round-Robin order:
+// ROUND 1: BAT Set 1 -> BOWL Set 1 -> AR Set 1 -> SP Set 1 -> WK Set 1
+// ROUND 2: BAT Set 2 -> BOWL Set 2 -> AR Set 2 -> SP Set 2 -> WK Set 2
+// ...
+const finalCatalog = [];
+let overallLotCounter = 1;
+
+for (let r = 0; r < maxRounds; r++) {
+  const roundNumber = r + 1;
+  console.log(`\n--- ROUND ${roundNumber} ---`);
+
+  for (const catDef of categoryDefinitions) {
+    const setObj = categorySets[catDef.key][r];
+    if (!setObj) {
+      console.log(`Category ${catDef.key} has no more sets in Round ${roundNumber}, skipping.`);
+      continue;
+    }
+
+    console.log(`  ${catDef.key}: ${setObj.setName} (${setObj.players.length} players)`);
+
+    setObj.players.forEach((p, index) => {
       const lotInSet = index + 1;
-      const setTotal = chunk.length;
+      const setTotal = setObj.players.length;
       const isOverseas = p.country !== "India";
       const initials = p.name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
       const encodedName = encodeURIComponent(p.name + " cricketer");
@@ -704,13 +729,13 @@ for (const catDef of categoryDefinitions) {
         name: p.name,
         category: catDef.key,
         categoryTitle: catDef.title,
-        setName: setName,
-        setNumber: setNumber,
+        setName: setObj.setName,
+        setNumber: setObj.setNumber,
         lotInSet: lotInSet,
         setTotal: setTotal,
         overallLot: overallLotCounter,
-        round: setNumber,
-        categorySet: `${catDef.key}-SET-${String(setNumber).padStart(2, '0')}`,
+        round: roundNumber,
+        categorySet: `${catDef.key}-SET-${String(setObj.setNumber).padStart(2, '0')}`,
         country: p.country,
         countryFlag: cData.flag,
         countryCode: cData.code,
@@ -732,7 +757,7 @@ for (const catDef of categoryDefinitions) {
   }
 }
 
-console.log(`Total final players cataloged: ${finalCatalog.length}`);
+console.log(`\nTotal final players cataloged in round-robin sequence: ${finalCatalog.length}`);
 
 // Ensure data folder exists
 const outDir = path.join(__dirname);
@@ -742,4 +767,5 @@ if (!fs.existsSync(outDir)) {
 
 fs.writeFileSync(path.join(outDir, 'players.json'), JSON.stringify(finalCatalog, null, 2));
 console.log(`Wrote ${finalCatalog.length} players to players.json successfully.`);
+
 

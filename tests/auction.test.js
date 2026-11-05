@@ -26,11 +26,47 @@ function it(description, fn) {
   }
 }
 
-// 1. Initial Franchise Purse Tests
+// 1. Initial Franchise Purse & 15-Second Timer Tests
 it('Initial franchise purse is flat ₹120.0 Crore across all franchises (Total ₹1,200 Cr)', () => {
   assert.strictEqual(calculateDynamicPurse(120), 120.0);
   assert.strictEqual(DEFAULT_CONFIG.basePurse, 120.0);
   assert.strictEqual(DEFAULT_CONFIG.maxSquadSize, 15);
+  assert.strictEqual(DEFAULT_CONFIG.timerDuration, 15);
+});
+
+it('Preserves 8-player standard sets in Round-Robin order (BAT 1 -> BOWL 1 -> AR 1 -> SP 1 -> WK 1 -> BAT 2...)', async () => {
+  const fs = await import('fs');
+  const path = await import('path');
+  const players = JSON.parse(fs.readFileSync(path.resolve('./server/data/players.json'), 'utf-8'));
+  assert.strictEqual(players.length, 290);
+
+  // Round 1 (Lots 1 to 40)
+  assert.strictEqual(players[0].category, 'BAT');
+  assert.strictEqual(players[0].setName, 'Batter Set 1');
+  assert.strictEqual(players[0].round, 1);
+  assert.strictEqual(players[7].category, 'BAT');
+
+  assert.strictEqual(players[8].category, 'BOWL');
+  assert.strictEqual(players[8].setName, 'Bowler Set 1');
+  assert.strictEqual(players[8].round, 1);
+
+  assert.strictEqual(players[16].category, 'AR');
+  assert.strictEqual(players[16].setName, 'All-rounder Set 1');
+
+  assert.strictEqual(players[24].category, 'SP');
+  assert.strictEqual(players[24].setName, 'Spinner Set 1');
+
+  assert.strictEqual(players[32].category, 'WK');
+  assert.strictEqual(players[32].setName, 'Wicketkeeper Set 1');
+
+  // Round 2 (Lot 41 begins Batter Set 2)
+  assert.strictEqual(players[40].category, 'BAT');
+  assert.strictEqual(players[40].setName, 'Batter Set 2');
+  assert.strictEqual(players[40].round, 2);
+
+  // Round 8 (Final Incomplete Sets)
+  const round8Players = players.filter(p => p.round === 8);
+  assert.strictEqual(round8Players.length, 10); // 1 BAT + 4 BOWL + 2 AR + 2 SP + 1 WK
 });
 
 // 2. Automatic Bid Increment Tests
