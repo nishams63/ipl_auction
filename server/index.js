@@ -102,6 +102,21 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Update Playing XI
+  socket.on('update_playing_xi', ({ roomCode, participantToken, franchiseId, playingXI, captainId, viceCaptainId, wicketKeeperId, impactPlayerId }, callback) => {
+    const result = roomManager.updatePlayingXI({
+      roomCode,
+      participantToken,
+      franchiseId,
+      playingXI,
+      captainId,
+      viceCaptainId,
+      wicketKeeperId,
+      impactPlayerId
+    });
+    if (callback) callback(result);
+  });
+
   // Host Update Config
   socket.on('update_config', ({ roomCode, hostToken, config }, callback) => {
     const result = roomManager.updateConfig({ roomCode, hostToken, newConfig: config });

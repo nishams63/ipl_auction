@@ -8,6 +8,8 @@ import LiveAuctionView from './components/LiveAuctionView';
 import FinalResultsView from './components/FinalResultsView';
 import FranchiseDashboardModal from './components/FranchiseDashboardModal';
 import AuctionHistoryModal from './components/AuctionHistoryModal';
+import CinematicAuctionOverlay from './components/CinematicAuctionOverlay';
+import MobileRotateOverlay from './components/MobileRotateOverlay';
 
 export default function App() {
   const [session, setSession] = useState(getUserSession());
@@ -16,6 +18,7 @@ export default function App() {
   const [isSquadModalOpen, setIsSquadModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [inspectFranchiseId, setInspectFranchiseId] = useState(null);
+  const [completedLotEvent, setCompletedLotEvent] = useState(null);
 
   // Auto reconnect to room if stored in session
   useEffect(() => {
@@ -48,6 +51,7 @@ export default function App() {
 
     socket.on('lot_presented', (updatedRoom) => {
       setRoom(updatedRoom);
+      setCompletedLotEvent(null);
       playGavel();
     });
 
@@ -64,7 +68,9 @@ export default function App() {
       });
     });
 
-    socket.on('lot_completed', ({ result, lot, historyEntry, franchises }) => {
+    socket.on('lot_completed', (data) => {
+      const { result, lot, historyEntry, franchises } = data;
+      setCompletedLotEvent(data);
       if (result === 'SOLD') {
         playSoldFanfare();
       } else {
@@ -302,7 +308,14 @@ export default function App() {
         )}
       </main>
 
-      {/* Modals */}
+      {/* Modals & Overlays */}
+      <MobileRotateOverlay />
+
+      <CinematicAuctionOverlay
+        eventData={completedLotEvent}
+        onDismiss={() => setCompletedLotEvent(null)}
+      />
+
       {room && (
         <>
           <FranchiseDashboardModal
@@ -310,6 +323,8 @@ export default function App() {
             isOpen={isSquadModalOpen}
             onClose={() => setIsSquadModalOpen(false)}
             initialFranchiseId={inspectFranchiseId || myFranchise?.id}
+            myFranchise={myFranchise}
+            participant={participant}
           />
 
           <AuctionHistoryModal

@@ -1,11 +1,11 @@
 // Server-authoritative IPL Auction Engine & Mathematical Rules
 
 export const DEFAULT_CONFIG = {
-  basePurse: 120.0, // ₹120 Cr
+  basePurse: 120.0, // ₹120 Cr flat across all 10 franchises
   maxFranchises: 10,
   minParticipants: 2,
-  minSquadSize: 15,
-  maxSquadSize: 25,
+  minSquadSize: 11,
+  maxSquadSize: 15,
   maxOverseas: 8,
   minWKs: 1,
   minPlayerPrice: 0.20, // ₹0.20 Cr floor for uncapped candidate
@@ -14,13 +14,11 @@ export const DEFAULT_CONFIG = {
 };
 
 /**
- * Calculates dynamic purse per franchise based on active human franchises
- * Formula: Base Purse × (Active Franchises / 10)
+ * Returns initial auction purse per franchise (Flat ₹120.0 Crore across all 10 franchises)
+ * Total budget across all 10 franchises = ₹1,200 Crore
  */
-export function calculateDynamicPurse(basePurse, activeCount) {
-  const safeCount = Math.min(10, Math.max(1, activeCount));
-  const purse = basePurse * (safeCount / 10);
-  return Math.round(purse * 100) / 100;
+export function calculateDynamicPurse(basePurse = 120.0) {
+  return Math.round((basePurse || 120.0) * 100) / 100;
 }
 
 /**
@@ -182,8 +180,8 @@ export function evaluateFranchiseSquad(franchise, config, initialPurse) {
   const isEliminated = franchise.isEliminated || !hasMinSquad || !hasMinWK;
 
   const batters = squad.filter(p => p.category === "BAT");
-  const fastBowlers = squad.filter(p => p.category === "FAST");
-  const spinBowlers = squad.filter(p => p.category === "SPIN");
+  const fastBowlers = squad.filter(p => p.category === "BOWL" || p.category === "FAST");
+  const spinBowlers = squad.filter(p => p.category === "SP" || p.category === "SPIN");
   const allRounders = squad.filter(p => p.category === "AR");
   const wicketKeepers = squad.filter(p => p.category === "WK");
   const overseas = squad.filter(p => p.isOverseas);

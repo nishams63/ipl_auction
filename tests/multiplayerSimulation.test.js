@@ -61,12 +61,12 @@ async function runMultiplayerSimulation() {
   assert.strictEqual(select2.success, true);
   console.log('  🟡 MS Dhoni claimed CSK, 🟣 Gautam Gambhir claimed KKR');
 
-  // 5. Verify Dynamic Purse Calculation (2 active franchises = ₹24.00 Cr)
+  // 5. Verify Flat Initial Purse (Every franchise starts with ₹120.00 Cr, Total across 10 franchises = ₹1,200 Cr)
   const roomStateRes = await fetch(`${SERVER_URL}/api/rooms/${roomCode}`);
   const roomState = await roomStateRes.json();
-  assert.strictEqual(roomState.franchises.CSK.initialPurse, 24.0);
-  assert.strictEqual(roomState.franchises.KKR.initialPurse, 24.0);
-  console.log(`  💰 Dynamic Purse verified: ₹${roomState.franchises.CSK.initialPurse} Cr each (Formula: 120 × 2/10)`);
+  assert.strictEqual(roomState.franchises.CSK.initialPurse, 120.0);
+  assert.strictEqual(roomState.franchises.KKR.initialPurse, 120.0);
+  console.log(`  💰 Flat Purse verified: ₹${roomState.franchises.CSK.initialPurse} Cr each across all franchises`);
 
   // 6. Host Starts Auction
   const startPromise = new Promise((res) => {
@@ -138,10 +138,10 @@ async function runMultiplayerSimulation() {
   assert.strictEqual(soldResult.result, 'SOLD');
   assert.strictEqual(soldResult.historyEntry.winningFranchiseCode, 'KKR');
 
-  // Verify KKR Purse deducted from ₹24.00 Cr to ₹21.75 Cr
-  assert.strictEqual(soldResult.franchises.KKR.remainingPurse, 21.75);
+  // Verify KKR Purse deducted from ₹120.00 Cr to ₹117.75 Cr
+  assert.strictEqual(soldResult.franchises.KKR.remainingPurse, 117.75);
   assert.strictEqual(soldResult.franchises.KKR.squad.length, 1);
-  console.log(`  💳 KKR Purse updated: Remaining ₹${soldResult.franchises.KKR.remainingPurse} Cr (₹2.25 Cr deducted)`);
+  console.log(`  💳 KKR Purse updated: Remaining ₹${soldResult.franchises.KKR.remainingPurse} Cr (₹2.25 Cr deducted from ₹120 Cr)`);
 
   // 10. Finish Auction & Verify Evaluation & Podium
   const finishPromise = new Promise((res) => {

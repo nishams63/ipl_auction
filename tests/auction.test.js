@@ -26,17 +26,11 @@ function it(description, fn) {
   }
 }
 
-// 1. Dynamic Purse Tests
-it('Calculates correct dynamic purse according to formula: Base × (Active / 10)', () => {
-  assert.strictEqual(calculateDynamicPurse(120, 10), 120.0);
-  assert.strictEqual(calculateDynamicPurse(120, 9), 108.0);
-  assert.strictEqual(calculateDynamicPurse(120, 8), 96.0);
-  assert.strictEqual(calculateDynamicPurse(120, 7), 84.0);
-  assert.strictEqual(calculateDynamicPurse(120, 6), 72.0);
-  assert.strictEqual(calculateDynamicPurse(120, 5), 60.0);
-  assert.strictEqual(calculateDynamicPurse(120, 4), 48.0);
-  assert.strictEqual(calculateDynamicPurse(120, 3), 36.0);
-  assert.strictEqual(calculateDynamicPurse(120, 2), 24.0);
+// 1. Initial Franchise Purse Tests
+it('Initial franchise purse is flat ₹120.0 Crore across all franchises (Total ₹1,200 Cr)', () => {
+  assert.strictEqual(calculateDynamicPurse(120), 120.0);
+  assert.strictEqual(DEFAULT_CONFIG.basePurse, 120.0);
+  assert.strictEqual(DEFAULT_CONFIG.maxSquadSize, 15);
 });
 
 // 2. Automatic Bid Increment Tests

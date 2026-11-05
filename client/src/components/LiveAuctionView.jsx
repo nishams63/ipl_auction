@@ -44,7 +44,9 @@ function FranchiseBadge({ code, size = "md" }) {
 function CategoryBadge({ category }) {
   const styles = {
     BAT: "bg-blue-600/90 text-white border-blue-400/40",
+    BOWL: "bg-amber-500/90 text-slate-950 font-black border-amber-300/40",
     FAST: "bg-amber-500/90 text-slate-950 font-black border-amber-300/40",
+    SP: "bg-purple-600/90 text-white border-purple-400/40",
     SPIN: "bg-purple-600/90 text-white border-purple-400/40",
     AR: "bg-emerald-600/90 text-white border-emerald-400/40",
     WK: "bg-cyan-500/90 text-slate-950 font-black border-cyan-300/40"
@@ -301,13 +303,27 @@ export default function LiveAuctionView({
               Private Room
             </span>
 
-            {/* Round & Set & Lot Badge */}
-            <div className="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 px-3.5 py-1.5 rounded-xl text-slate-300 font-medium">
-              <span>Round <strong className="text-white">{String(player.round).padStart(2, '0')}</strong></span>
+            {/* Complete Auction Category & Set Navigation Info */}
+            <div className="hidden sm:flex items-center gap-2 bg-slate-900/95 border border-slate-700/80 px-3.5 py-1.5 rounded-xl text-slate-300 font-medium text-xs shadow-inner">
+              <span className="text-amber-400 font-extrabold uppercase tracking-wider">
+                CATEGORY: <strong className="text-white">{player.category}</strong>
+              </span>
               <span className="text-slate-600">|</span>
-              <span>Set: <strong className="text-amber-400 font-mono">{player.categorySet}</strong></span>
+              <span>
+                SET: <strong className="text-amber-300 font-bold">{player.setName || player.categorySet}</strong>
+              </span>
               <span className="text-slate-600">|</span>
-              <span>Lot <strong className="text-white font-mono">{lot.lotNumber}</strong> of {lot.totalLots}</span>
+              <span className="font-mono">
+                LOT: <strong className="text-white">{String(player.lotInSet || 1).padStart(2, '0')} / {String(player.setTotal || 8).padStart(2, '0')}</strong>
+              </span>
+              <span className="text-slate-600">|</span>
+              <span className="font-mono text-[11px] text-slate-400">
+                COMPLETED: <strong className="text-emerald-400">{String((player.lotInSet || 1) - 1).padStart(2, '0')}</strong>
+              </span>
+              <span className="text-slate-600">|</span>
+              <span className="font-mono text-[11px] text-slate-400">
+                REMAINING: <strong className="text-amber-400">{String((player.setTotal || 8) - ((player.lotInSet || 1) - 1)).padStart(2, '0')}</strong>
+              </span>
             </div>
           </div>
 

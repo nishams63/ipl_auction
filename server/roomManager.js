@@ -51,7 +51,7 @@ export class RoomManager {
     // Deep clone players list for this room
     const catalog = JSON.parse(JSON.stringify(playersRaw));
 
-    // Initialize all 10 franchises
+    // Initialize all 10 franchises with flat ₹120.0 Crore purse and Playing XI management
     const franchises = {};
     for (const f of IPL_FRANCHISES) {
       franchises[f.id] = {
@@ -60,13 +60,18 @@ export class RoomManager {
         ownerName: null,
         ownerSocketId: null,
         isClaimed: false,
-        initialPurse: config.basePurse,
-        remainingPurse: config.basePurse,
+        initialPurse: config.basePurse || 120.0,
+        remainingPurse: config.basePurse || 120.0,
         totalSpent: 0,
         squad: [],
         overseasCount: 0,
         isEliminated: false,
-        eliminationReason: null
+        eliminationReason: null,
+        playingXI: [], // 11 players in batting order
+        captainId: null, // Exactly 1
+        viceCaptainId: null, // Exactly 1
+        wicketKeeperId: null, // At least 1
+        impactPlayerId: null // From bench
       };
     }
 
@@ -196,16 +201,97 @@ export class RoomManager {
   }
 
   recalculateLobbyPurses(room) {
-    const activeFranchises = Object.values(room.franchises).filter(f => f.isClaimed);
-    const activeCount = Math.max(1, activeFranchises.length);
-    const dynamicPurse = calculateDynamicPurse(room.config.basePurse, activeCount);
-
+    // Every IPL franchise starts with exactly ₹120 Crore (Total across 10 franchises = ₹1,200 Cr)
+    const flatPurse = room.config.basePurse || 120.0;
     for (const f of Object.values(room.franchises)) {
-      if (f.isClaimed) {
-        f.initialPurse = dynamicPurse;
-        f.remainingPurse = dynamicPurse;
+      f.initialPurse = flatPurse;
+      if (f.squad.length === 0) {
+        f.remainingPurse = flatPurse;
       }
     }
+  }
+
+  updatePlayingXI({ roomCode, participantToken, franchiseId, playingXI = [], captainId = null, viceCaptainId = null, wicketKeeperId = null, impactPlayerId = null }) {
+    const room = this.getRoom(roomCode);
+    if (!room) return { success: false, error: 'Room not found' };
+
+    const franchise = room.franchises[franchiseId];
+    if (!franchise) return { success: false, error: 'Franchise not found' };
+
+    // Ownership check: only franchise owner can edit their Playing XI
+    if (franchise.ownerToken !== participantToken) {
+      return { success: false, error: 'Only the franchise owner can edit this Playing XI' };
+    }
+
+    const squadPlayerMap = new Map((franchise.squad || []).map(p => [p.id, p]));
+
+    // Validate squad membership
+    for (const pid of playingXI) {
+      if (!squadPlayerMap.has(pid)) {
+        return { success: false, error: 'Selected player is not in this franchise squad' };
+      }
+    }
+
+    // Max 11 players in Playing XI
+    if (playingXI.length > 11) {
+      return { success: false, error: 'Playing XI cannot have more than 11 players' };
+    }
+
+    // Overseas limit in Playing XI (Max 4 overseas)
+    const overseasInXI = playingXI.filter(pid => squadPlayerMap.get(pid)?.isOverseas).length;
+    if (overseasInXI > 4) {
+      return {
+        success: false,
+        error: `Maximum 4 overseas players allowed in Playing XI (Current: ${overseasInXI})`
+      };
+    }
+
+    // Impact Player validation: must be from squad bench, not in starting XI
+    if (impactPlayerId) {
+      if (!squadPlayerMap.has(impactPlayerId)) {
+        return { success: false, error: 'Impact player must be from your squad' };
+      }
+      if (playingXI.includes(impactPlayerId)) {
+        return { success: false, error: 'Impact player cannot also be in the starting Playing XI' };
+      }
+    }
+
+    // Captain and Vice-Captain assignment checks
+    if (captainId && !playingXI.includes(captainId)) {
+      return { success: false, error: 'Captain must be selected from the Playing XI' };
+    }
+    if (viceCaptainId && !playingXI.includes(viceCaptainId)) {
+      return { success: false, error: 'Vice-Captain must be selected from the Playing XI' };
+    }
+    if (captainId && viceCaptainId && captainId === viceCaptainId) {
+      return { success: false, error: 'Captain and Vice-Captain must be two distinct players' };
+    }
+
+    // If XI is fully populated (11 players), enforce mandatory roles
+    if (playingXI.length === 11) {
+      const wkCount = playingXI.filter(pid => squadPlayerMap.get(pid)?.category === 'WK').length;
+      if (wkCount < 1) {
+        return { success: false, error: 'Playing XI must have at least 1 Wicketkeeper' };
+      }
+      if (!captainId) {
+        return { success: false, error: 'Playing XI must have exactly 1 Captain assigned' };
+      }
+      if (!viceCaptainId) {
+        return { success: false, error: 'Playing XI must have exactly 1 Vice-Captain assigned' };
+      }
+    }
+
+    // Update franchise state
+    franchise.playingXI = playingXI;
+    franchise.captainId = captainId;
+    franchise.viceCaptainId = viceCaptainId;
+    franchise.wicketKeeperId = wicketKeeperId;
+    franchise.impactPlayerId = impactPlayerId;
+
+    this.addAuditLog(room, 'PLAYING_XI_UPDATED', `${franchise.name} updated their Playing XI`);
+    this.broadcastRoomState(room, 'state_updated');
+
+    return { success: true, franchise };
   }
 
   updateConfig({ roomCode, hostToken, newConfig }) {
@@ -303,10 +389,29 @@ export class RoomManager {
     const player = room.playersCatalog[room.currentPlayerIndex];
     player.status = 'in_auction';
 
+    const completedInSet = (player.lotInSet || 1) - 1;
+    const remainingInSet = (player.setTotal || 8) - completedInSet;
+    const nextPlayerObj = room.playersCatalog[room.currentPlayerIndex + 1] || null;
+
     room.currentLot = {
       player,
       lotNumber: room.currentPlayerIndex + 1,
       totalLots: room.playersCatalog.length,
+      category: player.category,
+      categoryTitle: player.categoryTitle,
+      setName: player.setName,
+      setNumber: player.setNumber,
+      lotInSet: player.lotInSet,
+      setTotal: player.setTotal,
+      completedInSet,
+      remainingInSet,
+      nextPlayer: nextPlayerObj ? {
+        id: nextPlayerObj.id,
+        name: nextPlayerObj.name,
+        category: nextPlayerObj.category,
+        role: nextPlayerObj.role,
+        imageUrl: nextPlayerObj.imageUrl
+      } : null,
       highestBid: 0,
       highestBidderFranchiseId: null,
       highestBidderName: null,
@@ -320,7 +425,7 @@ export class RoomManager {
     this.addAuditLog(
       room,
       'LOT_PRESENTED',
-      `Lot #${room.currentLot.lotNumber}: ${player.name} (${player.category} - ${player.country}) presented with base price ₹${player.basePrice} Cr`
+      `Lot #${room.currentLot.lotNumber}: ${player.name} (${player.category} - ${player.setName}) presented with base price ₹${player.basePrice} Cr`
     );
 
     this.broadcastRoomState(room, 'lot_presented');

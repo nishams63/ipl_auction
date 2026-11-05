@@ -610,75 +610,129 @@ const rawRounds = [
   }
 ];
 
-// Deduplication logic:
-// We assign a unique ID to each distinct player.
-// If a player appears more than once, we keep the earliest round/set presentation,
-// while flagging that they were deduplicated.
+// Deduplication & 5-Category 8-Player Set Partitioning:
+// 1. BAT – Specialist Batters
+// 2. BOWL – Specialist Fast Bowlers
+// 3. AR – All-rounders
+// 4. SP – Specialist Spinners
+// 5. WK – Wicketkeepers
+
+const countryFlags = {
+  "India": { flag: "🇮🇳", code: "IND" },
+  "Australia": { flag: "🇦🇺", code: "AUS" },
+  "England": { flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", code: "ENG" },
+  "South Africa": { flag: "🇿🇦", code: "SA" },
+  "West Indies": { flag: "🌴", code: "WI" },
+  "New Zealand": { flag: "🇳🇿", code: "NZ" },
+  "Afghanistan": { flag: "🇦🇫", code: "AFG" },
+  "Sri Lanka": { flag: "🇱🇰", code: "SL" },
+  "Zimbabwe": { flag: "🇿🇼", code: "ZIM" },
+  "Bangladesh": { flag: "🇧🇩", code: "BAN" }
+};
+
+const categoryDefinitions = [
+  { key: "BAT", rawKey: "BAT", title: "Specialist Batters", setPrefix: "BATTER SET" },
+  { key: "BOWL", rawKey: "FAST", title: "Specialist Fast Bowlers", setPrefix: "BOWL SET" },
+  { key: "AR", rawKey: "AR", title: "All-rounders", setPrefix: "AR SET" },
+  { key: "SP", rawKey: "SPIN", title: "Specialist Spinners", setPrefix: "SP SET" },
+  { key: "WK", rawKey: "WK", title: "Wicketkeepers", setPrefix: "WK SET" }
+];
+
+// Extract players in their original relative sequence per category
+const categorizedPlayers = {
+  BAT: [],
+  BOWL: [],
+  AR: [],
+  SP: [],
+  WK: []
+};
+
 const seenNames = new Map();
-const allPlayers = [];
-let idCounter = 1;
 
 for (const roundData of rawRounds) {
   for (const set of roundData.sets) {
+    const matchedDef = categoryDefinitions.find(c => c.rawKey === set.category);
+    if (!matchedDef) continue;
+
     for (const p of set.players) {
       const normalizedName = p.name.trim().toLowerCase();
       if (seenNames.has(normalizedName)) {
-        // Repeated card - duplicate in candidate HTML
-        const existing = seenNames.get(normalizedName);
-        console.log(`Deduplicating duplicate entry: "${p.name}" in Round ${roundData.round} ${set.code} (already present in Round ${existing.round} ${existing.categorySet})`);
+        console.log(`Deduplicating duplicate entry: "${p.name}" in Round ${roundData.round} ${set.code}`);
         continue;
       }
 
+      seenNames.set(normalizedName, true);
+      categorizedPlayers[matchedDef.key].push({
+        ...p,
+        originalRound: roundData.round,
+        category: matchedDef.key,
+        categoryTitle: matchedDef.title
+      });
+    }
+  }
+}
+
+// Now chunk each category into sets of exactly 8 players,
+// allowing the final set to contain remaining players without dummy players.
+const SET_SIZE = 8;
+const finalCatalog = [];
+let overallLotCounter = 1;
+
+for (const catDef of categoryDefinitions) {
+  const catList = categorizedPlayers[catDef.key];
+  const totalInCat = catList.length;
+  const numSets = Math.ceil(totalInCat / SET_SIZE);
+
+  console.log(`Category ${catDef.key} (${catDef.title}): ${totalInCat} players across ${numSets} sets`);
+
+  for (let s = 0; s < numSets; s++) {
+    const setNumber = s + 1;
+    const setName = `${catDef.setPrefix} ${setNumber}`;
+    const chunk = catList.slice(s * SET_SIZE, (s + 1) * SET_SIZE);
+
+    chunk.forEach((p, index) => {
+      const lotInSet = index + 1;
+      const setTotal = chunk.length;
       const isOverseas = p.country !== "India";
       const initials = p.name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
       const encodedName = encodeURIComponent(p.name + " cricketer");
-      // High-resolution 800px portrait URL with quality parameters
       const imageUrl = `https://tse1.mm.bing.net/th?q=${encodedName}%20portrait%20hd&w=800&h=800&c=7&rs=1&p=0`;
-
-      // Country flags & codes
-      const countryFlags = {
-        "India": { flag: "🇮🇳", code: "IND" },
-        "Australia": { flag: "🇦🇺", code: "AUS" },
-        "England": { flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", code: "ENG" },
-        "South Africa": { flag: "🇿🇦", code: "SA" },
-        "West Indies": { flag: "🌴", code: "WI" },
-        "New Zealand": { flag: "🇳🇿", code: "NZ" },
-        "Afghanistan": { flag: "🇦🇫", code: "AFG" },
-        "Sri Lanka": { flag: "🇱🇰", code: "SL" },
-        "Zimbabwe": { flag: "🇿🇼", code: "ZIM" },
-        "Bangladesh": { flag: "🇧🇩", code: "BAN" }
-      };
-
       const cData = countryFlags[p.country] || { flag: "🏏", code: p.country.substring(0, 3).toUpperCase() };
 
       const playerRecord = {
-        id: `PL_${String(idCounter++).padStart(3, '0')}`,
+        id: `PL_${String(overallLotCounter).padStart(3, '0')}`,
         name: p.name,
-        category: set.category,
-        categorySet: set.code,
-        round: roundData.round,
+        category: catDef.key,
+        categoryTitle: catDef.title,
+        setName: setName,
+        setNumber: setNumber,
+        lotInSet: lotInSet,
+        setTotal: setTotal,
+        overallLot: overallLotCounter,
+        round: setNumber,
+        categorySet: `${catDef.key}-SET-${String(setNumber).padStart(2, '0')}`,
         country: p.country,
         countryFlag: cData.flag,
         countryCode: cData.code,
         isOverseas,
         initials,
         role: p.role,
-        basePrice: p.basePrice, // in Crores
+        basePrice: p.basePrice,
         rating: p.rating,
         stats: p.stats || {},
         imageUrl,
-        status: "available", // "available" | "in_auction" | "sold" | "unsold"
+        status: "available",
         soldTo: null,
         soldPrice: null
       };
 
-      seenNames.set(normalizedName, playerRecord);
-      allPlayers.push(playerRecord);
-    }
+      overallLotCounter++;
+      finalCatalog.push(playerRecord);
+    });
   }
 }
 
-console.log(`Total unique players imported after deduplication: ${allPlayers.length}`);
+console.log(`Total final players cataloged: ${finalCatalog.length}`);
 
 // Ensure data folder exists
 const outDir = path.join(__dirname);
@@ -686,5 +740,6 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-fs.writeFileSync(path.join(outDir, 'players.json'), JSON.stringify(allPlayers, null, 2));
-console.log(`Wrote ${allPlayers.length} players to players.json successfully.`);
+fs.writeFileSync(path.join(outDir, 'players.json'), JSON.stringify(finalCatalog, null, 2));
+console.log(`Wrote ${finalCatalog.length} players to players.json successfully.`);
+
