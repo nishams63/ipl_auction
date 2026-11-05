@@ -238,6 +238,8 @@ export default function App() {
     }
   };
 
+  const [activeNavTab, setActiveNavTab] = useState('home');
+
   const myFranchise = room && participant?.franchiseId
     ? room.franchises[participant.franchiseId]
     : (room && Object.values(room.franchises).find(f => f.ownerToken === session.token));
@@ -248,7 +250,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050a18] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#050a1b] text-slate-100 flex flex-col selection:bg-amber-400 selection:text-slate-950">
       <Navbar
         room={room}
         participant={participant}
@@ -256,6 +258,12 @@ export default function App() {
         onOpenSquad={() => openSquadModal(myFranchise?.id)}
         onOpenHistory={() => setIsHistoryModalOpen(true)}
         onOpenHostControls={() => {}}
+        onNavigateTab={(tab) => {
+          setActiveNavTab(tab);
+          if (tab === 'home' && room) {
+            // Optional: don't leave room, but can show toast or keep state
+          }
+        }}
       />
 
       <main className="flex-1">
@@ -263,6 +271,8 @@ export default function App() {
           <LandingView
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}
+            activeSection={activeNavTab}
+            onCloseSection={() => setActiveNavTab('home')}
           />
         ) : room.status === 'lobby' ? (
           <LobbyView

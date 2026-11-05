@@ -26,34 +26,34 @@ export default function AuctionHistoryModal({
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#0b1329] border border-slate-700/80 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4">
+      <div className="glass-panel border-glow-gold rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Modal Top Bar */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/70">
+        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-slate-950/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400">
               <History className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-xl font-black text-white">Auction Records & History</h2>
-              <p className="text-xs text-slate-400">Real-time log of sold lots and audit logs</p>
+              <p className="text-xs text-slate-300">Real-time log of sold lots and audit events</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+            <div className="flex bg-slate-950/90 p-1 rounded-full border border-white/10 text-xs font-bold">
               <button
                 onClick={() => setTab('players')}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  tab === 'players' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
+                  tab === 'players' ? 'gold-btn text-slate-950 font-black' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Lots ({room.history?.length || 0})
               </button>
               <button
                 onClick={() => setTab('audit')}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  tab === 'audit' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
+                  tab === 'audit' ? 'gold-btn text-slate-950 font-black' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Audit Log
@@ -62,7 +62,7 @@ export default function AuctionHistoryModal({
 
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition"
+              className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>

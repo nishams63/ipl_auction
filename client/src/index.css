@@ -2,16 +2,18 @@
 
 @layer base {
   :root {
-    --ipl-navy: #070d1e;
+    --ipl-navy: #050a1b;
+    --ipl-deep: #070e24;
+    --ipl-surface: #0a132c;
     --ipl-gold: #fbbf24;
-    --ipl-blue: #2563eb;
-    --ipl-surface: #0f172a;
-    --ipl-surface-light: #1e293b;
-    --ipl-border: #334155;
+    --ipl-gold-glow: #f59e0b;
+    --ipl-cyan: #38bdf8;
+    --ipl-purple: #a855f7;
+    --ipl-emerald: #10b981;
   }
 
   body {
-    background-color: #050a18;
+    background-color: #050a1b;
     color: #f8fafc;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
@@ -29,33 +31,72 @@
   }
 }
 
-/* Custom IPL animations and glass effects */
+/* Glassmorphism Styles */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(10, 19, 44, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(15, 26, 56, 0.65);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.glass-card {
-  background: rgba(30, 41, 59, 0.6);
+.glass-pill {
+  background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.gold-glow {
-  box-shadow: 0 0 25px rgba(251, 191, 36, 0.25);
+/* Stadium Colored Glowing Borders */
+.border-glow-gold {
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(251, 191, 36, 0.2);
 }
 
-.gold-border {
-  border-color: rgba(251, 191, 36, 0.5);
+.border-glow-blue {
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(56, 189, 248, 0.2);
 }
 
-/* Custom pulse animations */
+.border-glow-purple {
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.15), inset 0 1px 0 rgba(168, 85, 247, 0.2);
+}
+
+.border-glow-emerald {
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(16, 185, 129, 0.2);
+}
+
+/* Golden Elements */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fef08a 0%, #fbbf24 35%, #f59e0b 70%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-btn {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  box-shadow: 0 0 28px rgba(245, 158, 11, 0.4);
+  transition: all 0.25s ease;
+}
+
+.gold-btn:hover {
+  background: linear-gradient(135deg, #fde047 0%, #fbbf24 50%, #f59e0b 100%);
+  box-shadow: 0 0 38px rgba(245, 158, 11, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Animations */
 @keyframes bidPulse {
   0% { transform: scale(1); }
-  50% { transform: scale(1.04); box-shadow: 0 0 35px rgba(234, 179, 8, 0.45); }
+  50% { transform: scale(1.03); box-shadow: 0 0 35px rgba(234, 179, 8, 0.5); }
   100% { transform: scale(1); }
 }
 
@@ -74,18 +115,27 @@
   animation: hammerHit 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Scrollbar styles */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: #060b1e;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
+  background: #1e293b;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #334155;
 }

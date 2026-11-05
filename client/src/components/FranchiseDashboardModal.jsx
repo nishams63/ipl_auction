@@ -23,19 +23,19 @@ export default function FranchiseDashboardModal({
   const domestic = squad.filter(p => !p.isOverseas);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#0b1329] border border-slate-700/80 rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4">
+      <div className="glass-panel border-glow-gold rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header with franchise selector tabs */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-slate-950/60">
           <div className="flex items-center gap-2 overflow-x-auto py-1 max-w-[85%]">
             {Object.values(room.franchises).map(f => (
               <button
                 key={f.id}
                 onClick={() => setSelectedId(f.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 flex-shrink-0 ${
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
                   selectedId === f.id
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                    ? 'gold-btn text-slate-950 shadow-md font-black'
+                    : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/10'
                 }`}
               >
                 <span
@@ -49,7 +49,7 @@ export default function FranchiseDashboardModal({
 
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition"
+            className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>

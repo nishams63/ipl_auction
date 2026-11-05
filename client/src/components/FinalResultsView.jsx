@@ -57,14 +57,23 @@ export default function FinalResultsView({
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
       {/* Top Banner */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-extrabold text-xs uppercase tracking-widest">
-          <Trophy className="w-4 h-4" /> Official Auction Results & Rankings
+      <div className="text-center space-y-3 relative">
+        <div className="flex justify-start sm:absolute sm:left-0 sm:top-0">
+          <button
+            onClick={onBackToLobby}
+            className="px-4 py-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+          </button>
+        </div>
+
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-extrabold text-xs uppercase tracking-widest shadow-lg">
+          <Trophy className="w-4 h-4 text-amber-400" /> Official Auction Results & Rankings
         </div>
         <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight">
           IPL Auction Champions
         </h1>
-        <p className="text-slate-400 text-sm max-w-xl mx-auto">
+        <p className="text-slate-300 text-sm max-w-xl mx-auto">
           Deterministic 100% transparent evaluation based on player quality ratings, batting/bowling depth, role balance, and financial compliance.
         </p>
       </div>

@@ -121,21 +121,21 @@ export default function LiveAuctionView({
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       {/* Top Quick Status & Host Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 glass-panel px-5 py-3 rounded-2xl border border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-4 glass-panel px-5 py-3 rounded-2xl border border-white/10 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-extrabold text-white text-sm tracking-wide uppercase">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400/50" />
+            <span className="font-black text-white text-sm tracking-wide uppercase">
               Round {String(player.round).padStart(2, '0')}
             </span>
-            <span className="text-slate-500">•</span>
-            <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-lg">
+            <span className="text-white/20">•</span>
+            <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
               {player.categorySet}
             </span>
           </div>
-          <span className="text-slate-500 hidden sm:inline">•</span>
-          <span className="text-xs text-slate-400 hidden sm:inline">
-            Lot <strong className="text-white font-mono">{lot.lotNumber}</strong> of {lot.totalLots}
+          <span className="text-white/20 hidden sm:inline">•</span>
+          <span className="text-xs text-slate-300 hidden sm:inline">
+            Lot <strong className="text-amber-400 font-mono">{lot.lotNumber}</strong> of {lot.totalLots}
           </span>
         </div>
 
@@ -144,10 +144,10 @@ export default function LiveAuctionView({
           <div className="flex items-center gap-2">
             <button
               onClick={onPauseResume}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 border transition cursor-pointer ${
                 room.status === 'paused'
-                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/25'
+                  : 'bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-white/10'
               }`}
             >
               {room.status === 'paused' ? <Play className="w-3.5 h-3.5 fill-current" /> : <Pause className="w-3.5 h-3.5" />}
@@ -156,18 +156,18 @@ export default function LiveAuctionView({
 
             <button
               onClick={onAdvanceLot}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-slate-700 transition"
+              className="px-3.5 py-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-white/10 transition cursor-pointer"
               title="Hammer down or close current lot"
             >
               <Gavel className="w-3.5 h-3.5 text-amber-400" />
-              Advance
+              Advance Lot
             </button>
 
             <button
               onClick={onFinishAuction}
-              className="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold transition"
+              className="px-3.5 py-1.5 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold transition cursor-pointer"
             >
-              End Auction
+              Conclude Auction
             </button>
           </div>
         )}
@@ -176,11 +176,11 @@ export default function LiveAuctionView({
       {/* Main 2-Column Auction Presentation */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT: Player Information Presentation (5 cols) */}
-        <div className="lg:col-span-5 glass-panel rounded-3xl p-6 border border-slate-800/80 shadow-2xl flex flex-col justify-between">
+        <div className="lg:col-span-5 glass-panel rounded-3xl p-6 border-glow-gold shadow-2xl flex flex-col justify-between">
           <div>
             {/* Player Card Header */}
             <div className="relative mb-6">
-              <div className="w-full h-64 sm:h-72 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 border border-slate-700/60 overflow-hidden flex items-center justify-center relative shadow-inner">
+              <div className="w-full h-64 sm:h-72 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 overflow-hidden flex items-center justify-center relative shadow-2xl">
                 {!imgError ? (
                   <img
                     src={player.imageUrl}
@@ -189,26 +189,26 @@ export default function LiveAuctionView({
                     className="w-full h-full object-cover object-top hover:scale-105 transition duration-500"
                   />
                 ) : (
-                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-black text-4xl shadow-2xl">
+                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center text-slate-950 font-black text-4xl shadow-2xl">
                     {player.initials}
                   </div>
                 )}
 
                 {/* Badges on image */}
                 <div className="absolute top-3 left-3 flex gap-2">
-                  <span className="text-xs font-extrabold uppercase px-3 py-1 rounded-xl bg-slate-900/90 text-amber-400 border border-amber-500/30 backdrop-blur-md shadow">
+                  <span className="text-xs font-black uppercase px-3 py-1 rounded-full bg-slate-950/90 text-amber-300 border border-amber-400/40 backdrop-blur-md shadow-lg">
                     {player.category}
                   </span>
                   {player.isOverseas && (
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-xl bg-blue-500/90 text-white backdrop-blur-md shadow flex items-center gap-1">
-                      <Globe className="w-3 h-3" /> Overseas
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-600/90 text-white backdrop-blur-md shadow-lg flex items-center gap-1.5 border border-blue-400/30">
+                      <Globe className="w-3.5 h-3.5" /> Overseas
                     </span>
                   )}
                 </div>
 
                 {/* Rating Badge */}
-                <div className="absolute bottom-3 right-3 bg-slate-950/90 border border-slate-700/80 px-3 py-1.5 rounded-xl flex items-center gap-2 backdrop-blur-md shadow-lg">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">OVR</span>
+                <div className="absolute bottom-3 right-3 bg-slate-950/90 border border-amber-400/40 px-3.5 py-1.5 rounded-full flex items-center gap-2 backdrop-blur-md shadow-xl">
+                  <span className="text-[10px] text-amber-300 uppercase font-black tracking-wider">OVR</span>
                   <span className="font-black text-amber-400 text-lg font-mono">{player.rating}</span>
                 </div>
               </div>
@@ -216,21 +216,21 @@ export default function LiveAuctionView({
 
             {/* Player Identity */}
             <div className="space-y-1 mb-4">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="text-xs font-bold text-amber-400/90 uppercase tracking-widest">
                 {player.country}
               </div>
               <h2 className="text-3xl font-black text-white tracking-tight">
                 {player.name}
               </h2>
-              <div className="text-sm text-amber-400/90 font-medium">
+              <div className="text-sm text-slate-300 font-medium">
                 {player.role}
               </div>
             </div>
 
             {/* Base Price Tag */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between mb-5">
-              <span className="text-xs text-slate-400 uppercase font-bold">Base Price</span>
-              <span className="text-xl font-black text-emerald-400 font-mono">
+            <div className="glass-card border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-5 shadow-inner">
+              <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Base Price</span>
+              <span className="text-2xl font-black text-emerald-400 font-mono">
                 ₹{player.basePrice.toFixed(2)} Cr
               </span>
             </div>
@@ -381,17 +381,17 @@ export default function LiveAuctionView({
               <button
                 onClick={handleBidClick}
                 disabled={!canBid || submittingBid}
-                className={`w-full py-5 px-6 rounded-2xl font-black text-xl tracking-wider transition-all duration-200 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden ${
+                className={`w-full py-4.5 px-6 rounded-full font-black text-xl tracking-wider transition-all duration-200 flex flex-col items-center justify-center relative overflow-hidden ${
                   canBid
-                    ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-amber-500/30 cursor-pointer transform active:scale-95'
-                    : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-80'
+                    ? 'gold-btn text-slate-950 cursor-pointer transform active:scale-95'
+                    : 'bg-slate-900 border border-white/10 text-slate-500 cursor-not-allowed opacity-80'
                 } ${pulseBid ? 'animate-bid-pulse ring-4 ring-amber-400' : ''}`}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <Gavel className="w-6 h-6 fill-current animate-hammer" />
                   <span>BID ₹{lot.nextValidBid.toFixed(2)} CR</span>
                 </div>
-                <span className="text-[11px] font-bold tracking-normal opacity-80 mt-0.5">
+                <span className="text-[11px] font-bold tracking-normal opacity-85 mt-0.5">
                   {lot.highestBid === 0
                     ? `Opening bid at player's base price`
                     : `Automatic next valid increment based on IPL rules`}
@@ -400,7 +400,7 @@ export default function LiveAuctionView({
 
               {/* Status / Feasibility Helper Text */}
               {!canBid && (
-                <div className="text-center text-xs font-semibold text-slate-400 flex items-center justify-center gap-1.5">
+                <div className="text-center text-xs font-semibold text-slate-300 flex items-center justify-center gap-1.5 bg-amber-500/10 border border-amber-500/20 py-2 px-3 rounded-full">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                   <span>{cannotBidReason}</span>
                 </div>
@@ -408,14 +408,14 @@ export default function LiveAuctionView({
 
               {/* My Franchise Snapshot */}
               {myFranchise && (
-                <div className="bg-slate-900/60 rounded-2xl p-3 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <div className="glass-card rounded-2xl p-3.5 border border-white/10 flex items-center justify-between text-xs text-slate-300 shadow">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white">{myFranchise.name}</span>
+                    <span className="font-extrabold text-white">{myFranchise.name}</span>
                     <span>•</span>
                     <span>Purse: <strong className="text-emerald-400 font-mono font-bold">₹{myFranchise.remainingPurse.toFixed(2)} Cr</strong></span>
                   </div>
                   <div>
-                    <span>Squad: <strong className="text-white font-mono">{myFranchise.squad.length}</strong>/{room.config.minSquadSize} min</span>
+                    <span>Squad: <strong className="text-amber-400 font-mono font-bold">{myFranchise.squad.length}</strong>/{room.config.minSquadSize} min</span>
                   </div>
                 </div>
               )}
@@ -423,9 +423,9 @@ export default function LiveAuctionView({
           </div>
 
           {/* Recent Bids Feed for this lot */}
-          <div className="glass-panel p-4 rounded-2xl border border-slate-800/80">
+          <div className="glass-panel p-4 rounded-2xl border border-white/10 shadow-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs uppercase font-extrabold tracking-wider text-slate-400 flex items-center gap-1.5">
+              <span className="text-xs uppercase font-extrabold tracking-wider text-slate-300 flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-amber-400" /> Bidding Activity
               </span>
               <span className="text-[11px] text-slate-500 font-mono">
