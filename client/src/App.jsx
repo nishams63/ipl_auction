@@ -9,7 +9,7 @@ import FinalResultsView from './components/FinalResultsView';
 import FranchiseDashboardModal from './components/FranchiseDashboardModal';
 import AuctionHistoryModal from './components/AuctionHistoryModal';
 import CinematicAuctionOverlay from './components/CinematicAuctionOverlay';
-import MobileRotateOverlay from './components/MobileRotateOverlay';
+
 
 export default function App() {
   const [session, setSession] = useState(getUserSession());
@@ -321,7 +321,7 @@ export default function App() {
       </main>
 
       {/* Modals & Overlays */}
-      <MobileRotateOverlay />
+
 
       <CinematicAuctionOverlay
         eventData={completedLotEvent}

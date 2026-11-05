@@ -125,30 +125,50 @@ export default function Navbar({
         )}
 
         {/* Right Action Icons & Controls (Reference Image Design) */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+          {/* Quick mobile buttons for Squads & History when in room */}
+          {room && (
+            <div className="flex md:hidden items-center gap-1">
+              <button
+                onClick={() => onOpenSquad && onOpenSquad()}
+                className="p-1.5 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-bold"
+                title="Squads & Teams"
+              >
+                <Users className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onOpenHistory && onOpenHistory()}
+                className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-400/30 text-xs font-bold"
+                title="Auction History"
+              >
+                <History className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Live Auction Red Pill Indicator */}
           {room && (
-            <div className="flex items-center gap-1.5 bg-red-600/90 text-white font-black text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg shadow-red-600/30 border border-red-400/40 animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-white" />
-              <span>LIVE AUCTION</span>
+            <div className="hidden sm:flex items-center gap-1.5 bg-red-600/90 text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-lg shadow-red-600/30 border border-red-400/40 animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              <span>LIVE</span>
             </div>
           )}
 
           {/* Sound Toggle (Circular Pill) */}
           <button
             onClick={toggleSound}
-            className="w-9 h-9 rounded-full bg-[#0a1437] hover:bg-slate-800 border border-white/15 text-slate-300 hover:text-white flex items-center justify-center transition shadow cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#0a1437] hover:bg-slate-800 border border-white/15 text-slate-300 hover:text-white flex items-center justify-center transition shadow cursor-pointer"
             title={sound ? "Mute Sound Effects" : "Enable Sound Effects"}
           >
-            {sound ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
+            {sound ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" />}
           </button>
 
           {/* User Profile Avatar (Blue Glowing Pill) */}
           <div
-            className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/50 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-blue-500/30 select-none cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/50 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-blue-500/30 select-none cursor-pointer"
             title={participant?.name || "Player Profile"}
           >
-            <User className="w-4 h-4 text-white" />
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
           </div>
         </div>
       </div>

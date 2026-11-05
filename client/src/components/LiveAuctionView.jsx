@@ -233,6 +233,7 @@ export default function LiveAuctionView({
   const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'BAT' | 'BOWL' | 'AR' | 'SP' | 'WK'
   const [nationalityFilter, setNationalityFilter] = useState('ALL'); // 'ALL' | 'IND' | 'OS'
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'CURRENT' | 'UPCOMING' | 'SOLD' | 'UNSOLD'
+  const [mobileTab, setMobileTab] = useState('auction'); // 'auction' | 'marquee' | 'teams'
 
   const activePlayerCardRef = useRef(null);
   const marqueeContainerRef = useRef(null);
@@ -377,38 +378,38 @@ export default function LiveAuctionView({
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[700px] h-40 bg-gradient-to-b from-blue-500/20 via-purple-500/10 to-transparent blur-3xl pointer-events-none" />
 
           {/* Hanging Team Banners Arc */}
-          <div className="relative z-10 flex items-center justify-between w-full max-w-5xl px-4 gap-2 sm:gap-4">
+          <div className="relative z-10 flex items-center justify-between w-full max-w-5xl px-2 sm:px-4 gap-1 sm:gap-4 overflow-x-hidden">
             {/* Left 5 Teams */}
-            <div className="flex items-center gap-1.5 sm:gap-3">
+            <div className="flex items-center gap-1 sm:gap-3">
               {['CSK', 'MI', 'RCB', 'KKR', 'SRH'].map(code => (
                 <div key={code} className="flex flex-col items-center group transform transition hover:-translate-y-1">
-                  <div className="w-8 sm:w-11 h-12 sm:h-16 rounded-b-xl border border-white/20 shadow-lg flex items-center justify-center font-black text-[10px] sm:text-xs"
+                  <div className="w-6 sm:w-11 h-9 sm:h-16 rounded-b-lg sm:rounded-b-xl border border-white/20 shadow-lg flex items-center justify-center font-black text-[8px] sm:text-xs"
                     style={{ backgroundColor: room.franchises[code]?.primaryColor || '#1e293b', color: room.franchises[code]?.textColor || '#fff' }}>
                     {code}
                   </div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 shadow-sm shadow-amber-400/50" />
+                  <div className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-amber-400 mt-0.5 sm:mt-1 shadow-sm shadow-amber-400/50" />
                 </div>
               ))}
             </div>
 
             {/* Center Stage: IPL Trophy Pedestal */}
-            <div className="flex flex-col items-center justify-center px-2 sm:px-4 py-1 rounded-2xl bg-slate-950/70 border border-amber-500/30 backdrop-blur-md shadow-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-amber-400 font-black text-xs sm:text-sm tracking-widest uppercase">IPL</span>
-                <span className="text-white font-extrabold text-[10px] sm:text-xs tracking-wider uppercase">AUCTION</span>
+            <div className="flex flex-col items-center justify-center px-1.5 sm:px-4 py-0.5 sm:py-1 rounded-xl sm:rounded-2xl bg-slate-950/70 border border-amber-500/30 backdrop-blur-md shadow-2xl flex-shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="text-amber-400 font-black text-[10px] sm:text-sm tracking-widest uppercase">IPL</span>
+                <span className="text-white font-extrabold text-[9px] sm:text-xs tracking-wider uppercase">AUCTION</span>
               </div>
-              <div className="w-12 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-1" />
+              <div className="w-8 sm:w-12 h-0.5 sm:h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent mt-0.5 sm:mt-1" />
             </div>
 
             {/* Right 5 Teams */}
-            <div className="flex items-center gap-1.5 sm:gap-3">
+            <div className="flex items-center gap-1 sm:gap-3">
               {['RR', 'DC', 'PBKS', 'GT', 'LSG'].map(code => (
                 <div key={code} className="flex flex-col items-center group transform transition hover:-translate-y-1">
-                  <div className="w-8 sm:w-11 h-12 sm:h-16 rounded-b-xl border border-white/20 shadow-lg flex items-center justify-center font-black text-[10px] sm:text-xs"
+                  <div className="w-6 sm:w-11 h-9 sm:h-16 rounded-b-lg sm:rounded-b-xl border border-white/20 shadow-lg flex items-center justify-center font-black text-[8px] sm:text-xs"
                     style={{ backgroundColor: room.franchises[code]?.primaryColor || '#1e293b', color: room.franchises[code]?.textColor || '#fff' }}>
                     {code}
                   </div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 shadow-sm shadow-amber-400/50" />
+                  <div className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-amber-400 mt-0.5 sm:mt-1 shadow-sm shadow-amber-400/50" />
                 </div>
               ))}
             </div>
@@ -501,10 +502,52 @@ export default function LiveAuctionView({
         </div>
       </div>
 
+      {/* MOBILE PORTRAIT VIEWPORT SWITCHER (Visible only on mobile/tablet screens < lg) */}
+      <div className="lg:hidden flex items-center justify-between bg-[#081235]/95 p-1 rounded-2xl border border-white/10 shadow-lg gap-1">
+        <button
+          onClick={() => setMobileTab('auction')}
+          className={`flex-1 py-2 px-1 rounded-xl text-xs font-black transition flex items-center justify-center gap-1 cursor-pointer ${
+            mobileTab === 'auction'
+              ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          <Gavel className="w-3.5 h-3.5 fill-current" />
+          <span>Live Bid</span>
+          {lot.highestBid > 0 && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping ml-0.5" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setMobileTab('marquee')}
+          className={`flex-1 py-2 px-1 rounded-xl text-xs font-black transition flex items-center justify-center gap-1 cursor-pointer ${
+            mobileTab === 'marquee'
+              ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          <Star className="w-3.5 h-3.5 fill-current" />
+          <span>Players ({catalog.length})</span>
+        </button>
+
+        <button
+          onClick={() => setMobileTab('teams')}
+          className={`flex-1 py-2 px-1 rounded-xl text-xs font-black transition flex items-center justify-center gap-1 cursor-pointer ${
+            mobileTab === 'teams'
+              ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          <Shield className="w-3.5 h-3.5" />
+          <span>Teams (10)</span>
+        </button>
+      </div>
+
       {/* 3. MAIN DASHBOARD: THREE-COLUMN BROADCAST LAYOUT (20% - 60% - 20%) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         {/* LEFT COLUMN: COMPLETE MARQUEE CATALOGUE (All ~300 Players) */}
-        <div className="lg:col-span-3 bg-[#0a1333]/90 border border-blue-900/40 rounded-2xl p-3.5 shadow-xl flex flex-col justify-between backdrop-blur-md">
+        <div className={`lg:col-span-3 ${mobileTab === 'marquee' ? 'flex' : 'hidden lg:flex'} bg-[#0a1333]/90 border border-blue-900/40 rounded-2xl p-3.5 shadow-xl flex-col justify-between backdrop-blur-md`}>
           <div className="flex flex-col flex-1 min-h-0">
             {/* Header: Title with Dynamic Total Count & Quick Navigation */}
             <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-white/10 flex-shrink-0">
@@ -781,7 +824,7 @@ export default function LiveAuctionView({
         </div>
 
         {/* CENTER COLUMN (60%): PLAYER PROFILE + LIVE BIDDING ARENA */}
-        <div className="lg:col-span-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`lg:col-span-6 ${mobileTab === 'auction' ? 'grid' : 'hidden lg:grid'} grid-cols-1 md:grid-cols-2 gap-4`}>
           {/* CENTER-LEFT: PLAYER PROFILE CARD */}
           <div className="bg-[#0b1437]/90 border border-blue-800/40 rounded-2xl p-4 shadow-xl flex flex-col justify-between backdrop-blur-md relative overflow-hidden">
             {/* Header: Country Flag & Franchise badge */}
@@ -800,7 +843,7 @@ export default function LiveAuctionView({
               </div>
 
               {/* Dynamic High-Resolution Player Image */}
-              <div className="w-full h-52 sm:h-56 rounded-xl bg-gradient-to-b from-blue-950/60 via-slate-900 to-slate-950 border border-blue-500/20 overflow-hidden relative flex items-center justify-center shadow-inner group">
+              <div className="w-full h-44 sm:h-56 rounded-xl bg-gradient-to-b from-blue-950/60 via-slate-900 to-slate-950 border border-blue-500/20 overflow-hidden relative flex items-center justify-center shadow-inner group">
                 {!imgError ? (
                   <img
                     key={player.id}
@@ -1055,7 +1098,7 @@ export default function LiveAuctionView({
         </div>
 
         {/* RIGHT COLUMN (20%): TEAMS OVERVIEW (10) */}
-        <div className="lg:col-span-3 bg-[#0a1333]/90 border border-blue-900/40 rounded-2xl p-3.5 shadow-xl flex flex-col justify-between backdrop-blur-md">
+        <div className={`lg:col-span-3 ${mobileTab === 'teams' ? 'flex' : 'hidden lg:flex'} bg-[#0a1333]/90 border border-blue-900/40 rounded-2xl p-3.5 shadow-xl flex-col justify-between backdrop-blur-md`}>
           <div>
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -1126,6 +1169,33 @@ export default function LiveAuctionView({
           </div>
         </div>
       </div>
+
+      {/* MOBILE PORTRAIT STICKY QUICK-BID PILL (When browsing Marquee or Teams tabs) */}
+      {mobileTab !== 'auction' && (
+        <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-[#071133]/95 border border-amber-400/60 rounded-2xl p-2.5 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 cursor-pointer" onClick={() => setMobileTab('auction')}>
+            <div className="w-9 h-9 rounded-full overflow-hidden border border-amber-400 flex-shrink-0 bg-slate-800">
+              <img src={player.imageUrl} alt={player.name} className="w-full h-full object-cover object-top" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-black text-white truncate flex items-center gap-1">
+                <span className="truncate">{player.name}</span>
+                <span className="text-[10px] text-amber-400">({player.category})</span>
+              </div>
+              <div className="text-[10px] text-emerald-400 font-bold font-mono">
+                Bid: ₹{lot.highestBid > 0 ? lot.highestBid.toFixed(2) : player.basePrice.toFixed(2)} Cr • <span className={isCritical ? 'text-red-400' : 'text-amber-400'}>{Math.max(0, lot.countdown)}s</span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setMobileTab('auction')}
+            className="px-3.5 py-2 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg flex-shrink-0 flex items-center gap-1 cursor-pointer"
+          >
+            <Gavel className="w-3.5 h-3.5 fill-current" />
+            <span>Bid Now</span>
+          </button>
+        </div>
+      )}
 
       {/* 4. BOTTOM AUCTION MARQUEE & RULES TICKER STRIP */}
       <div className="w-full bg-[#08102d]/95 border border-white/10 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg">
