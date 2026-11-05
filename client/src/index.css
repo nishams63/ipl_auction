@@ -139,3 +139,25 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+/* Custom player marquee list scrollbar */
+.player-list-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.45) rgba(10, 19, 44, 0.8);
+  overscroll-behavior: contain;
+}
+.player-list-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.player-list-scroll::-webkit-scrollbar-track {
+  background: rgba(10, 19, 44, 0.8);
+  border-radius: 4px;
+}
+.player-list-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.4);
+  border-radius: 4px;
+}
+.player-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.85);
+}
+

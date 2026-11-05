@@ -69,7 +69,7 @@ export default function App() {
     });
 
     socket.on('lot_completed', (data) => {
-      const { result, lot, historyEntry, franchises } = data;
+      const { result, lot, historyEntry, franchises, playersCatalog } = data;
       setCompletedLotEvent(data);
       if (result === 'SOLD') {
         playSoldFanfare();
@@ -78,10 +78,22 @@ export default function App() {
       }
       setRoom(prev => {
         if (!prev) return prev;
+        const updatedCatalog = playersCatalog || (prev.playersCatalog || []).map(p => {
+          if (p.id === lot?.player?.id) {
+            return {
+              ...p,
+              status: result === 'SOLD' ? 'sold' : 'unsold',
+              soldTo: result === 'SOLD' ? (lot.highestBidderFranchiseId || historyEntry?.winningFranchiseCode) : null,
+              soldPrice: result === 'SOLD' ? lot.highestBid : 0
+            };
+          }
+          return p;
+        });
         return {
           ...prev,
           currentLot: lot,
           franchises,
+          playersCatalog: updatedCatalog,
           history: [historyEntry, ...(prev.history || [])]
         };
       });

@@ -606,7 +606,8 @@ export class RoomManager {
         result: 'SOLD',
         lot: lot,
         historyEntry,
-        franchises: room.franchises
+        franchises: room.franchises,
+        playersCatalog: room.playersCatalog
       });
     } else {
       // UNSOLD
@@ -632,7 +633,8 @@ export class RoomManager {
         result: 'UNSOLD',
         lot: lot,
         historyEntry,
-        franchises: room.franchises
+        franchises: room.franchises,
+        playersCatalog: room.playersCatalog
       });
     }
 

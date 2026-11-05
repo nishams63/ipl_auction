@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Gavel, Clock, AlertTriangle, ArrowRight, Shield, Award,
   Globe, User, CheckCircle2, XCircle, TrendingUp, Sparkles, Pause, Play,
-  Copy, Check, Edit3, X, ChevronRight, Plane, Star, Radio
+  Copy, Check, Edit3, X, ChevronRight, Plane, Star, Radio,
+  Search, Filter, ArrowUp, RotateCcw
 } from 'lucide-react';
 import { playGavel, playBidPing, playTick, playSoldFanfare, playUnsold } from '../utils/audio';
 
@@ -222,14 +223,147 @@ export default function LiveAuctionView({
   const isCritical = lot.countdown <= 3;
   const timerColor = isCritical ? "#EF4444" : isUrgent ? "#F59E0B" : "#10B981";
 
-  // Marquee list extraction (showing upcoming and currently active players from catalogue)
+  // Complete catalogue & marquee list state (all ~300 players)
   const catalog = room.playersCatalog || [];
   const currentIdx = room.currentPlayerIndex >= 0 ? room.currentPlayerIndex : 0;
-  // Slice starting from current - 1 (or 0) up to 10 players
-  const startIndex = Math.max(0, Math.min(currentIdx, catalog.length - 10));
-  const marqueeList = catalog.slice(startIndex, startIndex + 10);
+  const currentLotPlayerId = player?.id || (catalog[currentIdx]?.id);
 
-  // Next 3 upcoming players for the bottom marquee
+  // Search and filter state for complete catalogue
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'BAT' | 'BOWL' | 'AR' | 'SP' | 'WK'
+  const [nationalityFilter, setNationalityFilter] = useState('ALL'); // 'ALL' | 'IND' | 'OS'
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'CURRENT' | 'UPCOMING' | 'SOLD' | 'UNSOLD'
+
+  const activePlayerCardRef = useRef(null);
+  const marqueeContainerRef = useRef(null);
+
+  // Quick lookup map of completed room history lots
+  const historyMap = useMemo(() => {
+    const map = {};
+    (room.history || []).forEach(h => {
+      if (h.player?.id) {
+        map[h.player.id] = h;
+      }
+    });
+    return map;
+  }, [room.history]);
+
+  // Process all catalog players preserving exact round-robin sequence with dynamic statuses
+  const processedCatalog = useMemo(() => {
+    return catalog.map((p, idx) => {
+      const isCurrent = p.id === currentLotPlayerId;
+      const historyItem = historyMap[p.id];
+
+      let computedStatus = 'upcoming';
+      let soldToCode = null;
+      let soldPrice = 0;
+
+      if (isCurrent) {
+        computedStatus = 'current';
+      } else if (p.status === 'sold' || historyItem?.status === 'SOLD') {
+        computedStatus = 'sold';
+        soldToCode = p.soldTo || historyItem?.winningFranchiseCode || historyItem?.winningFranchiseId;
+        soldPrice = p.soldPrice || historyItem?.finalBid || 0;
+      } else if (p.status === 'unsold' || historyItem?.status === 'UNSOLD') {
+        computedStatus = 'unsold';
+      } else if (room.currentPlayerIndex > idx) {
+        computedStatus = 'unsold';
+      } else {
+        computedStatus = 'upcoming';
+      }
+
+      return {
+        ...p,
+        catalogOrder: p.overallLot || (idx + 1),
+        computedStatus,
+        soldToCode,
+        soldPrice,
+        isCurrent
+      };
+    });
+  }, [catalog, currentLotPlayerId, historyMap, room.currentPlayerIndex]);
+
+  // Overall catalog statistics
+  const catalogStats = useMemo(() => {
+    let sold = 0;
+    let unsold = 0;
+    processedCatalog.forEach(p => {
+      if (p.computedStatus === 'sold') sold++;
+      else if (p.computedStatus === 'unsold') unsold++;
+    });
+    return { sold, unsold, remaining: catalog.length - sold - unsold };
+  }, [processedCatalog, catalog.length]);
+
+  // Filtered catalogue without modifying the underlying sequence
+  const filteredList = useMemo(() => {
+    return processedCatalog.filter(p => {
+      // 1. Search Query (name, country, role, set)
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchName = (p.name || '').toLowerCase().includes(q);
+        const matchCountry = (p.country || '').toLowerCase().includes(q) || (p.countryCode || '').toLowerCase().includes(q);
+        const matchRole = (p.role || '').toLowerCase().includes(q);
+        const matchSet = (p.setName || '').toLowerCase().includes(q);
+        if (!matchName && !matchCountry && !matchRole && !matchSet) return false;
+      }
+
+      // 2. Category Filter
+      if (categoryFilter !== 'ALL') {
+        if (p.category !== categoryFilter) return false;
+      }
+
+      // 3. Nationality Filter
+      if (nationalityFilter === 'IND' && p.isOverseas) return false;
+      if (nationalityFilter === 'OS' && !p.isOverseas) return false;
+
+      // 4. Status Filter
+      if (statusFilter !== 'ALL') {
+        if (statusFilter === 'CURRENT' && p.computedStatus !== 'current') return false;
+        if (statusFilter === 'UPCOMING' && p.computedStatus !== 'upcoming') return false;
+        if (statusFilter === 'SOLD' && p.computedStatus !== 'sold') return false;
+        if (statusFilter === 'UNSOLD' && p.computedStatus !== 'unsold') return false;
+      }
+
+      return true;
+    });
+  }, [processedCatalog, searchQuery, categoryFilter, nationalityFilter, statusFilter]);
+
+  // Auto-scroll to active player on lot transition (when no search query is active)
+  useEffect(() => {
+    if (!searchQuery && activePlayerCardRef.current) {
+      activePlayerCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [currentLotPlayerId]);
+
+  // Navigation handlers
+  const jumpToActiveLot = () => {
+    if (searchQuery || categoryFilter !== 'ALL' || nationalityFilter !== 'ALL' || statusFilter !== 'ALL') {
+      setSearchQuery('');
+      setCategoryFilter('ALL');
+      setNationalityFilter('ALL');
+      setStatusFilter('ALL');
+    }
+    setTimeout(() => {
+      if (activePlayerCardRef.current) {
+        activePlayerCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 60);
+  };
+
+  const scrollToTop = () => {
+    if (marqueeContainerRef.current) {
+      marqueeContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('ALL');
+    setNationalityFilter('ALL');
+    setStatusFilter('ALL');
+  };
+
+  // Next 3 upcoming players for the bottom marquee ticker
   const nextThree = catalog.slice(currentIdx + 1, currentIdx + 4);
 
   return (
@@ -369,81 +503,280 @@ export default function LiveAuctionView({
 
       {/* 3. MAIN DASHBOARD: THREE-COLUMN BROADCAST LAYOUT (20% - 60% - 20%) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        {/* LEFT COLUMN (20%): MARQUEE LIST (10) */}
+        {/* LEFT COLUMN: COMPLETE MARQUEE CATALOGUE (All ~300 Players) */}
         <div className="lg:col-span-3 bg-[#0a1333]/90 border border-blue-900/40 rounded-2xl p-3.5 shadow-xl flex flex-col justify-between backdrop-blur-md">
-          <div>
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                <h3 className="text-xs font-black tracking-wider uppercase text-white">
-                  MARQUEE LIST ({marqueeList.length})
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Header: Title with Dynamic Total Count & Quick Navigation */}
+            <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-white/10 flex-shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400 flex-shrink-0" />
+                <h3 className="text-xs font-black tracking-wider uppercase text-white truncate">
+                  MARQUEE LIST ({filteredList.length === catalog.length ? catalog.length : `${filteredList.length} / ${catalog.length}`})
                 </h3>
               </div>
-              <span className="text-[10px] text-slate-400 uppercase font-mono">Order</span>
+
+              {/* Jump to Active Lot & Scroll to Top Buttons */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={jumpToActiveLot}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-black transition cursor-pointer shadow-sm group"
+                  title="Jump to Current Active Lot"
+                >
+                  <Radio className="w-3 h-3 text-amber-400 animate-pulse" />
+                  <span>Live Lot</span>
+                </button>
+                <button
+                  onClick={scrollToTop}
+                  className="flex items-center gap-1 p-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[10px] font-bold transition cursor-pointer"
+                  title="Scroll to Top (#1)"
+                >
+                  <ArrowUp className="w-3 h-3" />
+                </button>
+              </div>
             </div>
 
-            {/* Scrollable Player Rows */}
-            <div className="space-y-1.5 max-h-[510px] overflow-y-auto pr-1">
-              {marqueeList.map((p, idx) => {
-                const isActive = p.id === player.id;
-                const isSold = p.status === 'sold';
-                const isUnsold = p.status === 'unsold';
+            {/* Search Input */}
+            <div className="relative mb-2 flex-shrink-0">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search player, country, role..."
+                className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-8 pr-7 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-400/80 transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-white"
+                  title="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
 
-                return (
-                  <div
-                    key={p.id}
-                    className={`p-2 rounded-xl border transition flex items-center justify-between gap-2 text-xs ${
-                      isActive
-                        ? 'border-amber-400 bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-transparent shadow-md shadow-amber-500/10 ring-1 ring-amber-400/40'
-                        : isSold
-                        ? 'border-emerald-500/20 bg-emerald-950/15 opacity-70'
-                        : isUnsold
-                        ? 'border-slate-800 bg-slate-900/30 opacity-60'
-                        : 'border-white/5 bg-slate-900/40 hover:bg-slate-800/40'
+            {/* Filter Pills Toolbar */}
+            <div className="space-y-1.5 mb-2.5 flex-shrink-0">
+              {/* Category Pills */}
+              <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none text-[10px]">
+                <span className="text-slate-500 font-bold uppercase text-[9px] mr-0.5 flex items-center gap-0.5">
+                  <Filter className="w-2.5 h-2.5" /> CAT:
+                </span>
+                {['ALL', 'BAT', 'BOWL', 'AR', 'SP', 'WK'].map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`px-1.5 py-0.5 rounded font-extrabold uppercase transition cursor-pointer border ${
+                      categoryFilter === cat
+                        ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm'
+                        : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`text-[11px] font-mono font-bold w-4 text-center ${isActive ? 'text-amber-400' : 'text-slate-500'}`}>
-                        {startIndex + idx + 1}
-                      </span>
+                    {cat}
+                  </button>
+                ))}
+              </div>
 
-                      {/* Small circular avatar */}
-                      <div className={`w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border flex items-center justify-center font-bold text-[10px] ${
-                        isActive ? 'border-amber-400 bg-amber-500/20 text-amber-300 ring-2 ring-amber-400/30' : 'border-slate-700 bg-slate-800 text-slate-300'
-                      }`}>
-                        <img
-                          src={p.imageUrl}
-                          alt={p.name}
-                          className="w-full h-full object-cover object-top"
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
-                      </div>
+              {/* Nationality & Status Filters */}
+              <div className="flex items-center justify-between text-[10px] gap-1">
+                {/* Nationality */}
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500 font-bold text-[9px]">NAT:</span>
+                  {[
+                    { label: 'All', val: 'ALL' },
+                    { label: 'IND', val: 'IND' },
+                    { label: 'OS', val: 'OS' }
+                  ].map(n => (
+                    <button
+                      key={n.val}
+                      onClick={() => setNationalityFilter(n.val)}
+                      className={`px-1.5 py-0.5 rounded font-bold transition cursor-pointer border text-[9px] ${
+                        nationalityFilter === n.val
+                          ? 'bg-blue-500 text-white border-blue-400 shadow-sm'
+                          : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {n.label}
+                    </button>
+                  ))}
+                </div>
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className={`font-bold truncate text-[11px] ${isActive ? 'text-white font-extrabold' : 'text-slate-200'}`}>
-                            {p.name}
+                {/* Status Dropdown */}
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500 font-bold text-[9px]">STATUS:</span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="bg-slate-900 border border-slate-700/80 text-slate-200 text-[10px] font-bold rounded px-1.5 py-0.5 outline-none focus:border-amber-400"
+                  >
+                    <option value="ALL">All Status</option>
+                    <option value="CURRENT">⚡ Current</option>
+                    <option value="UPCOMING">⏳ Upcoming</option>
+                    <option value="SOLD">✓ Sold</option>
+                    <option value="UNSOLD">✗ Unsold</option>
+                  </select>
+                </div>
+
+                {/* Reset button if any filter active */}
+                {(searchQuery || categoryFilter !== 'ALL' || nationalityFilter !== 'ALL' || statusFilter !== 'ALL') && (
+                  <button
+                    onClick={resetFilters}
+                    className="text-[9px] text-amber-400 hover:underline flex items-center gap-0.5 font-bold cursor-pointer flex-shrink-0"
+                    title="Reset all filters"
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" />
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Scrollable Player Rows (All ~300 Players in Round-Robin Sequence) */}
+            <div
+              ref={marqueeContainerRef}
+              className="flex-1 overflow-y-auto overscroll-contain player-list-scroll pr-1.5 space-y-1.5 min-h-[440px] max-h-[520px]"
+            >
+              {filteredList.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 space-y-2">
+                  <p className="text-xs">No players match your active filters</p>
+                  <button
+                    onClick={resetFilters}
+                    className="text-xs text-amber-400 hover:underline font-bold cursor-pointer"
+                  >
+                    Reset filters
+                  </button>
+                </div>
+              ) : (
+                filteredList.map((p) => {
+                  const isCurrent = p.isCurrent;
+                  const isSold = p.computedStatus === 'sold';
+                  const isUnsold = p.computedStatus === 'unsold';
+
+                  return (
+                    <div
+                      key={p.id}
+                      ref={isCurrent ? activePlayerCardRef : null}
+                      className={`p-2 rounded-xl border transition-all duration-200 flex items-center justify-between gap-2 text-xs relative ${
+                        isCurrent
+                          ? 'border-2 border-amber-400 bg-gradient-to-r from-amber-500/25 via-yellow-500/15 to-blue-950/40 shadow-lg shadow-amber-500/20 ring-2 ring-amber-400/50'
+                          : isSold
+                          ? 'border-emerald-500/25 bg-emerald-950/20 opacity-80 hover:opacity-100'
+                          : isUnsold
+                          ? 'border-rose-900/30 bg-rose-950/15 opacity-70 hover:opacity-100'
+                          : 'border-white/5 bg-slate-900/40 hover:bg-slate-800/40 hover:border-slate-700/60'
+                      }`}
+                    >
+                      {/* Left: Catalogue Order Number + Avatar + Metadata */}
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className={`text-[11px] font-mono font-black w-6 text-center flex-shrink-0 ${
+                          isCurrent ? 'text-amber-400 font-extrabold' : isSold ? 'text-emerald-400' : isUnsold ? 'text-rose-400' : 'text-slate-500'
+                        }`}>
+                          #{p.catalogOrder}
+                        </span>
+
+                        {/* Player Circular Avatar */}
+                        <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border flex items-center justify-center font-bold text-[10px] relative ${
+                          isCurrent
+                            ? 'border-amber-400 bg-amber-500/20 text-amber-300 ring-2 ring-amber-400/40'
+                            : isSold
+                            ? 'border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
+                            : isUnsold
+                            ? 'border-rose-900/40 bg-rose-950/40 text-rose-300'
+                            : 'border-slate-700 bg-slate-800 text-slate-300'
+                        }`}>
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover object-top"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                          <span className="hidden w-full h-full items-center justify-center font-mono font-bold text-[11px] bg-slate-800 text-slate-300">
+                            {p.initials || p.name.substring(0, 2).toUpperCase()}
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                          <span>{p.countryCode || p.country}</span>
-                          {p.isOverseas && <Plane className="w-2.5 h-2.5 text-blue-400" />}
+
+                        {/* Player Name, Nationality & Category Set */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span
+                              className={`font-bold truncate text-[11px] ${
+                                isCurrent ? 'text-white font-black' : isSold ? 'text-slate-200' : isUnsold ? 'text-slate-400 line-through' : 'text-slate-200'
+                              }`}
+                              title={p.name}
+                            >
+                              {p.name}
+                            </span>
+                          </div>
+
+                          <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                            <span className="flex items-center gap-1">
+                              <span>{p.countryFlag || '🏏'}</span>
+                              <span className="font-mono">{p.countryCode || p.country}</span>
+                            </span>
+                            {p.isOverseas ? (
+                              <span className="text-[9px] font-extrabold text-blue-400 bg-blue-500/10 px-1 py-0.2 rounded flex items-center gap-0.5">
+                                <Plane className="w-2.5 h-2.5" /> OS
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-extrabold text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded">
+                                IND
+                              </span>
+                            )}
+                            <span className="text-slate-600">•</span>
+                            <span className="text-[9px] text-slate-400 truncate">{p.setName}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <CategoryBadge category={p.category} />
+                      {/* Right: Category badge + Dynamic Auction Status */}
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <CategoryBadge category={p.category} />
+
+                        {/* Dynamic Auction Status Badge */}
+                        {isCurrent ? (
+                          <span className="flex items-center gap-1 bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider shadow-sm animate-pulse">
+                            <Radio className="w-2.5 h-2.5 fill-current" />
+                            CURRENT
+                          </span>
+                        ) : isSold ? (
+                          <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                            <span className="text-emerald-400">SOLD</span>
+                            <span className="text-slate-500">•</span>
+                            <strong className="text-white">{p.soldToCode}</strong>
+                            <span className="font-mono text-emerald-300">₹{p.soldPrice?.toFixed(2)} Cr</span>
+                          </div>
+                        ) : isUnsold ? (
+                          <span className="bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold px-1.5 py-0.5 rounded text-[9px]">
+                            UNSOLD
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px] font-mono bg-slate-800/60 border border-slate-700/50 px-1.5 py-0.5 rounded">
+                            ₹{p.basePrice?.toFixed(2)} Cr
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
-          <div className="pt-3 mt-2 border-t border-white/10 text-[10px] text-slate-400 flex items-center justify-between">
-            <span>Catalogue Order</span>
-            <span>Total: <strong>{lot.totalLots}</strong></span>
+          {/* Footer: Dynamic Summary Statistics */}
+          <div className="pt-2.5 mt-2 border-t border-white/10 text-[10px] text-slate-400 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-1.5">
+              <span>Sold: <strong className="text-emerald-400">{catalogStats.sold}</strong></span>
+              <span className="text-slate-700">|</span>
+              <span>Unsold: <strong className="text-rose-400">{catalogStats.unsold}</strong></span>
+              <span className="text-slate-700">|</span>
+              <span>Remaining: <strong className="text-amber-400">{catalogStats.remaining}</strong></span>
+            </div>
+            <span>Total: <strong className="text-white font-mono">{catalog.length}</strong></span>
           </div>
         </div>
 
