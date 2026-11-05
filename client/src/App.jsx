@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { socket, getUserSession, saveUserSession } from './utils/socket';
+import { socket, getUserSession, saveUserSession, SERVER_URL } from './utils/socket';
 import { playGavel, playBidPing, playSoldFanfare, playUnsold } from './utils/audio';
 import Navbar from './components/Navbar';
 import LandingView from './components/LandingView';
@@ -131,7 +131,7 @@ export default function App() {
   // Actions
   const handleCreateRoom = async ({ hostName, basePurse }) => {
     try {
-      const res = await fetch('/api/rooms', {
+      const res = await fetch(`${SERVER_URL}/api/rooms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,10 +1,12 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = window.location.hostname === 'localhost' && window.location.port === '5173'
-  ? 'http://localhost:4000'
-  : '/';
+export const SERVER_URL = import.meta.env.VITE_SERVER_URL || (
+  typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '5173'
+    ? 'http://localhost:4000'
+    : ''
+);
 
-export const socket = io(SOCKET_URL, {
+export const socket = io(SERVER_URL || (typeof window !== 'undefined' ? window.location.origin : ''), {
   autoConnect: true,
   transports: ['websocket', 'polling']
 });
