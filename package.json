@@ -5,10 +5,11 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "start": "node server/index.js",
     "server": "node server/index.js",
     "client": "npm --prefix client run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "npm --prefix client run build",
+    "build": "npm --prefix client install && npm --prefix client run build",
     "test": "node tests/auction.test.js && node tests/multiplayerSimulation.test.js"
   },
   "dependencies": {

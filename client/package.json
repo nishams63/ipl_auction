@@ -12,7 +12,6 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.4",
     "canvas-confetti": "^1.9.4",
-    "ipl-auction-simulator": "file:..",
     "lucide-react": "^1.69.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
