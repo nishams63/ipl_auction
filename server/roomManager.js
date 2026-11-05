@@ -600,6 +600,8 @@ export class RoomManager {
       currentLot: room.currentLot,
       lotNumber: room.currentLot?.lotNumber || 0,
       totalLots: room.playersCatalog.length,
+      currentPlayerIndex: room.currentPlayerIndex,
+      playersCatalog: room.playersCatalog,
       history: room.history,
       recentBids: room.allBids.slice(-15),
       auditLog: room.auditLog.slice(0, 30),

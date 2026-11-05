@@ -632,7 +632,24 @@ for (const roundData of rawRounds) {
       const isOverseas = p.country !== "India";
       const initials = p.name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
       const encodedName = encodeURIComponent(p.name + " cricketer");
-      const imageUrl = `https://tse1.mm.bing.net/th?q=${encodedName}%20portrait&w=180&h=180&c=7&rs=1&p=0`;
+      // High-resolution 800px portrait URL with quality parameters
+      const imageUrl = `https://tse1.mm.bing.net/th?q=${encodedName}%20portrait%20hd&w=800&h=800&c=7&rs=1&p=0`;
+
+      // Country flags & codes
+      const countryFlags = {
+        "India": { flag: "🇮🇳", code: "IND" },
+        "Australia": { flag: "🇦🇺", code: "AUS" },
+        "England": { flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", code: "ENG" },
+        "South Africa": { flag: "🇿🇦", code: "SA" },
+        "West Indies": { flag: "🌴", code: "WI" },
+        "New Zealand": { flag: "🇳🇿", code: "NZ" },
+        "Afghanistan": { flag: "🇦🇫", code: "AFG" },
+        "Sri Lanka": { flag: "🇱🇰", code: "SL" },
+        "Zimbabwe": { flag: "🇿🇼", code: "ZIM" },
+        "Bangladesh": { flag: "🇧🇩", code: "BAN" }
+      };
+
+      const cData = countryFlags[p.country] || { flag: "🏏", code: p.country.substring(0, 3).toUpperCase() };
 
       const playerRecord = {
         id: `PL_${String(idCounter++).padStart(3, '0')}`,
@@ -641,6 +658,8 @@ for (const roundData of rawRounds) {
         categorySet: set.code,
         round: roundData.round,
         country: p.country,
+        countryFlag: cData.flag,
+        countryCode: cData.code,
         isOverseas,
         initials,
         role: p.role,

@@ -88,12 +88,23 @@ export function validateBid({
     ? currentLot.player.basePrice
     : calculateNextBid(currentLot.highestBid, currentLot.player.basePrice);
 
-  if (Math.abs(bidAmount - validNextAmount) > 0.001) {
+  if (bidAmount < validNextAmount - 0.001) {
     return {
       valid: false,
-      error: `Bid amount ₹${bidAmount} Cr does not match required increment ₹${validNextAmount} Cr`
+      error: `Bid amount must be at least the next minimum valid bid of ₹${validNextAmount.toFixed(2)} Cr`
     };
   }
+
+  // Must be in valid auction increment steps (multiples of 0.25 Cr)
+  const cents = Math.round(bidAmount * 100);
+  if (cents % 25 !== 0) {
+    return {
+      valid: false,
+      error: `Bid amount must be in valid IPL auction steps (multiples of ₹0.25 Cr)`
+    };
+  }
+
+  const validNextAmountToAccept = Math.round(bidAmount * 100) / 100;
 
   // Max squad size check
   if (franchise.squad.length >= room.config.maxSquadSize) {
@@ -126,7 +137,7 @@ export function validateBid({
     };
   }
 
-  return { valid: true, validNextAmount };
+  return { valid: true, validNextAmount: validNextAmountToAccept };
 }
 
 /**

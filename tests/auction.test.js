@@ -66,7 +66,7 @@ it('Increments correctly by ₹1.00 Cr above ₹15 Cr', () => {
 });
 
 // 3. Bid Validation & Concurrency Tests
-it('Rejects bids that do not match the automatic next increment', () => {
+it('Rejects bids below minimum increment or with invalid fractional steps', () => {
   const fakeRoom = {
     status: 'active',
     config: DEFAULT_CONFIG,
@@ -86,16 +86,35 @@ it('Rejects bids that do not match the automatic next increment', () => {
     }
   };
 
-  // Attempting manual jump to ₹5.0 Cr instead of valid next ₹2.25 Cr
-  const result = validateBid({
+  // 1. Attempting bid below next minimum valid (2.10 Cr < 2.25 Cr)
+  const resultLow = validateBid({
     room: fakeRoom,
     franchiseId: 'CSK',
-    bidAmount: 5.0,
+    bidAmount: 2.10,
     expectedVersion: 1
   });
+  assert.strictEqual(resultLow.valid, false);
+  assert.ok(resultLow.error.includes('must be at least the next minimum valid bid'));
 
-  assert.strictEqual(result.valid, false);
-  assert.ok(result.error.includes('does not match required increment'));
+  // 2. Attempting invalid increment step (2.33 Cr not multiple of 0.25 Cr)
+  const resultInvalidStep = validateBid({
+    room: fakeRoom,
+    franchiseId: 'CSK',
+    bidAmount: 2.33,
+    expectedVersion: 1
+  });
+  assert.strictEqual(resultInvalidStep.valid, false);
+  assert.ok(resultInvalidStep.error.includes('multiples of ₹0.25 Cr'));
+
+  // 3. Valid increment is accepted
+  const resultValid = validateBid({
+    room: fakeRoom,
+    franchiseId: 'CSK',
+    bidAmount: 2.25,
+    expectedVersion: 1
+  });
+  assert.strictEqual(resultValid.valid, true);
+  assert.strictEqual(resultValid.validNextAmount, 2.25);
 });
 
 it('Rejects stale bids against an older stateVersion (simultaneous bidding protection)', () => {
