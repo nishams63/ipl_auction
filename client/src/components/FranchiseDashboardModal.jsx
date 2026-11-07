@@ -55,6 +55,11 @@ export default function FranchiseDashboardModal({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
+  // Candidate player pool search & category filter (for setup & auction)
+  const [poolSearch, setPoolSearch] = useState('');
+  const [poolCategory, setPoolCategory] = useState('ALL');
+  const [poolSource, setPoolSource] = useState('auto'); // 'auto' | 'catalog' | 'squad'
+
   // Sync selected franchise with props when opened
   useEffect(() => {
     if (initialFranchiseId) {
@@ -62,33 +67,63 @@ export default function FranchiseDashboardModal({
     }
   }, [initialFranchiseId, isOpen]);
 
-  // Load existing Playing XI when switching franchise or room updates
   const franchise = room?.franchises?.[selectedFranchiseId] || Object.values(room?.franchises || {})[0];
 
+  // Load existing Playing XI when switching franchise or modal opens
+  // CRITICAL FIX: Do NOT depend on room or franchise updates to prevent resetting during live bidding
   useEffect(() => {
-    if (franchise) {
-      setPlayingXIIds(franchise.playingXI || []);
-      setCaptainId(franchise.captainId || null);
-      setViceCaptainId(franchise.viceCaptainId || null);
-      setImpactPlayerId(franchise.impactPlayerId || null);
-      setSaveSuccess(false);
-      setSaveError(null);
+    if (!franchise) return;
+
+    const roomConfig = room?.playingXIConfigurations?.[franchise.id];
+    let initialXI = roomConfig?.playingXI;
+    let initialC = roomConfig?.captainId;
+    let initialVC = roomConfig?.viceCaptainId;
+    let initialIP = roomConfig?.impactPlayerId;
+
+    if (!initialXI || initialXI.length === 0) {
+      initialXI = franchise.playingXI;
+      initialC = franchise.captainId;
+      initialVC = franchise.viceCaptainId;
+      initialIP = franchise.impactPlayerId;
     }
-  }, [franchise?.id, franchise?.playingXI, isOpen]);
+
+    if (!initialXI || initialXI.length === 0) {
+      try {
+        const local = localStorage.getItem(`ipl_auction_pxi_${room?.roomCode}_${franchise.id}`);
+        if (local) {
+          const parsed = JSON.parse(local);
+          initialXI = parsed.playingXI || [];
+          initialC = parsed.captainId || null;
+          initialVC = parsed.viceCaptainId || null;
+          initialIP = parsed.impactPlayerId || null;
+        }
+      } catch (e) {}
+    }
+
+    setPlayingXIIds(initialXI || []);
+    setCaptainId(initialC || null);
+    setViceCaptainId(initialVC || null);
+    setImpactPlayerId(initialIP || null);
+    setSaveSuccess(false);
+    setSaveError(null);
+  }, [selectedFranchiseId, isOpen]);
 
   if (!isOpen || !room) return null;
 
-  const squad = franchise?.squad || [];
-  const squadMap = new Map(squad.map(p => [p.id, p]));
+  // Build unified playerMap from both catalog and acquired squad
+  const playerMap = new Map();
+  (room.playersCatalog || []).forEach(p => playerMap.set(p.id, p));
+  (franchise?.squad || []).forEach(p => playerMap.set(p.id, p));
 
-  // Is current user owner of this franchise?
+  const squad = franchise?.squad || [];
+
+  // Permissions: Both franchise owner and host can configure and confirm Playing XI
   const isOwner = myFranchise?.id === franchise?.id;
-  const isHost = participant?.isHost;
-  const canEdit = isOwner; // Only owner can edit, host can view all
+  const isHost = !!participant?.isHost;
+  const canEdit = isOwner || isHost;
 
   // Playing XI calculations
-  const playingXIPlayers = playingXIIds.map(id => squadMap.get(id)).filter(Boolean);
-  const benchPlayers = squad.filter(p => !playingXIIds.includes(p.id));
+  const playingXIPlayers = playingXIIds.map(id => playerMap.get(id)).filter(Boolean);
   const overseasInXI = playingXIPlayers.filter(p => p.isOverseas).length;
   const wkInXI = playingXIPlayers.filter(p => p.category === 'WK').length;
 
@@ -99,6 +134,23 @@ export default function FranchiseDashboardModal({
   const hasCaptain = !!captainId && playingXIIds.includes(captainId);
   const hasViceCaptain = !!viceCaptainId && playingXIIds.includes(viceCaptainId) && viceCaptainId !== captainId;
   const isXIComplete = has11 && overseasValid && hasMinWK && hasCaptain && hasViceCaptain;
+
+  // Decide candidate pool: if squad has >= 11 and poolSource is 'auto', use squad. Otherwise allow catalog
+  const useSquadOnly = poolSource === 'squad' || (poolSource === 'auto' && squad.length >= 11);
+  const candidatePool = useSquadOnly ? squad : (room.playersCatalog || []);
+
+  const benchPlayers = candidatePool
+    .filter(p => !playingXIIds.includes(p.id))
+    .filter(p => {
+      if (poolCategory !== 'ALL' && p.category !== poolCategory) return false;
+      if (poolSearch.trim()) {
+        const q = poolSearch.toLowerCase().trim();
+        const mName = (p.name || '').toLowerCase().includes(q);
+        const mRole = (p.role || '').toLowerCase().includes(q);
+        return mName || mRole;
+      }
+      return true;
+    });
 
   // Playing XI Actions
   const addToXI = (player) => {
@@ -166,9 +218,11 @@ export default function FranchiseDashboardModal({
     if (!canEdit) return;
     setSaveError(null);
 
+    const token = participant?.token || myFranchise?.ownerToken || room?.hostToken;
     socket.emit('update_playing_xi', {
       roomCode: room.roomCode,
-      participantToken: participant?.token || myFranchise?.ownerToken,
+      participantToken: token,
+      hostToken: isHost ? (participant?.token || room?.hostToken) : undefined,
       franchiseId: franchise.id,
       playingXI: playingXIIds,
       captainId,
@@ -177,8 +231,16 @@ export default function FranchiseDashboardModal({
       impactPlayerId
     }, (res) => {
       if (res?.success) {
+        try {
+          localStorage.setItem(`ipl_auction_pxi_${room.roomCode}_${franchise.id}`, JSON.stringify({
+            playingXI: playingXIIds,
+            captainId,
+            viceCaptainId,
+            impactPlayerId
+          }));
+        } catch (e) {}
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        setTimeout(() => setSaveSuccess(false), 3500);
       } else {
         setSaveError(res?.error || "Failed to update Playing XI");
       }
@@ -549,12 +611,12 @@ export default function FranchiseDashboardModal({
 
               <div className={`p-2 rounded-xl border ${hasCaptain ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300' : 'bg-amber-950/20 border-amber-500/40 text-amber-400'}`}>
                 <span className="text-[10px] block font-semibold">Captain (C)</span>
-                <strong className="truncate block font-mono">{hasCaptain ? squadMap.get(captainId)?.name : 'Required'}</strong>
+                <strong className="truncate block font-mono">{hasCaptain ? playerMap.get(captainId)?.name : 'Required'}</strong>
               </div>
 
               <div className={`p-2 rounded-xl border ${hasViceCaptain ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300' : 'bg-amber-950/20 border-amber-500/40 text-amber-400'}`}>
                 <span className="text-[10px] block font-semibold">Vice-Captain (VC)</span>
-                <strong className="truncate block font-mono">{hasViceCaptain ? squadMap.get(viceCaptainId)?.name : 'Required'}</strong>
+                <strong className="truncate block font-mono">{hasViceCaptain ? playerMap.get(viceCaptainId)?.name : 'Required'}</strong>
               </div>
             </div>
 
@@ -572,7 +634,7 @@ export default function FranchiseDashboardModal({
 
                 {playingXIPlayers.length === 0 ? (
                   <div className="text-center py-12 text-slate-500 text-xs">
-                    No players in Playing XI yet. Add players from your available squad bench on the right.
+                    No players in Playing XI yet. Add players from your available pool on the right.
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -707,8 +769,8 @@ export default function FranchiseDashboardModal({
                       }}
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-400 outline-none"
                     >
-                      <option value="">-- Select Impact Player from Bench --</option>
-                      {benchPlayers.map(p => (
+                      <option value="">-- Select Impact Player --</option>
+                      {benchPlayers.slice(0, 30).map(p => (
                         <option key={p.id} value={p.id}>
                           {p.name} ({p.category} • {p.isOverseas ? 'OS' : 'IND'})
                         </option>
@@ -718,8 +780,8 @@ export default function FranchiseDashboardModal({
                     <div className="text-xs text-slate-300">
                       {impactPlayerId ? (
                         <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-xl">
-                          <span className="font-bold text-white">{squadMap.get(impactPlayerId)?.name}</span>
-                          <span className="text-[10px] text-slate-400">({squadMap.get(impactPlayerId)?.category})</span>
+                          <span className="font-bold text-white">{playerMap.get(impactPlayerId)?.name}</span>
+                          <span className="text-[10px] text-slate-400">({playerMap.get(impactPlayerId)?.category})</span>
                         </div>
                       ) : (
                         <span className="text-slate-500 italic">No Impact Player designated yet</span>
@@ -728,22 +790,71 @@ export default function FranchiseDashboardModal({
                   )}
                 </div>
 
-                {/* Available Bench Players */}
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                {/* Available Bench / Candidate Players */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between pb-1 border-b border-white/10">
                     <h4 className="text-xs font-black uppercase text-slate-300 tracking-wider">
-                      Available Bench ({benchPlayers.length})
+                      Available Players ({benchPlayers.length})
                     </h4>
-                    <span className="text-[10px] text-slate-500">Add to XI</span>
+                    {squad.length > 0 && (
+                      <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                        <button
+                          onClick={() => setPoolSource('squad')}
+                          className={`px-2 py-0.5 rounded font-bold cursor-pointer transition ${
+                            poolSource === 'squad' || (poolSource === 'auto' && squad.length >= 11)
+                              ? 'bg-amber-400 text-slate-950 font-black'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          Squad ({squad.length})
+                        </button>
+                        <button
+                          onClick={() => setPoolSource('catalog')}
+                          className={`px-2 py-0.5 rounded font-bold cursor-pointer transition ${
+                            poolSource === 'catalog' || (poolSource === 'auto' && squad.length < 11)
+                              ? 'bg-amber-400 text-slate-950 font-black'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          Catalog (All)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Filter & Search Bar */}
+                  <div className="space-y-1.5">
+                    <input
+                      type="text"
+                      placeholder="Search player name or role..."
+                      value={poolSearch}
+                      onChange={(e) => setPoolSearch(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-400"
+                    />
+                    <div className="flex items-center gap-1 overflow-x-auto text-[10px]">
+                      {['ALL', 'BAT', 'BOWL', 'AR', 'WK'].map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setPoolCategory(cat)}
+                          className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
+                            poolCategory === cat
+                              ? 'bg-amber-500 text-slate-950 font-black'
+                              : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {benchPlayers.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 text-xs">
-                      All purchased squad members are currently in the Playing XI.
+                    <div className="text-center py-6 text-slate-500 text-xs">
+                      No matching players available.
                     </div>
                   ) : (
-                    <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
-                      {benchPlayers.map(p => (
+                    <div className="space-y-1.5 max-h-[320px] overflow-y-auto pr-1">
+                      {benchPlayers.slice(0, 50).map(p => (
                         <div
                           key={p.id}
                           className="bg-slate-950/70 border border-slate-800 p-2 rounded-xl flex items-center justify-between gap-2 text-xs"

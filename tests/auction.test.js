@@ -117,6 +117,7 @@ it('Rejects bids below minimum increment or with invalid fractional steps', () =
   };
 
   // 1. Attempting bid below next minimum valid (2.10 Cr < 2.25 Cr)
+  // 1. Attempting custom bid below next increment (2.10 Cr vs 2.25 Cr)
   const resultLow = validateBid({
     room: fakeRoom,
     franchiseId: 'CSK',
@@ -124,9 +125,9 @@ it('Rejects bids below minimum increment or with invalid fractional steps', () =
     expectedVersion: 1
   });
   assert.strictEqual(resultLow.valid, false);
-  assert.ok(resultLow.error.includes('must be at least the next minimum valid bid'));
+  assert.ok(resultLow.error.includes('Custom bids are disabled'));
 
-  // 2. Attempting invalid increment step (2.33 Cr not multiple of 0.25 Cr)
+  // 2. Attempting custom bid with arbitrary amount (2.33 Cr)
   const resultInvalidStep = validateBid({
     room: fakeRoom,
     franchiseId: 'CSK',
@@ -134,7 +135,7 @@ it('Rejects bids below minimum increment or with invalid fractional steps', () =
     expectedVersion: 1
   });
   assert.strictEqual(resultInvalidStep.valid, false);
-  assert.ok(resultInvalidStep.error.includes('multiples of ₹0.25 Cr'));
+  assert.ok(resultInvalidStep.error.includes('Custom bids are disabled'));
 
   // 3. Valid increment is accepted
   const resultValid = validateBid({

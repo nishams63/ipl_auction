@@ -81,28 +81,22 @@ export function validateBid({
     return { valid: false, error: "Your franchise already holds the highest bid" };
   }
 
-  // Calculate required next bid amount
+  // Calculate required next bid amount strictly based on configured increments
   const validNextAmount = currentLot.highestBid === 0
     ? currentLot.player.basePrice
     : calculateNextBid(currentLot.highestBid, currentLot.player.basePrice);
 
-  if (bidAmount < validNextAmount - 0.001) {
-    return {
-      valid: false,
-      error: `Bid amount must be at least the next minimum valid bid of ₹${validNextAmount.toFixed(2)} Cr`
-    };
+  // Strict Rule: Disallow custom amounts. Bid must match the exact next valid increment.
+  if (bidAmount !== undefined && bidAmount !== null) {
+    if (Math.abs(bidAmount - validNextAmount) > 0.001) {
+      return {
+        valid: false,
+        error: `Custom bids are disabled. You must place the exact next increment bid of ₹${validNextAmount.toFixed(2)} Cr`
+      };
+    }
   }
 
-  // Must be in valid auction increment steps (multiples of 0.25 Cr)
-  const cents = Math.round(bidAmount * 100);
-  if (cents % 25 !== 0) {
-    return {
-      valid: false,
-      error: `Bid amount must be in valid IPL auction steps (multiples of ₹0.25 Cr)`
-    };
-  }
-
-  const validNextAmountToAccept = Math.round(bidAmount * 100) / 100;
+  const validNextAmountToAccept = validNextAmount;
 
   // Max squad size check
   if (franchise.squad.length >= room.config.maxSquadSize) {

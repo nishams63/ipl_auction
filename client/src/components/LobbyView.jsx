@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, Play, Settings, Users, Shield, Sparkles, AlertCircle } from 'lucide-react';
+import { Copy, Check, Play, Settings, Users, Shield, Sparkles, AlertCircle, Trophy } from 'lucide-react';
 import { IPL_FRANCHISES } from '../../../server/data/franchises';
 
 export default function LobbyView({
@@ -7,7 +7,8 @@ export default function LobbyView({
   participant,
   onSelectFranchise,
   onStartAuction,
-  onUpdateConfig
+  onUpdateConfig,
+  onOpenSquad
 }) {
   const [copied, setCopied] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
@@ -275,20 +276,38 @@ export default function LobbyView({
                 </div>
 
                 {/* Owner status and claim button */}
-                <div className="mt-4 pt-3 border-t border-white/10">
+                <div className="mt-4 pt-3 border-t border-white/10 space-y-2">
                   {isMine ? (
-                    <div className="flex items-center justify-between bg-amber-500/10 px-2.5 py-1.5 rounded-xl border border-amber-500/20">
-                      <span className="text-xs font-black text-amber-300 flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5 text-amber-400" /> Your Franchise
-                      </span>
-                      <span className="text-[10px] text-amber-400 font-mono font-bold uppercase tracking-wider">Owner</span>
+                    <div>
+                      <div className="flex items-center justify-between bg-amber-500/10 px-2.5 py-1.5 rounded-xl border border-amber-500/20">
+                        <span className="text-xs font-black text-amber-300 flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-amber-400" /> Your Franchise
+                        </span>
+                        <span className="text-[10px] text-amber-400 font-mono font-bold uppercase tracking-wider">Owner</span>
+                      </div>
+                      <button
+                        onClick={() => onOpenSquad && onOpenSquad(f.id)}
+                        className="w-full mt-2 py-1.5 px-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+                      >
+                        <Trophy className="w-3.5 h-3.5" />
+                        <span>Configure Playing XI</span>
+                      </button>
                     </div>
                   ) : isClaimedByOther ? (
                     <div>
-                      <span className="text-[11px] text-slate-400 block font-medium">Claimed by:</span>
-                      <span className="text-xs font-bold text-slate-200 truncate block">
-                        {f.ownerName}
-                      </span>
+                      <div className="mb-2">
+                        <span className="text-[11px] text-slate-400 block font-medium">Claimed by:</span>
+                        <span className="text-xs font-bold text-slate-200 truncate block">
+                          {f.ownerName}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => onOpenSquad && onOpenSquad(f.id)}
+                        className="w-full py-1.5 px-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-white/10 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Trophy className="w-3 h-3 text-amber-400" />
+                        <span>View Playing XI</span>
+                      </button>
                     </div>
                   ) : (
                     <button
@@ -325,6 +344,17 @@ export default function LobbyView({
           </div>
         </div>
 
+        <div className="flex items-center gap-3">
+          {participant?.franchiseId && (
+            <button
+              onClick={() => onOpenSquad && onOpenSquad(participant.franchiseId)}
+              className="px-5 py-3 rounded-full font-bold text-xs bg-slate-800/90 hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-2 cursor-pointer shadow-md"
+            >
+              <Trophy className="w-4 h-4" />
+              <span>Configure Playing XI</span>
+            </button>
+          )}
+
         {participant?.isHost ? (
           <button
             onClick={onStartAuction}
@@ -343,6 +373,7 @@ export default function LobbyView({
             Waiting for host <strong className="text-amber-400">{room.hostName}</strong> to launch the auction...
           </div>
         )}
+        </div>
       </div>
     </div>
   );

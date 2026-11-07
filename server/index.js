@@ -182,6 +182,12 @@ io.on('connection', (socket) => {
     if (callback) callback(result);
   });
 
+  // Host Skip Current Player Set
+  socket.on('skip_set', ({ roomCode, hostToken }, callback) => {
+    const result = roomManager.skipCurrentSet({ roomCode, hostToken });
+    if (callback) callback(result);
+  });
+
   // Host Force Finish Auction
   socket.on('finish_auction', ({ roomCode, hostToken }, callback) => {
     const room = roomManager.getRoom(roomCode);

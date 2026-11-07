@@ -118,6 +118,17 @@ export default function App() {
       setRoom(updatedRoom);
     });
 
+    socket.on('set_skipped', (data) => {
+      setRoom(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          playersCatalog: data.playersCatalog || prev.playersCatalog,
+          history: data.history || prev.history
+        };
+      });
+    });
+
     return () => {
       socket.off('state_updated');
       socket.off('lot_presented');
@@ -125,6 +136,7 @@ export default function App() {
       socket.off('lot_completed');
       socket.off('timer_tick');
       socket.off('auction_completed');
+      socket.off('set_skipped');
     };
   }, [session.token]);
 
@@ -231,6 +243,14 @@ export default function App() {
     });
   };
 
+  const handleSkipSet = () => {
+    if (!room) return;
+    socket.emit('skip_set', {
+      roomCode: room.roomCode,
+      hostToken: session.token
+    });
+  };
+
   const handlePauseResume = () => {
     if (!room) return;
     if (room.status === 'paused') {
@@ -299,6 +319,7 @@ export default function App() {
             onSelectFranchise={handleSelectFranchise}
             onStartAuction={handleStartAuction}
             onUpdateConfig={handleUpdateConfig}
+            onOpenSquad={openSquadModal}
           />
         ) : room.status === 'completed' ? (
           <FinalResultsView
@@ -313,6 +334,7 @@ export default function App() {
             myFranchise={myFranchise}
             onPlaceBid={handlePlaceBid}
             onAdvanceLot={handleAdvanceLot}
+            onSkipSet={handleSkipSet}
             onPauseResume={handlePauseResume}
             onFinishAuction={handleFinishAuction}
             onOpenSquad={() => openSquadModal(myFranchise?.id)}

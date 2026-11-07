@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Gavel, Clock, AlertTriangle, ArrowRight, Shield, Award,
   Globe, User, CheckCircle2, XCircle, TrendingUp, Sparkles, Pause, Play,
-  Copy, Check, Edit3, X, ChevronRight, Plane, Star, Radio,
-  Search, Filter, ArrowUp, RotateCcw
+  Copy, Check, X, ChevronRight, Plane, Star, Radio,
+  Search, Filter, ArrowUp, RotateCcw, FastForward
 } from 'lucide-react';
 import { playGavel, playBidPing, playTick, playSoldFanfare, playUnsold } from '../utils/audio';
 
@@ -66,6 +66,7 @@ export default function LiveAuctionView({
   myFranchise,
   onPlaceBid,
   onAdvanceLot,
+  onSkipSet,
   onPauseResume,
   onFinishAuction,
   onOpenSquad
@@ -77,10 +78,9 @@ export default function LiveAuctionView({
   const [imgError, setImgError] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // Custom Bid Modal state
-  const [isCustomBidOpen, setIsCustomBidOpen] = useState(false);
-  const [customBidAmount, setCustomBidAmount] = useState('');
-  const [customBidError, setCustomBidError] = useState(null);
+  // Host Skip Set confirmation state
+  const [isSkipSetConfirmOpen, setIsSkipSetConfirmOpen] = useState(false);
+  const [isSkippingSet, setIsSkippingSet] = useState(false);
 
   // Sound triggers based on hammer and countdown (15s timer)
   useEffect(() => {
@@ -94,7 +94,6 @@ export default function LiveAuctionView({
   useEffect(() => {
     setImgError(false);
     setBidError(null);
-    setCustomBidError(null);
   }, [lot?.player?.id]);
 
   if (!lot || !lot.player) {
@@ -181,30 +180,15 @@ export default function LiveAuctionView({
     submitBid(lot.nextValidBid);
   };
 
-  // Quick increment buttons (+0.25, +0.50, +1.00, +2.00)
-  const handleQuickIncrement = (inc) => {
-    if (!canBid) return;
-    const base = lot.highestBid > 0 ? lot.highestBid : player.basePrice;
-    const targetBid = Math.round((base + inc) * 100) / 100;
-    submitBid(targetBid);
-  };
-
-  // Handle custom bid modal submission
-  const handleCustomBidSubmit = (e) => {
-    e.preventDefault();
-    const amount = parseFloat(customBidAmount);
-    if (isNaN(amount) || amount < lot.nextValidBid) {
-      setCustomBidError(`Amount must be at least ₹${lot.nextValidBid.toFixed(2)} Cr`);
-      return;
+  // Handle Skip Set host action
+  const handleConfirmSkipSet = () => {
+    setIsSkipSetConfirmOpen(false);
+    if (!participant?.isHost) return;
+    setIsSkippingSet(true);
+    if (onSkipSet) {
+      onSkipSet();
     }
-    const cents = Math.round(amount * 100);
-    if (cents % 25 !== 0) {
-      setCustomBidError(`Amount must be in multiples of ₹0.25 Cr`);
-      return;
-    }
-    submitBid(amount);
-    setIsCustomBidOpen(false);
-    setCustomBidAmount('');
+    setTimeout(() => setIsSkippingSet(false), 1500);
   };
 
   const copyRoomCode = () => {
@@ -265,6 +249,8 @@ export default function LiveAuctionView({
         computedStatus = 'sold';
         soldToCode = p.soldTo || historyItem?.winningFranchiseCode || historyItem?.winningFranchiseId;
         soldPrice = p.soldPrice || historyItem?.finalBid || 0;
+      } else if (p.status === 'skipped' || p.status === 'SKIPPED' || historyItem?.status === 'SKIPPED') {
+        computedStatus = 'skipped';
       } else if (p.status === 'unsold' || historyItem?.status === 'UNSOLD') {
         computedStatus = 'unsold';
       } else if (room.currentPlayerIndex > idx) {
@@ -288,11 +274,13 @@ export default function LiveAuctionView({
   const catalogStats = useMemo(() => {
     let sold = 0;
     let unsold = 0;
+    let skipped = 0;
     processedCatalog.forEach(p => {
       if (p.computedStatus === 'sold') sold++;
       else if (p.computedStatus === 'unsold') unsold++;
+      else if (p.computedStatus === 'skipped') skipped++;
     });
-    return { sold, unsold, remaining: catalog.length - sold - unsold };
+    return { sold, unsold, skipped, remaining: catalog.length - sold - unsold - skipped };
   }, [processedCatalog, catalog.length]);
 
   // Filtered catalogue without modifying the underlying sequence
@@ -323,6 +311,7 @@ export default function LiveAuctionView({
         if (statusFilter === 'UPCOMING' && p.computedStatus !== 'upcoming') return false;
         if (statusFilter === 'SOLD' && p.computedStatus !== 'sold') return false;
         if (statusFilter === 'UNSOLD' && p.computedStatus !== 'unsold') return false;
+        if (statusFilter === 'SKIPPED' && p.computedStatus !== 'skipped') return false;
       }
 
       return true;
@@ -485,6 +474,16 @@ export default function LiveAuctionView({
               >
                 <span>Advance Lot</span>
                 <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => setIsSkipSetConfirmOpen(true)}
+                disabled={isSkippingSet}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold flex items-center gap-1.5 border border-amber-400/40 transition shadow-md cursor-pointer disabled:opacity-50"
+                title="Skip all remaining players in this set"
+              >
+                <FastForward className="w-3.5 h-3.5" />
+                <span>Skip Set</span>
               </button>
 
               <button
@@ -658,6 +657,7 @@ export default function LiveAuctionView({
                     <option value="UPCOMING">⏳ Upcoming</option>
                     <option value="SOLD">✓ Sold</option>
                     <option value="UNSOLD">✗ Unsold</option>
+                    <option value="SKIPPED">⏭ Skipped</option>
                   </select>
                 </div>
 
@@ -695,6 +695,7 @@ export default function LiveAuctionView({
                   const isCurrent = p.isCurrent;
                   const isSold = p.computedStatus === 'sold';
                   const isUnsold = p.computedStatus === 'unsold';
+                  const isSkipped = p.computedStatus === 'skipped';
 
                   return (
                     <div
@@ -705,6 +706,8 @@ export default function LiveAuctionView({
                           ? 'border-2 border-amber-400 bg-gradient-to-r from-amber-500/25 via-yellow-500/15 to-blue-950/40 shadow-lg shadow-amber-500/20 ring-2 ring-amber-400/50'
                           : isSold
                           ? 'border-emerald-500/25 bg-emerald-950/20 opacity-80 hover:opacity-100'
+                          : isSkipped
+                          ? 'border-amber-500/25 bg-amber-950/20 opacity-75 hover:opacity-100'
                           : isUnsold
                           ? 'border-rose-900/30 bg-rose-950/15 opacity-70 hover:opacity-100'
                           : 'border-white/5 bg-slate-900/40 hover:bg-slate-800/40 hover:border-slate-700/60'
@@ -713,7 +716,7 @@ export default function LiveAuctionView({
                       {/* Left: Catalogue Order Number + Avatar + Metadata */}
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <span className={`text-[11px] font-mono font-black w-6 text-center flex-shrink-0 ${
-                          isCurrent ? 'text-amber-400 font-extrabold' : isSold ? 'text-emerald-400' : isUnsold ? 'text-rose-400' : 'text-slate-500'
+                          isCurrent ? 'text-amber-400 font-extrabold' : isSold ? 'text-emerald-400' : isSkipped ? 'text-amber-400' : isUnsold ? 'text-rose-400' : 'text-slate-500'
                         }`}>
                           #{p.catalogOrder}
                         </span>
@@ -724,6 +727,8 @@ export default function LiveAuctionView({
                             ? 'border-amber-400 bg-amber-500/20 text-amber-300 ring-2 ring-amber-400/40'
                             : isSold
                             ? 'border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
+                            : isSkipped
+                            ? 'border-amber-500/40 bg-amber-950/40 text-amber-300'
                             : isUnsold
                             ? 'border-rose-900/40 bg-rose-950/40 text-rose-300'
                             : 'border-slate-700 bg-slate-800 text-slate-300'
@@ -748,7 +753,7 @@ export default function LiveAuctionView({
                           <div className="flex items-center gap-1.5 truncate">
                             <span
                               className={`font-bold truncate text-[11px] ${
-                                isCurrent ? 'text-white font-black' : isSold ? 'text-slate-200' : isUnsold ? 'text-slate-400 line-through' : 'text-slate-200'
+                                isCurrent ? 'text-white font-black' : isSold ? 'text-slate-200' : isSkipped ? 'text-amber-300' : isUnsold ? 'text-slate-400 line-through' : 'text-slate-200'
                               }`}
                               title={p.name}
                             >
@@ -793,6 +798,10 @@ export default function LiveAuctionView({
                             <strong className="text-white">{p.soldToCode}</strong>
                             <span className="font-mono text-emerald-300">₹{p.soldPrice?.toFixed(2)} Cr</span>
                           </div>
+                        ) : isSkipped ? (
+                          <span className="bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold px-1.5 py-0.5 rounded text-[9px]">
+                            SKIPPED
+                          </span>
                         ) : isUnsold ? (
                           <span className="bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold px-1.5 py-0.5 rounded text-[9px]">
                             UNSOLD
@@ -817,7 +826,9 @@ export default function LiveAuctionView({
               <span className="text-slate-700">|</span>
               <span>Unsold: <strong className="text-rose-400">{catalogStats.unsold}</strong></span>
               <span className="text-slate-700">|</span>
-              <span>Remaining: <strong className="text-amber-400">{catalogStats.remaining}</strong></span>
+              <span>Skipped: <strong className="text-amber-400">{catalogStats.skipped || 0}</strong></span>
+              <span className="text-slate-700">|</span>
+              <span>Remaining: <strong className="text-blue-400">{catalogStats.remaining}</strong></span>
             </div>
             <span>Total: <strong className="text-white font-mono">{catalog.length}</strong></span>
           </div>
@@ -1002,53 +1013,37 @@ export default function LiveAuctionView({
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-2">
-                {/* Large Gold Bidding Button (2 cols) */}
-                <button
-                  onClick={handleMainBidClick}
-                  disabled={!canBid || submittingBid}
-                  className={`col-span-2 py-3 px-3 rounded-xl font-black text-sm sm:text-base tracking-wide transition flex items-center justify-center gap-1.5 shadow-xl relative cursor-pointer ${
-                    canBid
-                      ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 shadow-amber-500/30 active:scale-95'
-                      : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-70'
-                  } ${pulseBid ? 'animate-bid-pulse ring-4 ring-amber-400' : ''}`}
-                >
-                  <Gavel className="w-4 h-4 fill-current animate-hammer" />
-                  <span>BID ₹{lot.nextValidBid.toFixed(2)} Cr</span>
-                </button>
-
-                {/* Custom Bid Button */}
-                <button
-                  onClick={() => setIsCustomBidOpen(true)}
-                  disabled={!canBid}
-                  className={`py-3 px-2 rounded-xl font-bold text-xs flex items-center justify-center gap-1 border transition cursor-pointer ${
-                    canBid
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-                      : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed'
-                  }`}
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Custom</span>
-                </button>
+              {/* NEXT VALID BID DISPLAY & CONFIGURED INCREMENT */}
+              <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                    NEXT VALID BID
+                  </span>
+                  <span className="text-xl font-black font-mono text-emerald-400">
+                    ₹{lot.nextValidBid.toFixed(2)} Cr
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 block font-semibold">Configured Increment</span>
+                  <span className="text-xs font-mono font-bold text-amber-400">
+                    +₹{(lot.nextValidBid - (lot.highestBid > 0 ? lot.highestBid : 0)).toFixed(2)} Cr
+                  </span>
+                </div>
               </div>
 
-              {/* 4 Quick Bid Increment Buttons */}
-              <div className="grid grid-cols-4 gap-1.5 pt-1">
-                {[0.25, 0.50, 1.00, 2.00].map(inc => (
-                  <button
-                    key={inc}
-                    onClick={() => handleQuickIncrement(inc)}
-                    disabled={!canBid}
-                    className={`py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
-                      canBid
-                        ? 'bg-slate-900 hover:bg-blue-600/30 hover:border-blue-400 text-slate-200 border-slate-700'
-                        : 'bg-slate-950 border-slate-900 text-slate-600 cursor-not-allowed'
-                    }`}
-                  >
-                    + ₹{inc.toFixed(2)} Cr
-                  </button>
-                ))}
-              </div>
+              {/* Authoritative Single Increment Bidding Button (Full Width) */}
+              <button
+                onClick={handleMainBidClick}
+                disabled={!canBid || submittingBid}
+                className={`w-full py-3.5 px-4 rounded-xl font-black text-sm sm:text-base tracking-wide transition flex items-center justify-center gap-2 shadow-xl relative cursor-pointer ${
+                  canBid
+                    ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 shadow-amber-500/30 active:scale-[0.98]'
+                    : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-70'
+                } ${pulseBid ? 'animate-bid-pulse ring-4 ring-amber-400' : ''}`}
+              >
+                <Gavel className="w-4 h-4 fill-current animate-hammer" />
+                <span>+ BID ₹{lot.nextValidBid.toFixed(2)} Cr</span>
+              </button>
 
               {!canBid && (
                 <div className="text-center text-[10px] text-slate-400 flex items-center justify-center gap-1 pt-1">
@@ -1234,71 +1229,47 @@ export default function LiveAuctionView({
         </div>
       </div>
 
-      {/* CUSTOM BID MODAL */}
-      {isCustomBidOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel p-6 rounded-3xl max-w-md w-full border border-amber-500/40 shadow-2xl relative space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black text-white flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-amber-400" /> Enter Custom Bid
-              </h3>
-              <button
-                onClick={() => setIsCustomBidOpen(false)}
-                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
+      {/* SKIP CURRENT SET CONFIRMATION DIALOG (HOST ONLY) */}
+      {isSkipSetConfirmOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#091130] border border-amber-500/50 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative space-y-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 flex-shrink-0">
+                <FastForward className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Skip Current Set?</h3>
+                <p className="text-xs text-amber-400 font-semibold">{player.setName || player.categorySet || 'Active Player Set'}</p>
+              </div>
             </div>
 
-            <p className="text-xs text-slate-300">
-              Enter a valid bid for <strong className="text-white">{player.name}</strong>. Must be at least the next minimum increment of <strong className="text-emerald-400">₹{lot.nextValidBid.toFixed(2)} Cr</strong>.
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Are you sure you want to skip the remaining players in this set? These players will not be available for bidding in this auction.
             </p>
 
-            {customBidError && (
-              <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
-                {customBidError}
-              </div>
-            )}
+            <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+              <div>• Active bidding on current player will be closed safely</div>
+              <div>• Remaining eligible players in set will be marked as <strong className="text-amber-400">SKIPPED</strong></div>
+              <div>• Room will immediately advance to the next available set</div>
+            </div>
 
-            <form onSubmit={handleCustomBidSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">
-                  Bid Amount in ₹ Crores (multiples of 0.25 Cr)
-                </label>
-                <input
-                  type="number"
-                  step="0.25"
-                  min={lot.nextValidBid}
-                  max={myFranchise?.remainingPurse || 120}
-                  value={customBidAmount}
-                  onChange={e => setCustomBidAmount(e.target.value)}
-                  placeholder={`Min ₹${lot.nextValidBid.toFixed(2)} Cr`}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-mono text-lg font-black focus:border-amber-400 outline-none"
-                  autoFocus
-                />
-              </div>
-
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1">
-                <div>Your Remaining Purse: <strong className="text-emerald-400 font-mono">₹{myFranchise?.remainingPurse.toFixed(2)} Cr</strong></div>
-                <div>Current Leader: <strong className="text-white">{lot.highestBidderName || 'None'}</strong> (₹{lot.highestBid.toFixed(2)} Cr)</div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCustomBidOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20"
-                >
-                  Submit Bid
-                </button>
-              </div>
-            </form>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsSkipSetConfirmOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold text-xs hover:bg-slate-700 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSkipSet}
+                disabled={isSkippingSet}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer disabled:opacity-50"
+              >
+                {isSkippingSet ? 'Skipping...' : 'Confirm Skip'}
+              </button>
+            </div>
           </div>
         </div>
       )}

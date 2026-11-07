@@ -21,11 +21,61 @@ const playersRaw = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'data', 'players.json'), 'utf-8')
 );
 
+const STORAGE_FILE = path.join(__dirname, 'data', 'persisted_rooms.json');
+
 export class RoomManager {
   constructor(io) {
     this.io = io;
     this.rooms = new Map(); // roomCode -> roomState
     this.timerIntervals = new Map(); // roomCode -> intervalId
+    this.loadFromStorage();
+  }
+
+  saveToStorage() {
+    try {
+      const serializableRooms = {};
+      for (const [code, r] of this.rooms.entries()) {
+        serializableRooms[code] = {
+          ...r,
+          participants: Array.from(r.participants ? r.participants.entries() : [])
+        };
+      }
+      fs.writeFileSync(STORAGE_FILE, JSON.stringify(serializableRooms, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Failed to save rooms to disk:', err.message);
+    }
+  }
+
+  loadFromStorage() {
+    try {
+      if (fs.existsSync(STORAGE_FILE)) {
+        const raw = fs.readFileSync(STORAGE_FILE, 'utf-8');
+        const data = JSON.parse(raw);
+        for (const [code, r] of Object.entries(data)) {
+          r.participants = new Map(r.participants || []);
+          if (!r.playingXIConfigurations) {
+            r.playingXIConfigurations = {};
+            for (const f of IPL_FRANCHISES) {
+              const franchise = r.franchises?.[f.id];
+              r.playingXIConfigurations[f.id] = {
+                franchiseId: f.id,
+                playingXI: franchise?.playingXI || [],
+                captainId: franchise?.captainId || null,
+                viceCaptainId: franchise?.viceCaptainId || null,
+                wicketKeeperId: franchise?.wicketKeeperId || null,
+                impactPlayerId: franchise?.impactPlayerId || null,
+                isConfirmed: !!(franchise?.playingXI && franchise.playingXI.length === 11),
+                confirmedAt: null
+              };
+            }
+          }
+          this.rooms.set(code, r);
+        }
+        console.log(`Loaded ${this.rooms.size} persistent room(s) from disk.`);
+      }
+    } catch (err) {
+      console.error('Failed to load rooms from disk:', err.message);
+    }
   }
 
   generateRoomCode() {
@@ -75,6 +125,21 @@ export class RoomManager {
       };
     }
 
+    // Independent, dedicated Playing XI configuration store for all franchises
+    const playingXIConfigurations = {};
+    for (const f of IPL_FRANCHISES) {
+      playingXIConfigurations[f.id] = {
+        franchiseId: f.id,
+        playingXI: [],
+        captainId: null,
+        viceCaptainId: null,
+        wicketKeeperId: null,
+        impactPlayerId: null,
+        isConfirmed: false,
+        confirmedAt: null
+      };
+    }
+
     const room = {
       roomCode,
       createdAt: new Date().toISOString(),
@@ -86,6 +151,7 @@ export class RoomManager {
       currentPlayerIndex: -1,
       currentLot: null,
       franchises,
+      playingXIConfigurations,
       participants: new Map(), // token -> { token, name, socketId, franchiseId, isHost }
       history: [], // List of completed lots { player, winningFranchise, finalBid, bidsCount, status }
       allBids: [], // Complete audit log of every bid placed
@@ -100,6 +166,7 @@ export class RoomManager {
     };
 
     this.rooms.set(roomCode, room);
+    this.saveToStorage();
     return room;
   }
 
@@ -211,24 +278,29 @@ export class RoomManager {
     }
   }
 
-  updatePlayingXI({ roomCode, participantToken, franchiseId, playingXI = [], captainId = null, viceCaptainId = null, wicketKeeperId = null, impactPlayerId = null }) {
+  updatePlayingXI({ roomCode, participantToken, franchiseId, playingXI = [], captainId = null, viceCaptainId = null, wicketKeeperId = null, impactPlayerId = null, isConfirmed = true }) {
     const room = this.getRoom(roomCode);
     if (!room) return { success: false, error: 'Room not found' };
 
     const franchise = room.franchises[franchiseId];
     if (!franchise) return { success: false, error: 'Franchise not found' };
 
-    // Ownership check: only franchise owner can edit their Playing XI
-    if (franchise.ownerToken !== participantToken) {
-      return { success: false, error: 'Only the franchise owner can edit this Playing XI' };
+    // Ownership or Host check: franchise owner or host can edit and confirm Playing XI
+    const isOwner = franchise.ownerToken === participantToken;
+    const isHost = room.hostToken === participantToken;
+    if (!isOwner && !isHost) {
+      return { success: false, error: 'Only the franchise owner or host can configure this Playing XI' };
     }
 
-    const squadPlayerMap = new Map((franchise.squad || []).map(p => [p.id, p]));
+    // Build recognized player map from catalog and purchased squad
+    const playerLookup = new Map();
+    (room.playersCatalog || []).forEach(p => playerLookup.set(p.id, p));
+    (franchise.squad || []).forEach(p => playerLookup.set(p.id, p));
 
-    // Validate squad membership
+    // Validate player existence
     for (const pid of playingXI) {
-      if (!squadPlayerMap.has(pid)) {
-        return { success: false, error: 'Selected player is not in this franchise squad' };
+      if (!playerLookup.has(pid)) {
+        return { success: false, error: 'Selected player is not recognized in this auction room' };
       }
     }
 
@@ -238,7 +310,7 @@ export class RoomManager {
     }
 
     // Overseas limit in Playing XI (Max 4 overseas)
-    const overseasInXI = playingXI.filter(pid => squadPlayerMap.get(pid)?.isOverseas).length;
+    const overseasInXI = playingXI.filter(pid => playerLookup.get(pid)?.isOverseas).length;
     if (overseasInXI > 4) {
       return {
         success: false,
@@ -246,10 +318,10 @@ export class RoomManager {
       };
     }
 
-    // Impact Player validation: must be from squad bench, not in starting XI
+    // Impact Player validation: must be recognized, not in starting XI
     if (impactPlayerId) {
-      if (!squadPlayerMap.has(impactPlayerId)) {
-        return { success: false, error: 'Impact player must be from your squad' };
+      if (!playerLookup.has(impactPlayerId)) {
+        return { success: false, error: 'Impact player must be a recognized candidate or squad player' };
       }
       if (playingXI.includes(impactPlayerId)) {
         return { success: false, error: 'Impact player cannot also be in the starting Playing XI' };
@@ -269,7 +341,7 @@ export class RoomManager {
 
     // If XI is fully populated (11 players), enforce mandatory roles
     if (playingXI.length === 11) {
-      const wkCount = playingXI.filter(pid => squadPlayerMap.get(pid)?.category === 'WK').length;
+      const wkCount = playingXI.filter(pid => playerLookup.get(pid)?.category === 'WK').length;
       if (wkCount < 1) {
         return { success: false, error: 'Playing XI must have at least 1 Wicketkeeper' };
       }
@@ -282,16 +354,35 @@ export class RoomManager {
     }
 
     // Update franchise state
-    franchise.playingXI = playingXI;
+    franchise.playingXI = [...playingXI];
     franchise.captainId = captainId;
     franchise.viceCaptainId = viceCaptainId;
-    franchise.wicketKeeperId = wicketKeeperId;
+    franchise.wicketKeeperId = wicketKeeperId || (playingXI.find(pid => playerLookup.get(pid)?.category === 'WK') || null);
     franchise.impactPlayerId = impactPlayerId;
+    franchise.isConfirmed = !!isConfirmed;
 
-    this.addAuditLog(room, 'PLAYING_XI_UPDATED', `${franchise.name} updated their Playing XI`);
+    // Independent persistent data structure
+    if (!room.playingXIConfigurations) room.playingXIConfigurations = {};
+    room.playingXIConfigurations[franchiseId] = {
+      franchiseId,
+      playingXI: [...playingXI],
+      captainId,
+      viceCaptainId,
+      wicketKeeperId: franchise.wicketKeeperId,
+      impactPlayerId,
+      isConfirmed: !!isConfirmed,
+      confirmedAt: new Date().toISOString()
+    };
+
+    this.saveToStorage();
+    this.addAuditLog(room, 'PLAYING_XI_UPDATED', `${franchise.name} confirmed their Playing XI (${playingXI.length}/11)`);
     this.broadcastRoomState(room, 'state_updated');
 
-    return { success: true, franchise };
+    return {
+      success: true,
+      franchise,
+      configuration: room.playingXIConfigurations[franchiseId]
+    };
   }
 
   updateConfig({ roomCode, hostToken, newConfig }) {
@@ -682,6 +773,111 @@ export class RoomManager {
     return { success: false, error: 'Cannot advance lot right now' };
   }
 
+  skipCurrentSet({ roomCode, hostToken }) {
+    const room = this.getRoom(roomCode);
+    if (!room) return { success: false, error: 'Room not found' };
+    if (room.hostToken !== hostToken) return { success: false, error: 'Only the auction host can skip player sets' };
+    if (room.status !== 'active') return { success: false, error: 'Auction is not currently active' };
+
+    if (room.isSkippingSet) {
+      return { success: false, error: 'Set skip is already in progress' };
+    }
+    room.isSkippingSet = true;
+
+    try {
+      const currentLot = room.currentLot;
+      if (!currentLot || !currentLot.player) {
+        room.isSkippingSet = false;
+        return { success: false, error: 'No active player set to skip' };
+      }
+
+      // Stop current timer immediately
+      this.clearRoomTimer(room.roomCode);
+
+      const currentSetKey = currentLot.player.categorySet || currentLot.player.setName;
+      const currentSetName = currentLot.player.setName || currentSetKey;
+
+      let skippedCount = 0;
+      const skippedPlayers = [];
+
+      // Mark current player and all remaining unauctioned players in this set as SKIPPED
+      for (let i = room.currentPlayerIndex; i < room.playersCatalog.length; i++) {
+        const p = room.playersCatalog[i];
+        const pSetKey = p.categorySet || p.setName;
+        if (pSetKey === currentSetKey || p.setName === currentSetName) {
+          if (p.status !== 'sold' && p.status !== 'unsold' && p.status !== 'SKIPPED') {
+            p.status = 'SKIPPED';
+            skippedCount++;
+            skippedPlayers.push(p);
+
+            const historyEntry = {
+              lotNumber: p.overallLot || (i + 1),
+              player: p,
+              status: 'SKIPPED',
+              winningFranchiseId: null,
+              winningFranchiseName: null,
+              finalBid: 0,
+              bidsCount: 0,
+              timestamp: new Date().toISOString()
+            };
+            room.history.unshift(historyEntry);
+          }
+        }
+      }
+
+      this.addAuditLog(
+        room,
+        'SET_SKIPPED',
+        `Host skipped remaining players in set "${currentSetName}". (${skippedCount} player(s) marked as SKIPPED)`
+      );
+
+      // Find next player index with a different set that is still available
+      let nextIdx = -1;
+      for (let i = room.currentPlayerIndex; i < room.playersCatalog.length; i++) {
+        const p = room.playersCatalog[i];
+        if (p.status !== 'sold' && p.status !== 'unsold' && p.status !== 'SKIPPED') {
+          nextIdx = i;
+          break;
+        }
+      }
+
+      this.saveToStorage();
+
+      // Emit set_skipped event to all clients so UI updates immediately
+      this.io.to(room.roomCode).emit('set_skipped', {
+        skippedSetName: currentSetName,
+        skippedCount,
+        playersCatalog: room.playersCatalog,
+        history: room.history
+      });
+
+      if (nextIdx === -1) {
+        room.isSkippingSet = false;
+        this.finishAuction(room);
+        return {
+          success: true,
+          skippedSet: currentSetKey,
+          skippedSetName: currentSetName,
+          skippedCount,
+          message: 'All sets completed. Auction concluded.'
+        };
+      } else {
+        room.currentPlayerIndex = nextIdx - 1;
+        room.isSkippingSet = false;
+        this.nextPlayer(room);
+        return {
+          success: true,
+          skippedSet: currentSetKey,
+          skippedSetName: currentSetName,
+          skippedCount
+        };
+      }
+    } catch (err) {
+      room.isSkippingSet = false;
+      return { success: false, error: err.message };
+    }
+  }
+
   addAuditLog(room, type, message) {
     const entry = {
       timestamp: new Date().toISOString(),
@@ -704,6 +900,7 @@ export class RoomManager {
       hostName: room.hostName,
       config: room.config,
       franchises: room.franchises,
+      playingXIConfigurations: room.playingXIConfigurations || {},
       currentLot: room.currentLot,
       lotNumber: room.currentLot?.lotNumber || 0,
       totalLots: room.playersCatalog.length,
