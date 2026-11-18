@@ -39,8 +39,8 @@ export default function FranchiseDashboardModal({
   isOpen,
   onClose,
   initialFranchiseId,
-  myFranchise,
-  participant
+  myFranchise
+  // `participant` is still passed by App.jsx but no longer needed: editing is owner-only
 }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'squad' | 'playing_xi'
   const [selectedFranchiseId, setSelectedFranchiseId] = useState(
@@ -58,7 +58,9 @@ export default function FranchiseDashboardModal({
   // Candidate player pool search & category filter (for setup & auction)
   const [poolSearch, setPoolSearch] = useState('');
   const [poolCategory, setPoolCategory] = useState('ALL');
-  const [poolSource, setPoolSource] = useState('auto'); // 'auto' | 'catalog' | 'squad'
+  // Lineups may only use players this franchise has purchased (server-enforced). If a saved or
+  // cached lineup contains anyone else, they are dropped from the editor and the owner is told.
+  const [droppedNotice, setDroppedNotice] = useState(null);
 
   // Sync selected franchise with props when opened
   useEffect(() => {
@@ -100,10 +102,16 @@ export default function FranchiseDashboardModal({
       } catch (e) {}
     }
 
-    setPlayingXIIds(initialXI || []);
-    setCaptainId(initialC || null);
-    setViceCaptainId(initialVC || null);
-    setImpactPlayerId(initialIP || null);
+    const ownedIds = new Set((franchise.squad || []).map(p => p.id));
+    const keptXI = (initialXI || []).filter(id => ownedIds.has(id));
+    const droppedCount = (initialXI || []).length - keptXI.length;
+    setPlayingXIIds(keptXI);
+    setCaptainId(initialC && ownedIds.has(initialC) && keptXI.includes(initialC) ? initialC : null);
+    setViceCaptainId(initialVC && ownedIds.has(initialVC) && keptXI.includes(initialVC) ? initialVC : null);
+    setImpactPlayerId(initialIP && ownedIds.has(initialIP) && !keptXI.includes(initialIP) ? initialIP : null);
+    setDroppedNotice(droppedCount > 0
+      ? `${droppedCount} previously selected player${droppedCount === 1 ? ' is' : 's are'} not in ${franchise.name}'s purchased squad and ${droppedCount === 1 ? 'was' : 'were'} removed. Save to update your Playing XI.`
+      : null);
     setSaveSuccess(false);
     setSaveError(null);
   }, [selectedFranchiseId, isOpen]);
@@ -117,10 +125,10 @@ export default function FranchiseDashboardModal({
 
   const squad = franchise?.squad || [];
 
-  // Permissions: Both franchise owner and host can configure and confirm Playing XI
-  const isOwner = myFranchise?.id === franchise?.id;
-  const isHost = !!participant?.isHost;
-  const canEdit = isOwner || isHost;
+  // Permissions: only the franchise owner can configure their Playing XI (the host has no
+  // override). The server enforces this; this flag only hides controls that would be refused.
+  const isOwner = !!myFranchise?.id && myFranchise.id === franchise?.id;
+  const canEdit = isOwner;
 
   // Playing XI calculations
   const playingXIPlayers = playingXIIds.map(id => playerMap.get(id)).filter(Boolean);
@@ -135,9 +143,9 @@ export default function FranchiseDashboardModal({
   const hasViceCaptain = !!viceCaptainId && playingXIIds.includes(viceCaptainId) && viceCaptainId !== captainId;
   const isXIComplete = has11 && overseasValid && hasMinWK && hasCaptain && hasViceCaptain;
 
-  // Decide candidate pool: if squad has >= 11 and poolSource is 'auto', use squad. Otherwise allow catalog
-  const useSquadOnly = poolSource === 'squad' || (poolSource === 'auto' && squad.length >= 11);
-  const candidatePool = useSquadOnly ? squad : (room.playersCatalog || []);
+  // Candidate pool: ONLY players this franchise has purchased (the server rejects anyone else)
+  const candidatePool = squad;
+  const unpickedSquad = squad.filter(p => !playingXIIds.includes(p.id));
 
   const benchPlayers = candidatePool
     .filter(p => !playingXIIds.includes(p.id))
@@ -218,11 +226,9 @@ export default function FranchiseDashboardModal({
     if (!canEdit) return;
     setSaveError(null);
 
-    const token = participant?.token || myFranchise?.ownerToken || room?.hostToken;
+    // The server identifies us by our joined session (socket binding); no token needed
     socket.emit('update_playing_xi', {
       roomCode: room.roomCode,
-      participantToken: token,
-      hostToken: isHost ? (participant?.token || room?.hostToken) : undefined,
       franchiseId: franchise.id,
       playingXI: playingXIIds,
       captainId,
@@ -240,6 +246,7 @@ export default function FranchiseDashboardModal({
           }));
         } catch (e) {}
         setSaveSuccess(true);
+        setDroppedNotice(null);
         setTimeout(() => setSaveSuccess(false), 3500);
       } else {
         setSaveError(res?.error || "Failed to update Playing XI");
@@ -585,6 +592,11 @@ export default function FranchiseDashboardModal({
                 <span>Playing XI saved and synchronized across all participants!</span>
               </div>
             )}
+            {droppedNotice && canEdit && (
+              <div role="status" className="text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                {droppedNotice}
+              </div>
+            )}
             {saveError && (
               <div className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
@@ -770,7 +782,7 @@ export default function FranchiseDashboardModal({
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-400 outline-none"
                     >
                       <option value="">-- Select Impact Player --</option>
-                      {benchPlayers.slice(0, 30).map(p => (
+                      {unpickedSquad.map(p => (
                         <option key={p.id} value={p.id}>
                           {p.name} ({p.category} • {p.isOverseas ? 'OS' : 'IND'})
                         </option>
@@ -796,30 +808,9 @@ export default function FranchiseDashboardModal({
                     <h4 className="text-xs font-black uppercase text-slate-300 tracking-wider">
                       Available Players ({benchPlayers.length})
                     </h4>
-                    {squad.length > 0 && (
-                      <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-                        <button
-                          onClick={() => setPoolSource('squad')}
-                          className={`px-2 py-0.5 rounded font-bold cursor-pointer transition ${
-                            poolSource === 'squad' || (poolSource === 'auto' && squad.length >= 11)
-                              ? 'bg-amber-400 text-slate-950 font-black'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Squad ({squad.length})
-                        </button>
-                        <button
-                          onClick={() => setPoolSource('catalog')}
-                          className={`px-2 py-0.5 rounded font-bold cursor-pointer transition ${
-                            poolSource === 'catalog' || (poolSource === 'auto' && squad.length < 11)
-                              ? 'bg-amber-400 text-slate-950 font-black'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Catalog (All)
-                        </button>
-                      </div>
-                    )}
+                    <span className="text-[10px] font-bold text-slate-400">
+                      Purchased squad ({squad.length})
+                    </span>
                   </div>
 
                   {/* Filter & Search Bar */}
@@ -832,7 +823,7 @@ export default function FranchiseDashboardModal({
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-400"
                     />
                     <div className="flex items-center gap-1 overflow-x-auto text-[10px]">
-                      {['ALL', 'BAT', 'BOWL', 'AR', 'WK'].map(cat => (
+                      {['ALL', 'BAT', 'BOWL', 'AR', 'SP', 'WK'].map(cat => (
                         <button
                           key={cat}
                           onClick={() => setPoolCategory(cat)}
@@ -849,8 +840,17 @@ export default function FranchiseDashboardModal({
                   </div>
 
                   {benchPlayers.length === 0 ? (
-                    <div className="text-center py-6 text-slate-500 text-xs">
-                      No matching players available.
+                    <div className="text-center py-6 text-slate-500 text-xs space-y-1">
+                      {squad.length === 0 ? (
+                        <>
+                          <p className="font-semibold text-slate-400">No purchased players yet.</p>
+                          <p>Only players {franchise.name} buys in the auction can be picked. They appear here as soon as the hammer falls.</p>
+                        </>
+                      ) : unpickedSquad.length === 0 ? (
+                        <p>Every purchased player is already in your Playing XI.</p>
+                      ) : (
+                        <p>No purchased players match this search or filter.</p>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-1.5 max-h-[320px] overflow-y-auto pr-1">

@@ -1,17 +1,9 @@
 // Server-authoritative IPL Auction Engine & Mathematical Rules
 
-export const DEFAULT_CONFIG = {
-  basePurse: 120.0, // ₹120 Cr flat across all 10 franchises
-  maxFranchises: 10,
-  minParticipants: 2,
-  minSquadSize: 11,
-  maxSquadSize: 15,
-  maxOverseas: 8,
-  minWKs: 1,
-  minPlayerPrice: 0.20, // ₹0.20 Cr floor for uncapped candidate
-  timerDuration: 15, // seconds (15-second bidding countdown)
-  autoAdvanceDelay: 4, // seconds between players
-};
+// Defaults and validation rules live in ./config.js (single source of truth)
+import { DEFAULT_CONFIG } from './config.js';
+import { toLakh, fromLakh, nextBidLakh, isWholeLakh } from './money.js';
+export { DEFAULT_CONFIG };
 
 /**
  * Returns initial auction purse per franchise (Flat ₹120.0 Crore across all 10 franchises)
@@ -22,30 +14,35 @@ export function calculateDynamicPurse(basePurse = 120.0) {
 }
 
 /**
- * Calculates automatic next valid bid based on mandatory IPL rules
- * ₹0 to ₹5 Cr: +₹0.25 Cr
- * Above ₹5 Cr to ₹10 Cr: +₹0.25 Cr
- * Above ₹10 Cr to ₹15 Cr: +₹0.50 Cr
- * Above ₹15 Cr: +₹1.00 Cr
+ * Next valid bid (₹ Cr), computed exactly in integer lakhs (see money.js):
+ *   first bid = base price; then below ₹10 Cr +0.25, ₹10–<15 Cr +0.50, ₹15 Cr+ +1.00.
  */
 export function calculateNextBid(currentBid, basePrice = 2.0) {
-  if (currentBid === null || currentBid === undefined || currentBid <= 0) {
-    return Math.round(basePrice * 100) / 100;
-  }
+  const current = (currentBid === null || currentBid === undefined || currentBid <= 0) ? 0 : toLakh(currentBid);
+  return fromLakh(nextBidLakh(current, toLakh(basePrice ?? 2.0)));
+}
 
-  let increment = 0.25;
-  if (currentBid < 5.0) {
-    increment = 0.25;
-  } else if (currentBid < 10.0) {
-    increment = 0.25;
-  } else if (currentBid < 15.0) {
-    increment = 0.50;
-  } else {
-    increment = 1.00;
+/**
+ * Per-slot reserve used for squad-completion feasibility, in lakhs: the configured floor, but
+ * never below the cheapest base price in the room's catalogue (a slot cannot be filled for less
+ * than any player costs; the default floor ₹0.20 Cr is below the catalogue minimum ₹0.30 Cr).
+ */
+export function reserveFloorLakh(room) {
+  const configured = toLakh(room?.config?.minPlayerPrice ?? DEFAULT_CONFIG.minPlayerPrice);
+  let cheapest = Infinity;
+  for (const p of room?.playersCatalog || []) {
+    if (p && typeof p.basePrice === 'number' && Number.isFinite(p.basePrice)) cheapest = Math.min(cheapest, toLakh(p.basePrice));
   }
+  return Number.isFinite(cheapest) ? Math.max(configured, cheapest) : configured;
+}
 
-  const nextBid = currentBid + increment;
-  return Math.round(nextBid * 100) / 100;
+const wkCountOf = franchise => (franchise.squad || []).filter(p => p?.category === 'WK').length;
+
+/**
+ * A lot accepts bids only until the hammer falls.
+ */
+export function isLotOpen(lot) {
+  return !!lot && lot.hammerStatus !== "SOLD" && lot.hammerStatus !== "UNSOLD" && !lot.closed;
 }
 
 /**
@@ -62,6 +59,15 @@ export function validateBid({
     return { valid: false, error: "Franchise not found" };
   }
 
+  // Real rooms always set isClaimed to a boolean (see RoomManager.createRoom)
+  if (franchise.isClaimed === false) {
+    return { valid: false, error: "Franchise is not active in this auction" };
+  }
+
+  if (franchise.isEliminated) {
+    return { valid: false, error: "Franchise has been financially eliminated and cannot bid" };
+  }
+
   if (room.status !== "active") {
     return { valid: false, error: "Auction is not actively accepting bids" };
   }
@@ -69,6 +75,17 @@ export function validateBid({
   const currentLot = room.currentLot;
   if (!currentLot || !currentLot.player) {
     return { valid: false, error: "No player currently being auctioned" };
+  }
+
+  // The hammer has fallen (SOLD/UNSOLD) and the next lot has not been presented yet
+  if (!isLotOpen(currentLot)) {
+    return { valid: false, error: "Bidding on this player has closed" };
+  }
+
+  // bidAmount is optional (server computes it), but if supplied it must be a real number
+  if (bidAmount !== undefined && bidAmount !== null &&
+      (typeof bidAmount !== "number" || !Number.isFinite(bidAmount))) {
+    return { valid: false, error: "Invalid bid amount" };
   }
 
   // Version check for atomic concurrency protection
@@ -81,14 +98,13 @@ export function validateBid({
     return { valid: false, error: "Your franchise already holds the highest bid" };
   }
 
-  // Calculate required next bid amount strictly based on configured increments
-  const validNextAmount = currentLot.highestBid === 0
-    ? currentLot.player.basePrice
-    : calculateNextBid(currentLot.highestBid, currentLot.player.basePrice);
+  // Required next bid, exactly (integer lakhs). The server always decides the amount.
+  const validNextLakh = nextBidLakh(currentLot.highestBid > 0 ? toLakh(currentLot.highestBid) : 0, toLakh(currentLot.player.basePrice));
+  const validNextAmount = fromLakh(validNextLakh);
 
-  // Strict Rule: Disallow custom amounts. Bid must match the exact next valid increment.
+  // Strict Rule: Disallow custom amounts. If the client echoes an amount it must be exactly it.
   if (bidAmount !== undefined && bidAmount !== null) {
-    if (Math.abs(bidAmount - validNextAmount) > 0.001) {
+    if (!isWholeLakh(bidAmount) || toLakh(bidAmount) !== validNextLakh) {
       return {
         valid: false,
         error: `Custom bids are disabled. You must place the exact next increment bid of ₹${validNextAmount.toFixed(2)} Cr`
@@ -111,21 +127,32 @@ export function validateBid({
     };
   }
 
-  // Financial feasibility protection:
-  // Team must be able to complete minimum squad size with remaining purse
-  const projectedPurse = franchise.remainingPurse - bidAmount;
-  if (projectedPurse < 0) {
+  // Wicketkeeper requirement: never let a franchise fill the slots it still needs for keepers
+  const projectedSquadCount = franchise.squad.length + 1;
+  const keepersStillNeeded = Math.max(0, (room.config.minWKs ?? 1) - wkCountOf(franchise) - (currentLot.player.category === 'WK' ? 1 : 0));
+  const slotsLeftAfter = room.config.maxSquadSize - projectedSquadCount;
+  if (keepersStillNeeded > slotsLeftAfter) {
+    return {
+      valid: false,
+      error: `Squad rule: keep ${keepersStillNeeded === 1 ? 'a slot' : `${keepersStillNeeded} slots`} for a wicketkeeper (min ${room.config.minWKs} WK; max squad ${room.config.maxSquadSize})`
+    };
+  }
+
+  // Financial feasibility protection (exact, integer lakhs):
+  // Team must be able to complete minimum squad size with remaining purse.
+  // Always use the server-computed amount, never the client-supplied value.
+  const projectedPurseLakh = toLakh(franchise.remainingPurse) - validNextLakh;
+  if (projectedPurseLakh < 0) {
     return { valid: false, error: "Insufficient purse balance" };
   }
 
-  const projectedSquadCount = franchise.squad.length + 1;
   const remainingSlotsToMin = Math.max(0, room.config.minSquadSize - projectedSquadCount);
-  const minRequiredReserve = remainingSlotsToMin * room.config.minPlayerPrice;
+  const minRequiredReserveLakh = remainingSlotsToMin * reserveFloorLakh(room);
 
-  if (projectedPurse < minRequiredReserve) {
+  if (projectedPurseLakh < minRequiredReserveLakh) {
     return {
       valid: false,
-      error: `Financial Feasibility: Must reserve at least ₹${minRequiredReserve.toFixed(2)} Cr for ${remainingSlotsToMin} remaining mandatory slots to meet minimum squad (${room.config.minSquadSize}).`
+      error: `Financial Feasibility: Must reserve at least ₹${fromLakh(minRequiredReserveLakh).toFixed(2)} Cr for ${remainingSlotsToMin} remaining mandatory slots to meet minimum squad (${room.config.minSquadSize}).`
     };
   }
 
@@ -135,18 +162,18 @@ export function validateBid({
 /**
  * Checks and updates financial elimination status of a franchise
  */
-export function checkFinancialElimination(franchise, config) {
+export function checkFinancialElimination(franchise, config, floorLakh = toLakh(config.minPlayerPrice)) {
   if (franchise.squad.length >= config.minSquadSize) {
     return { isEliminated: false };
   }
 
   const remainingNeeded = config.minSquadSize - franchise.squad.length;
-  const minReserveNeeded = remainingNeeded * config.minPlayerPrice;
+  const minReserveNeededLakh = remainingNeeded * floorLakh;
 
-  if (franchise.remainingPurse < minReserveNeeded) {
+  if (toLakh(franchise.remainingPurse) < minReserveNeededLakh) {
     return {
       isEliminated: true,
-      reason: `Purse exhausted (₹${franchise.remainingPurse.toFixed(2)} Cr remaining). Requires ₹${minReserveNeeded.toFixed(2)} Cr to complete ${remainingNeeded} more mandatory squad slots.`
+      reason: `Purse exhausted (₹${franchise.remainingPurse.toFixed(2)} Cr remaining). Requires ₹${fromLakh(minReserveNeededLakh).toFixed(2)} Cr to complete ${remainingNeeded} more mandatory squad slots.`
     };
   }
 

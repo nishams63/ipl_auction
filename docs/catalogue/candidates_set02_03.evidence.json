@@ -1,0 +1,3840 @@
+{
+  "generatedAt": "2026-11-16T07:11:06.166Z",
+  "existingCount": 290,
+  "candidateCount": 179,
+  "bySource": {
+    "ipl_auction_set_02 (1).html": 79,
+    "ipl_auction_set_03.html": 100
+  },
+  "candidates": [
+    {
+      "index": 0,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Ajinkya Rahane",
+      "country": "India",
+      "sourceCode": "BAT-01",
+      "sourceNote": "IPL 2023, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 1,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Rilee Rossouw",
+      "country": "South Africa",
+      "sourceCode": "BAT-02",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 2,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Ripal Patel",
+      "country": "India",
+      "sourceCode": "BAT-03",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_115",
+          "name": "Urvil Patel",
+          "category": "WK",
+          "country": "India",
+          "role": "Aggressive Wicketkeeper",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.82
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 3,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Priyam Garg",
+      "country": "India",
+      "sourceCode": "BAT-04",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 4,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Jason Roy",
+      "country": "England",
+      "sourceCode": "BAT-05",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_102",
+          "name": "Jason Holder",
+          "category": "AR",
+          "country": "West Indies",
+          "role": "Pace All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:jason"
+          ],
+          "similarity": 0.67
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 34,
+          "name": "Jason Behrendorff",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "BOWL",
+          "country": "Australia",
+          "reasons": [
+            "shared-distinctive-token:jason"
+          ],
+          "similarity": 0.62
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Mandeep Singh",
+      "country": "India",
+      "sourceCode": "BAT-06",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_013",
+          "name": "Arshdeep Singh",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Left-arm Fast Bowler",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        },
+        {
+          "id": "PL_097",
+          "name": "Ramandeep Singh",
+          "category": "AR",
+          "country": "India",
+          "role": "Finisher & Medium Pacer",
+          "reasons": [
+            "high-similarity:0.93",
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.93
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 6,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Jamie Overton",
+      "country": "England",
+      "sourceCode": "FAST-01",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_154",
+          "name": "Jamie Smith",
+          "category": "WK",
+          "country": "England",
+          "role": "Wicketkeeper Dynamic Batter",
+          "reasons": [
+            "shared-distinctive-token:jamie"
+          ],
+          "similarity": 0.58
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 7,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Kulwant Khejroliya",
+      "country": "India",
+      "sourceCode": "FAST-02",
+      "sourceNote": "IPL 2023, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 8,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Ishant Sharma",
+      "country": "India",
+      "sourceCode": "FAST-03",
+      "sourceNote": "IPL 2023, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 127,
+          "name": "Vivrant Sharma",
+          "source": "ipl_auction_set_03.html",
+          "category": "BAT",
+          "country": "India",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Chetan Sakariya",
+      "country": "India",
+      "sourceCode": "FAST-04",
+      "sourceNote": "IPL 2023, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 10,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Mohit Sharma",
+      "country": "India",
+      "sourceCode": "FAST-05",
+      "sourceNote": "IPL 2023, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_003",
+          "name": "Rohit Sharma",
+          "category": "BAT",
+          "country": "India",
+          "role": "Opening Batter",
+          "reasons": [
+            "high-similarity:0.92",
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.92
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 22,
+          "name": "Mohit Rathee",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "AR",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:mohit"
+          ],
+          "similarity": 0.67
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Arshad Khan",
+      "country": "India",
+      "sourceCode": "FAST-06",
+      "sourceNote": "IPL 2023, 2024, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_026",
+          "name": "Rashid Khan",
+          "category": "SP",
+          "country": "Afghanistan",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.82
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 12,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Raghav Goyal",
+      "country": "India",
+      "sourceCode": "SPIN-01",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 13,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Hrithik Shokeen",
+      "country": "India",
+      "sourceCode": "SPIN-02",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 14,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Piyush Chawla",
+      "country": "India",
+      "sourceCode": "SPIN-03",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 15,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Karan Sharma",
+      "country": "India",
+      "sourceCode": "SPIN-04",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_145",
+          "name": "Karn Sharma",
+          "category": "SP",
+          "country": "India",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "high-similarity:0.96",
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.96
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 16,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Vijayakanth Viyaskanth",
+      "country": "Sri Lanka",
+      "sourceCode": "SPIN-05",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 17,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Aman Hakim Khan",
+      "country": "India",
+      "sourceCode": "AR-01",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_183",
+          "name": "Aman Khan",
+          "category": "AR",
+          "country": "India",
+          "role": "Medium Pacer & Power Batter",
+          "reasons": [
+            "shared-distinctive-token:aman"
+          ],
+          "similarity": 0.75
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 18,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Lalit Yadav",
+      "country": "India",
+      "sourceCode": "AR-02",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 19,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Matthew Short",
+      "country": "Australia",
+      "sourceCode": "AR-03",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_126",
+          "name": "Matthew Breetzke",
+          "category": "BAT",
+          "country": "South Africa",
+          "role": "Top-order Batter / Keeper",
+          "reasons": [
+            "shared-distinctive-token:matthew"
+          ],
+          "similarity": 0.69
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 102,
+          "name": "Matthew Wade",
+          "source": "ipl_auction_set_03.html",
+          "category": "WK",
+          "country": "Australia",
+          "reasons": [
+            "shared-distinctive-token:matthew"
+          ],
+          "similarity": 0.64
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Michael Bracewell",
+      "country": "New Zealand",
+      "sourceCode": "AR-04",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 21,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Abdul Basith",
+      "country": "India",
+      "sourceCode": "AR-05",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_260",
+          "name": "Abdul Samad",
+          "category": "AR",
+          "country": "India",
+          "role": "Power Finisher & Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:abdul"
+          ],
+          "similarity": 0.61
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 22,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Mohit Rathee",
+      "country": "India",
+      "sourceCode": "AR-06",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 10,
+          "name": "Mohit Sharma",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "BOWL",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:mohit"
+          ],
+          "similarity": 0.67
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Kusal Mendis",
+      "country": "Sri Lanka",
+      "sourceCode": "WK-01",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_088",
+          "name": "Kusal Perera",
+          "category": "BAT",
+          "country": "Sri Lanka",
+          "role": "Aggressive Opener / Keeper",
+          "reasons": [
+            "shared-distinctive-token:kusal"
+          ],
+          "similarity": 0.58
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 24,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Litton Das",
+      "country": "Bangladesh",
+      "sourceCode": "WK-02",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 25,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Tom Kohler-Cadmore",
+      "country": "England",
+      "sourceCode": "WK-03",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 26,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Salil Arora",
+      "country": "India",
+      "sourceCode": "WK-04",
+      "sourceNote": "IPL 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_211",
+          "name": "Vaibhav Arora",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Swing Bowler",
+          "reasons": [
+            "shared-distinctive-token:arora"
+          ],
+          "similarity": 0.67
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 27,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 1,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Jordan Cox",
+      "country": "England",
+      "sourceCode": "WK-05",
+      "sourceNote": "IPL 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 82,
+          "name": "Chris Jordan",
+          "source": "ipl_auction_set_03.html",
+          "category": "BOWL",
+          "country": "England",
+          "reasons": [
+            "shared-distinctive-token:jordan"
+          ],
+          "similarity": 0.55
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Harpreet Singh Bhatia",
+      "country": "India",
+      "sourceCode": "BAT-01",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_269",
+          "name": "Harpreet Brar",
+          "category": "SP",
+          "country": "India",
+          "role": "Slow Left-arm Tight Bowler",
+          "reasons": [
+            "shared-distinctive-token:harpreet"
+          ],
+          "similarity": 0.65
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 29,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Joe Root",
+      "country": "England",
+      "sourceCode": "BAT-02",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 30,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Manan Vohra",
+      "country": "India",
+      "sourceCode": "BAT-03",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 31,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Sherfane Rutherford",
+      "country": "West Indies",
+      "sourceCode": "BAT-04",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 32,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Tristan Stubbs",
+      "country": "South Africa",
+      "sourceCode": "BAT-05",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 33,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Sediqullah Atal",
+      "country": "Afghanistan",
+      "sourceCode": "BAT-06",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 34,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Jason Behrendorff",
+      "country": "Australia",
+      "sourceCode": "FAST-01",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_102",
+          "name": "Jason Holder",
+          "category": "AR",
+          "country": "West Indies",
+          "role": "Pace All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:jason"
+          ],
+          "similarity": 0.62
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 4,
+          "name": "Jason Roy",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "BAT",
+          "country": "England",
+          "reasons": [
+            "shared-distinctive-token:jason"
+          ],
+          "similarity": 0.62
+        }
+      ]
+    },
+    {
+      "index": 35,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Riley Meredith",
+      "country": "Australia",
+      "sourceCode": "FAST-02",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 36,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Duan Jansen",
+      "country": "South Africa",
+      "sourceCode": "FAST-03",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 37,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Gurnoor Brar",
+      "country": "India",
+      "sourceCode": "FAST-04",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_269",
+          "name": "Harpreet Brar",
+          "category": "SP",
+          "country": "India",
+          "role": "Slow Left-arm Tight Bowler",
+          "reasons": [
+            "shared-distinctive-token:brar"
+          ],
+          "similarity": 0.56
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 38,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "KM Asif",
+      "country": "India",
+      "sourceCode": "FAST-05",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 39,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Obed McCoy",
+      "country": "West Indies",
+      "sourceCode": "FAST-06",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 40,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Krishnappa Gowtham",
+      "country": "India",
+      "sourceCode": "AR-01",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 41,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Suyash Prabhudessai",
+      "country": "India",
+      "sourceCode": "AR-02",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_067",
+          "name": "Suyash Sharma",
+          "category": "SP",
+          "country": "India",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:suyash"
+          ],
+          "similarity": 0.56
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 42,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Prerak Mankad",
+      "country": "India",
+      "sourceCode": "AR-03",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 43,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Yudhvir Singh",
+      "country": "India",
+      "sourceCode": "AR-04",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 44,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Marco Jansen",
+      "country": "South Africa",
+      "sourceCode": "AR-05",
+      "sourceNote": "IPL 2023, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 45,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Manoj Bhandage",
+      "country": "India",
+      "sourceCode": "AR-06",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 46,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Shaik Rasheed",
+      "country": "India",
+      "sourceCode": "BAT-01",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 47,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Shubham Dubey",
+      "country": "India",
+      "sourceCode": "BAT-02",
+      "sourceNote": "IPL 2024, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_229",
+          "name": "Shubham Agarwal",
+          "category": "SP",
+          "country": "India",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:shubham"
+          ],
+          "similarity": 0.57
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 172,
+          "name": "Shubham Garhwal",
+          "source": "ipl_auction_set_03.html",
+          "category": "BAT",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:shubham"
+          ],
+          "similarity": 0.57
+        }
+      ]
+    },
+    {
+      "index": 48,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Aniket Verma",
+      "country": "India",
+      "sourceCode": "BAT-03",
+      "sourceNote": "IPL 2025, 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 49,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Saurav Chauhan",
+      "country": "India",
+      "sourceCode": "BAT-04",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_199",
+          "name": "Bipin Saurav",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Batter",
+          "reasons": [
+            "shared-distinctive-token:saurav"
+          ],
+          "similarity": 0.46
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 50,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Ravichandran Smaran",
+      "country": "India",
+      "sourceCode": "BAT-05",
+      "sourceNote": "IPL 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 98,
+          "name": "Ravichandran Ashwin",
+          "source": "ipl_auction_set_03.html",
+          "category": "SP",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:ravichandran"
+          ],
+          "similarity": 0.79
+        }
+      ]
+    },
+    {
+      "index": 51,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Cooper Connolly",
+      "country": "Australia",
+      "sourceCode": "BAT-06",
+      "sourceNote": "IPL 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 52,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Darshan Nalkande",
+      "country": "India",
+      "sourceCode": "FAST-01",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 53,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Alzarri Joseph",
+      "country": "West Indies",
+      "sourceCode": "FAST-02",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 54,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Arjun Tendulkar",
+      "country": "India",
+      "sourceCode": "FAST-03",
+      "sourceNote": "IPL 2023, 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 55,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Jaydev Unadkat",
+      "country": "India",
+      "sourceCode": "FAST-04",
+      "sourceNote": "IPL 2023, 2024, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 56,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Yash Thakur",
+      "country": "India",
+      "sourceCode": "FAST-05",
+      "sourceNote": "IPL 2023, 2024, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_171",
+          "name": "Yash Dayal",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Left-arm Seam Bowler",
+          "reasons": [
+            "shared-distinctive-token:yash"
+          ],
+          "similarity": 0.57
+        },
+        {
+          "id": "PL_208",
+          "name": "Yash Dhull",
+          "category": "BAT",
+          "country": "India",
+          "role": "Top-order Stroke Maker",
+          "reasons": [
+            "shared-distinctive-token:yash"
+          ],
+          "similarity": 0.67
+        },
+        {
+          "id": "PL_227",
+          "name": "Yash Raj Punja",
+          "category": "SP",
+          "country": "India",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:yash"
+          ],
+          "similarity": 0.56
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 57,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Kwena Maphaka",
+      "country": "South Africa",
+      "sourceCode": "FAST-06",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 58,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Jacob Bethell",
+      "country": "England",
+      "sourceCode": "AR-01",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_170",
+          "name": "Jacob Duffy",
+          "category": "BOWL",
+          "country": "New Zealand",
+          "role": "Right-arm Swing Bowler",
+          "reasons": [
+            "shared-distinctive-token:jacob"
+          ],
+          "similarity": 0.5
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 59,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Mitchell Owen",
+      "country": "Australia",
+      "sourceCode": "AR-02",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_010",
+          "name": "Mitchell Starc",
+          "category": "BOWL",
+          "country": "Australia",
+          "role": "Left-arm Fast Bowler",
+          "reasons": [
+            "shared-distinctive-token:mitchell"
+          ],
+          "similarity": 0.67
+        },
+        {
+          "id": "PL_064",
+          "name": "Mitchell Marsh",
+          "category": "AR",
+          "country": "Australia",
+          "role": "Pace All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:mitchell"
+          ],
+          "similarity": 0.67
+        },
+        {
+          "id": "PL_138",
+          "name": "Daryl Mitchell",
+          "category": "AR",
+          "country": "New Zealand",
+          "role": "Middle-order Pace All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:mitchell"
+          ],
+          "similarity": 0.59
+        },
+        {
+          "id": "PL_289",
+          "name": "Mitchell Santner",
+          "category": "SP",
+          "country": "New Zealand",
+          "role": "Left-arm Orthodox Control Bowler",
+          "reasons": [
+            "shared-distinctive-token:mitchell"
+          ],
+          "similarity": 0.69
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 60,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Corbin Bosch",
+      "country": "South Africa",
+      "sourceCode": "AR-03",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 61,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Madhav Tiwari",
+      "country": "India",
+      "sourceCode": "AR-04",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 62,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Brydon Carse",
+      "country": "England",
+      "sourceCode": "AR-05",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 63,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Shivang Kumar",
+      "country": "India",
+      "sourceCode": "AR-06",
+      "sourceNote": "IPL 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 64,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Shamar Joseph",
+      "country": "West Indies",
+      "sourceCode": "FAST-01",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 65,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Sandeep Warrier",
+      "country": "India",
+      "sourceCode": "FAST-02",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_173",
+          "name": "Sandeep Sharma",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Swing & Death Knuckle-ball Master",
+          "reasons": [
+            "shared-distinctive-token:sandeep"
+          ],
+          "similarity": 0.69
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 66,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Luke Wood",
+      "country": "England",
+      "sourceCode": "FAST-03",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 67,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Nuwan Thushara",
+      "country": "Sri Lanka",
+      "sourceCode": "FAST-04",
+      "sourceNote": "IPL 2024, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 68,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Vidwath Kaverappa",
+      "country": "India",
+      "sourceCode": "FAST-05",
+      "sourceNote": "IPL 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 69,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Xavier Bartlett",
+      "country": "Australia",
+      "sourceCode": "FAST-06",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 70,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 4,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Harsh Dubey",
+      "country": "India",
+      "sourceCode": "AR-01",
+      "sourceNote": "IPL 2025, 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_257",
+          "name": "Harsh Tyagi",
+          "category": "AR",
+          "country": "India",
+          "role": "Left-arm Spin All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:harsh"
+          ],
+          "similarity": 0.64
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 71,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Reece Topley",
+      "country": "England",
+      "sourceCode": "FAST-01",
+      "sourceNote": "IPL 2024, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 72,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Richard Gleeson",
+      "country": "England",
+      "sourceCode": "FAST-02",
+      "sourceNote": "IPL 2024, 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 73,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Ashwani Kumar",
+      "country": "India",
+      "sourceCode": "FAST-03",
+      "sourceNote": "IPL 2025, 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 74,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Eshan Malinga",
+      "country": "Sri Lanka",
+      "sourceCode": "FAST-04",
+      "sourceNote": "IPL 2025, 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 75,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Praful Hinge",
+      "country": "India",
+      "sourceCode": "FAST-05",
+      "sourceNote": "IPL 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 76,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "David Payne",
+      "country": "England",
+      "sourceCode": "FAST-06",
+      "sourceNote": "IPL 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 77,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 6,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Satyanarayana Raju",
+      "country": "India",
+      "sourceCode": "FAST-01",
+      "sourceNote": "IPL 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 78,
+      "source": "ipl_auction_set_02 (1).html",
+      "round": 6,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Kuldip Yadav",
+      "country": "India",
+      "sourceCode": "FAST-02",
+      "sourceNote": "IPL 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_025",
+          "name": "Kuldeep Yadav",
+          "category": "SP",
+          "country": "India",
+          "role": "Left-arm Wrist Spinner",
+          "reasons": [
+            "high-similarity:0.88",
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.88
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 79,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Ambati Rayudu",
+      "country": "India",
+      "sourceCode": "BAT-01",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 80,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Robin Uthappa",
+      "country": "India",
+      "sourceCode": "BAT-02",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_155",
+          "name": "Robin Minz",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Power Hitter",
+          "reasons": [
+            "shared-distinctive-token:robin"
+          ],
+          "similarity": 0.52
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 81,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "David Warner",
+      "country": "Australia",
+      "sourceCode": "BAT-03",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 82,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Chris Jordan",
+      "country": "England",
+      "sourceCode": "FAST-01",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 27,
+          "name": "Jordan Cox",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "WK",
+          "country": "England",
+          "reasons": [
+            "shared-distinctive-token:jordan"
+          ],
+          "similarity": 0.55
+        }
+      ]
+    },
+    {
+      "index": 83,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Mukesh Choudhary",
+      "country": "India",
+      "sourceCode": "FAST-02",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_095",
+          "name": "Mukesh Kumar",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Medium Fast",
+          "reasons": [
+            "shared-distinctive-token:mukesh"
+          ],
+          "similarity": 0.71
+        },
+        {
+          "id": "PL_158",
+          "name": "Mukul Choudhary",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Batter",
+          "reasons": [
+            "shared-distinctive-token:choudhary"
+          ],
+          "similarity": 0.84
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 84,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Kamlesh Nagarkoti",
+      "country": "India",
+      "sourceCode": "FAST-03",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 85,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Pradeep Sangwan",
+      "country": "India",
+      "sourceCode": "FAST-04",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 86,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Kumar Kartikeya",
+      "country": "India",
+      "sourceCode": "SPIN-01",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 87,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Dwaine Pretorius",
+      "country": "South Africa",
+      "sourceCode": "AR-01",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 88,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Dwayne Bravo",
+      "country": "West Indies",
+      "sourceCode": "AR-02",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 89,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Devon Conway",
+      "country": "New Zealand",
+      "sourceCode": "WK-01",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 90,
+      "source": "ipl_auction_set_03.html",
+      "round": 1,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "KS Bharat",
+      "country": "India",
+      "sourceCode": "WK-02",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 91,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Aaron Finch",
+      "country": "Australia",
+      "sourceCode": "BAT-04",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 94,
+          "name": "Varun Aaron",
+          "source": "ipl_auction_set_03.html",
+          "category": "BOWL",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:aaron"
+          ],
+          "similarity": 0.45
+        }
+      ]
+    },
+    {
+      "index": 92,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Abhijeet Tomar",
+      "country": "India",
+      "sourceCode": "BAT-05",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 93,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Ayush Badoni",
+      "country": "India",
+      "sourceCode": "BAT-06",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_165",
+          "name": "Ayush Mhatre",
+          "category": "BAT",
+          "country": "India",
+          "role": "Young Mumbai Opener",
+          "reasons": [
+            "shared-distinctive-token:ayush"
+          ],
+          "similarity": 0.58
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 94,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Varun Aaron",
+      "country": "India",
+      "sourceCode": "FAST-05",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_031",
+          "name": "Varun Chakravarthy",
+          "category": "SP",
+          "country": "India",
+          "role": "Mystery Spinner",
+          "reasons": [
+            "shared-distinctive-token:varun"
+          ],
+          "similarity": 0.62
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 91,
+          "name": "Aaron Finch",
+          "source": "ipl_auction_set_03.html",
+          "category": "BAT",
+          "country": "Australia",
+          "reasons": [
+            "shared-distinctive-token:aaron"
+          ],
+          "similarity": 0.45
+        }
+      ]
+    },
+    {
+      "index": 95,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Rasikh Salam",
+      "country": "India",
+      "sourceCode": "FAST-06",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_252",
+          "name": "Rasikh Dar",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Slower Ball Specialist",
+          "reasons": [
+            "shared-distinctive-token:rasikh"
+          ],
+          "similarity": 0.73
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 96,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Tim Southee",
+      "country": "New Zealand",
+      "sourceCode": "FAST-07",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 97,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Andrew Tye",
+      "country": "Australia",
+      "sourceCode": "FAST-08",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 98,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Ravichandran Ashwin",
+      "country": "India",
+      "sourceCode": "SPIN-02",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_111",
+          "name": "Murugan Ashwin",
+          "category": "SP",
+          "country": "India",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:ashwin"
+          ],
+          "similarity": 0.61
+        },
+        {
+          "id": "PL_281",
+          "name": "Ashwin Hebbar",
+          "category": "BAT",
+          "country": "India",
+          "role": "Top-order Batter",
+          "reasons": [
+            "shared-distinctive-token:ashwin"
+          ],
+          "similarity": 0.38
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 50,
+          "name": "Ravichandran Smaran",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "BAT",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:ravichandran"
+          ],
+          "similarity": 0.79
+        }
+      ]
+    },
+    {
+      "index": 99,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Kieron Pollard",
+      "country": "West Indies",
+      "sourceCode": "AR-03",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 100,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Fabian Allen",
+      "country": "West Indies",
+      "sourceCode": "AR-04",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_114",
+          "name": "Finn Allen",
+          "category": "WK",
+          "country": "New Zealand",
+          "role": "Wicketkeeper Top-order Powerhouse",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.82
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 101,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Wriddhiman Saha",
+      "country": "India",
+      "sourceCode": "WK-03",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 102,
+      "source": "ipl_auction_set_03.html",
+      "round": 2,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Matthew Wade",
+      "country": "Australia",
+      "sourceCode": "WK-04",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_126",
+          "name": "Matthew Breetzke",
+          "category": "BAT",
+          "country": "South Africa",
+          "role": "Top-order Batter / Keeper",
+          "reasons": [
+            "shared-distinctive-token:matthew"
+          ],
+          "similarity": 0.64
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 19,
+          "name": "Matthew Short",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "AR",
+          "country": "Australia",
+          "reasons": [
+            "shared-distinctive-token:matthew"
+          ],
+          "similarity": 0.64
+        }
+      ]
+    },
+    {
+      "index": 103,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Evin Lewis",
+      "country": "West Indies",
+      "sourceCode": "BAT-07",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 104,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Shikhar Dhawan",
+      "country": "India",
+      "sourceCode": "BAT-08",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_262",
+          "name": "Rishi Dhawan",
+          "category": "AR",
+          "country": "India",
+          "role": "Medium Fast All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:dhawan"
+          ],
+          "similarity": 0.77
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 105,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Bhanuka Rajapaksa",
+      "country": "Sri Lanka",
+      "sourceCode": "BAT-09",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 106,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Basil Thampi",
+      "country": "India",
+      "sourceCode": "FAST-09",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 107,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Tymal Mills",
+      "country": "England",
+      "sourceCode": "FAST-10",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 108,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Nathan Coulter-Nile",
+      "country": "Australia",
+      "sourceCode": "FAST-11",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_132",
+          "name": "Nathan Ellis",
+          "category": "BOWL",
+          "country": "Australia",
+          "role": "Death Overs Specialist",
+          "reasons": [
+            "shared-distinctive-token:nathan"
+          ],
+          "similarity": 0.58
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 109,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Kuldeep Sen",
+      "country": "India",
+      "sourceCode": "FAST-12",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_025",
+          "name": "Kuldeep Yadav",
+          "category": "SP",
+          "country": "India",
+          "role": "Left-arm Wrist Spinner",
+          "reasons": [
+            "shared-distinctive-token:kuldeep"
+          ],
+          "similarity": 0.67
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 110,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Amit Mishra",
+      "country": "India",
+      "sourceCode": "SPIN-03",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 111,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Sanjay Yadav",
+      "country": "India",
+      "sourceCode": "AR-05",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 112,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Odean Smith",
+      "country": "West Indies",
+      "sourceCode": "AR-06",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 113,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Sam Billings",
+      "country": "England",
+      "sourceCode": "WK-05",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 114,
+      "source": "ipl_auction_set_03.html",
+      "round": 3,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Sheldon Jackson",
+      "country": "India",
+      "sourceCode": "WK-06",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 115,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Rassie van der Dussen",
+      "country": "South Africa",
+      "sourceCode": "BAT-10",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 116,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Kane Williamson",
+      "country": "New Zealand",
+      "sourceCode": "BAT-11",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 117,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Kedar Jadhav",
+      "country": "India",
+      "sourceCode": "BAT-12",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 118,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Siddarth Kaul",
+      "country": "India",
+      "sourceCode": "FAST-13",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 164,
+          "name": "Andre Siddarth",
+          "source": "ipl_auction_set_03.html",
+          "category": "BAT",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:siddarth"
+          ],
+          "similarity": 0.59
+        }
+      ]
+    },
+    {
+      "index": 119,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Sean Abbott",
+      "country": "Australia",
+      "sourceCode": "FAST-14",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 120,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Akash Singh",
+      "country": "India",
+      "sourceCode": "FAST-15",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_129",
+          "name": "Akash Deep",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Fast Medium",
+          "reasons": [
+            "shared-distinctive-token:akash"
+          ],
+          "similarity": 0.57
+        },
+        {
+          "id": "PL_273",
+          "name": "Akash Anand",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Batter",
+          "reasons": [
+            "shared-distinctive-token:akash"
+          ],
+          "similarity": 0.64
+        },
+        {
+          "id": "PL_285",
+          "name": "Akash Madhwal",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Searing Yorker Specialist",
+          "reasons": [
+            "shared-distinctive-token:akash"
+          ],
+          "similarity": 0.58
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 121,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Sisanda Magala",
+      "country": "South Africa",
+      "sourceCode": "FAST-16",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 122,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Adil Rashid",
+      "country": "England",
+      "sourceCode": "SPIN-04",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_026",
+          "name": "Rashid Khan",
+          "category": "SP",
+          "country": "Afghanistan",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:rashid"
+          ],
+          "similarity": 0.55
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 123,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "David Willey",
+      "country": "England",
+      "sourceCode": "AR-07",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 124,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Abhishek Sharma",
+      "country": "India",
+      "sourceCode": "AR-08",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_113",
+          "name": "Abhishek Porel",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Left-hand Batter",
+          "reasons": [
+            "shared-distinctive-token:abhishek"
+          ],
+          "similarity": 0.69
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 157,
+          "name": "Ashok Sharma",
+          "source": "ipl_auction_set_03.html",
+          "category": "BOWL",
+          "country": "India",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ]
+    },
+    {
+      "index": 125,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Baba Indrajith",
+      "country": "India",
+      "sourceCode": "WK-07",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 126,
+      "source": "ipl_auction_set_03.html",
+      "round": 4,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Dinesh Karthik",
+      "country": "India",
+      "sourceCode": "WK-08",
+      "sourceNote": "IPL appearance · 2022",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 127,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Vivrant Sharma",
+      "country": "India",
+      "sourceCode": "BAT-13",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 8,
+          "name": "Ishant Sharma",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "BOWL",
+          "country": "India",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ]
+    },
+    {
+      "index": 128,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Vaibhav Suryavanshi",
+      "country": "India",
+      "sourceCode": "BAT-14",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_167",
+          "name": "Vaibhav Sooryavanshi",
+          "category": "BAT",
+          "country": "India",
+          "role": "Youngest Prodigy Opener (13y)",
+          "reasons": [
+            "shared-distinctive-token:vaibhav",
+            "high-similarity:0.92"
+          ],
+          "similarity": 0.92
+        },
+        {
+          "id": "PL_211",
+          "name": "Vaibhav Arora",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Swing Bowler",
+          "reasons": [
+            "shared-distinctive-token:vaibhav"
+          ],
+          "similarity": 0.63
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 129,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Joshua Little",
+      "country": "Ireland",
+      "sourceCode": "FAST-17",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 130,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Mark Wood",
+      "country": "England",
+      "sourceCode": "FAST-18",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 131,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Vyshak Vijay Kumar",
+      "country": "India",
+      "sourceCode": "FAST-19",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_063",
+          "name": "Vijay Shankar",
+          "category": "AR",
+          "country": "India",
+          "role": "Medium-pace All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:vijay"
+          ],
+          "similarity": 0.58
+        },
+        {
+          "id": "PL_253",
+          "name": "Vijaykumar Vyshak",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Medium Fast & Knuckle",
+          "reasons": [
+            "merged-tokens",
+            "shared-distinctive-token:vyshak"
+          ],
+          "similarity": 0.57
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 158,
+          "name": "Tripurana Vijay",
+          "source": "ipl_auction_set_03.html",
+          "category": "BOWL",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:vijay"
+          ],
+          "similarity": 0.42
+        }
+      ]
+    },
+    {
+      "index": 132,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Wayne Parnell",
+      "country": "South Africa",
+      "sourceCode": "FAST-20",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 133,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Vignesh Puthur",
+      "country": "India",
+      "sourceCode": "SPIN-05",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 134,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Sanvir Singh",
+      "country": "India",
+      "sourceCode": "AR-09",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_240",
+          "name": "Ravi Singh",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Batter",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.82
+        },
+        {
+          "id": "PL_267",
+          "name": "Swapnil Singh",
+          "category": "SP",
+          "country": "India",
+          "role": "Left-arm Orthodox All-Rounder",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.8
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 135,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "David Wiese",
+      "country": "Namibia",
+      "sourceCode": "AR-10",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 136,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Philip Salt",
+      "country": "England",
+      "sourceCode": "WK-09",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_040",
+          "name": "Phil Salt",
+          "category": "WK",
+          "country": "England",
+          "role": "Aggressive Wicketkeeper Batter",
+          "reasons": [
+            "shared-distinctive-token:salt",
+            "high-similarity:0.90",
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.9
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 137,
+      "source": "ipl_auction_set_03.html",
+      "round": 5,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Abishek Porel",
+      "country": "India",
+      "sourceCode": "WK-10",
+      "sourceNote": "IPL appearance · 2023",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_113",
+          "name": "Abhishek Porel",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Left-hand Batter",
+          "reasons": [
+            "shared-distinctive-token:porel",
+            "high-similarity:0.96",
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.96
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 138,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Ashton Turner",
+      "country": "Australia",
+      "sourceCode": "BAT-15",
+      "sourceNote": "IPL appearance · 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 139,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Himmat Singh",
+      "country": "India",
+      "sourceCode": "BAT-16",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 140,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Auqib Nabi Dar",
+      "country": "India",
+      "sourceCode": "FAST-21",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_150",
+          "name": "Mohammad Nabi",
+          "category": "SP",
+          "country": "Afghanistan",
+          "role": "Off-spin All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:nabi"
+          ],
+          "similarity": 0.44
+        },
+        {
+          "id": "PL_255",
+          "name": "Auqib Nabi",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Medium Fast",
+          "reasons": [
+            "shared-distinctive-token:auqib,nabi"
+          ],
+          "similarity": 0.83
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 141,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Lizaad Williams",
+      "country": "South Africa",
+      "sourceCode": "FAST-22",
+      "sourceNote": "IPL appearance · 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 142,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Jhye Richardson",
+      "country": "Australia",
+      "sourceCode": "FAST-23",
+      "sourceNote": "IPL appearance · 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 143,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Digvesh Rathi",
+      "country": "India",
+      "sourceCode": "SPIN-06",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_187",
+          "name": "Digvesh Singh Rathi",
+          "category": "SP",
+          "country": "India",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:digvesh"
+          ],
+          "similarity": 0.81
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 144,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Gulbadin Naib",
+      "country": "Afghanistan",
+      "sourceCode": "AR-11",
+      "sourceNote": "IPL appearance · 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 153,
+          "name": "Gulbudeen Naib",
+          "source": "ipl_auction_set_03.html",
+          "category": "AR",
+          "country": "Afghanistan",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ]
+    },
+    {
+      "index": 145,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Sumit Kumar",
+      "country": "India",
+      "sourceCode": "AR-12",
+      "sourceNote": "IPL appearance · 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 146,
+      "source": "ipl_auction_set_03.html",
+      "round": 6,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "BR Sharath",
+      "country": "India",
+      "sourceCode": "WK-11",
+      "sourceNote": "IPL appearance · 2024",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 147,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Sachin Baby",
+      "country": "India",
+      "sourceCode": "BAT-17",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 148,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "SU Parakh",
+      "country": "India",
+      "sourceCode": "BAT-18",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 149,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "William O'Rourke",
+      "country": "New Zealand",
+      "sourceCode": "FAST-24",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 150,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Kyle Jamieson",
+      "country": "New Zealand",
+      "sourceCode": "FAST-25",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_139",
+          "name": "Kyle Mayers",
+          "category": "AR",
+          "country": "West Indies",
+          "role": "Opening Batter & Medium Pacer",
+          "reasons": [
+            "shared-distinctive-token:kyle"
+          ],
+          "similarity": 0.67
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 151,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Abhinandan Singh",
+      "country": "India",
+      "sourceCode": "FAST-26",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 152,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Allah Mohammad Ghazanfar",
+      "country": "Afghanistan",
+      "sourceCode": "SPIN-07",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 153,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Gulbudeen Naib",
+      "country": "Afghanistan",
+      "sourceCode": "AR-13",
+      "sourceNote": "IPL appearance · 2024",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": [
+        {
+          "index": 144,
+          "name": "Gulbadin Naib",
+          "source": "ipl_auction_set_03.html",
+          "category": "AR",
+          "country": "Afghanistan",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ]
+    },
+    {
+      "index": 154,
+      "source": "ipl_auction_set_03.html",
+      "round": 7,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "T Dahiya",
+      "country": "India",
+      "sourceCode": "WK-12",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [
+        {
+          "id": "PL_233",
+          "name": "Tejasvi Dahiya",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Batter",
+          "reasons": [
+            "shared-distinctive-token:dahiya",
+            "initial-matches:T"
+          ],
+          "similarity": 0.73
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 155,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Akshat Raghuwanshi",
+      "country": "India",
+      "sourceCode": "BAT-19",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 156,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "DV Malewar",
+      "country": "India",
+      "sourceCode": "BAT-20",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 157,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Ashok Sharma",
+      "country": "India",
+      "sourceCode": "FAST-27",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_163",
+          "name": "Ashutosh Sharma",
+          "category": "BAT",
+          "country": "India",
+          "role": "Impact Finisher",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 124,
+          "name": "Abhishek Sharma",
+          "source": "ipl_auction_set_03.html",
+          "category": "AR",
+          "country": "India",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ]
+    },
+    {
+      "index": 158,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Tripurana Vijay",
+      "country": "India",
+      "sourceCode": "FAST-28",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_063",
+          "name": "Vijay Shankar",
+          "category": "AR",
+          "country": "India",
+          "role": "Medium-pace All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:vijay"
+          ],
+          "similarity": 0.36
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 131,
+          "name": "Vyshak Vijay Kumar",
+          "source": "ipl_auction_set_03.html",
+          "category": "BOWL",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:vijay"
+          ],
+          "similarity": 0.42
+        }
+      ]
+    },
+    {
+      "index": 159,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "RS Ghosh",
+      "country": "India",
+      "sourceCode": "FAST-29",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 160,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Raghu Sharma",
+      "country": "India",
+      "sourceCode": "SPIN-08",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 161,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Yuvraj Chaudhary",
+      "country": "India",
+      "sourceCode": "AR-14",
+      "sourceNote": "Domestic prospect · 2025 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 162,
+      "source": "ipl_auction_set_03.html",
+      "round": 8,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "LG Pretorius",
+      "country": "South Africa",
+      "sourceCode": "WK-13",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": true,
+      "matchesExisting": [
+        {
+          "id": "PL_194",
+          "name": "Lhuan-dre Pretorius",
+          "category": "WK",
+          "country": "South Africa",
+          "role": "Young Wicketkeeper Opener",
+          "reasons": [
+            "initial-matches:LG"
+          ],
+          "similarity": 0.71
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 163,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Pyla Avinash",
+      "country": "India",
+      "sourceCode": "BAT-21",
+      "sourceNote": "Domestic prospect · 2025 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 164,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Andre Siddarth",
+      "country": "India",
+      "sourceCode": "BAT-22",
+      "sourceNote": "Domestic prospect · 2025 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_018",
+          "name": "Andre Russell",
+          "category": "AR",
+          "country": "West Indies",
+          "role": "Power-hitting Pace All-Rounder",
+          "reasons": [
+            "shared-distinctive-token:andre"
+          ],
+          "similarity": 0.52
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 118,
+          "name": "Siddarth Kaul",
+          "source": "ipl_auction_set_03.html",
+          "category": "BOWL",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:siddarth"
+          ],
+          "similarity": 0.59
+        }
+      ]
+    },
+    {
+      "index": 165,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Saurabh Dubey",
+      "country": "India",
+      "sourceCode": "FAST-30",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_230",
+          "name": "Saurabh Kumar",
+          "category": "SP",
+          "country": "India",
+          "role": "Slow Left-arm Orthodox",
+          "reasons": [
+            "shared-distinctive-token:saurabh"
+          ],
+          "similarity": 0.69
+        },
+        {
+          "id": "PL_234",
+          "name": "Saurabh Nawale",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Batter",
+          "reasons": [
+            "shared-distinctive-token:saurabh"
+          ],
+          "similarity": 0.67
+        },
+        {
+          "id": "PL_276",
+          "name": "Saurabh Rawat",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Batter",
+          "reasons": [
+            "shared-distinctive-token:saurabh"
+          ],
+          "similarity": 0.62
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 166,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Krish Bhagat",
+      "country": "India",
+      "sourceCode": "FAST-31",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 167,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Ben Dwarshuis",
+      "country": "Australia",
+      "sourceCode": "FAST-32",
+      "sourceNote": "IPL appearance · 2025",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 168,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Tejas Baroka",
+      "country": "India",
+      "sourceCode": "SPIN-09",
+      "sourceNote": "Domestic prospect · 2022 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 169,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Aneeshwar Gautam",
+      "country": "India",
+      "sourceCode": "AR-15",
+      "sourceNote": "Domestic prospect · 2022 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 170,
+      "source": "ipl_auction_set_03.html",
+      "round": 9,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Kunal Rathore",
+      "country": "India",
+      "sourceCode": "WK-14",
+      "sourceNote": "Domestic prospect · 2025 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 171,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Pratham Singh",
+      "country": "India",
+      "sourceCode": "BAT-23",
+      "sourceNote": "Domestic prospect · 2022 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 172,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "BAT",
+      "category": "BAT",
+      "name": "Shubham Garhwal",
+      "country": "India",
+      "sourceCode": "BAT-24",
+      "sourceNote": "Domestic prospect · 2022 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_229",
+          "name": "Shubham Agarwal",
+          "category": "SP",
+          "country": "India",
+          "role": "Right-arm Leg Spinner",
+          "reasons": [
+            "shared-distinctive-token:shubham",
+            "high-similarity:0.93"
+          ],
+          "similarity": 0.93
+        }
+      ],
+      "matchesCandidates": [
+        {
+          "index": 47,
+          "name": "Shubham Dubey",
+          "source": "ipl_auction_set_02 (1).html",
+          "category": "BAT",
+          "country": "India",
+          "reasons": [
+            "shared-distinctive-token:shubham"
+          ],
+          "similarity": 0.57
+        }
+      ]
+    },
+    {
+      "index": 173,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Brijesh Sharma",
+      "country": "India",
+      "sourceCode": "FAST-33",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_075",
+          "name": "Jitesh Sharma",
+          "category": "WK",
+          "country": "India",
+          "role": "Wicketkeeper Finisher",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.81
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 174,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Sushant Mishra",
+      "country": "India",
+      "sourceCode": "FAST-34",
+      "sourceNote": "IPL appearance · 2026",
+      "domesticProspect": false,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 175,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "FAST",
+      "category": "BOWL",
+      "name": "Anunay Singh",
+      "country": "India",
+      "sourceCode": "FAST-35",
+      "sourceNote": "Domestic prospect · 2022 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 176,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "SPIN",
+      "category": "SP",
+      "name": "Ansh Patel",
+      "country": "India",
+      "sourceCode": "SPIN-10",
+      "sourceNote": "Domestic prospect · 2022 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    },
+    {
+      "index": 177,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "AR",
+      "category": "AR",
+      "name": "Ramesh Kumar",
+      "country": "India",
+      "sourceCode": "AR-16",
+      "sourceNote": "Domestic prospect · 2022 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [
+        {
+          "id": "PL_095",
+          "name": "Mukesh Kumar",
+          "category": "BOWL",
+          "country": "India",
+          "role": "Right-arm Medium Fast",
+          "reasons": [
+            "same-surname-similar-first-name"
+          ],
+          "similarity": 0.83
+        }
+      ],
+      "matchesCandidates": []
+    },
+    {
+      "index": 178,
+      "source": "ipl_auction_set_03.html",
+      "round": 10,
+      "sourceCategory": "WK",
+      "category": "WK",
+      "name": "Krishnan Shrijith",
+      "country": "India",
+      "sourceCode": "WK-15",
+      "sourceNote": "Domestic prospect · 2025 squad · no IPL match confirmed",
+      "domesticProspect": true,
+      "initialsOnly": false,
+      "matchesExisting": [],
+      "matchesCandidates": []
+    }
+  ],
+  "summary": {
+    "exactDuplicatesOfExisting": 0,
+    "normalizedDuplicatesOfExisting": 0,
+    "candidatesWithAnyEvidenceVsExisting": 55,
+    "candidatesWithAnyEvidenceVsOtherCandidates": 24,
+    "domesticProspects": 12,
+    "initialsOnlyNames": 8
+  }
+}

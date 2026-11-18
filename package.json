@@ -10,11 +10,16 @@
     "client": "npm --prefix client run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "npm --prefix client install && npm --prefix client run build",
-    "test": "node tests/auction.test.js && node tests/multiplayerSimulation.test.js"
+    "test": "node tests/runAll.js",
+    "test:live": "node tests/multiplayerSimulation.test.js",
+    "db:migrate": "node scripts/db/migrate.mjs",
+    "db:status": "node scripts/db/status.mjs",
+    "db:import-json": "node scripts/db/import-json.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "pg": "^8.23.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.4",
     "ws": "^8.18.0"

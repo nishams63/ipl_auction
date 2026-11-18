@@ -14,11 +14,13 @@ export default function LobbyView({
   const [showConfig, setShowConfig] = useState(false);
 
   // Configuration state
-  const [basePurse, setBasePurse] = useState(room.config.basePurse || 120);
-  const [timerDuration, setTimerDuration] = useState(room.config.timerDuration || 15);
-  const [minSquadSize, setMinSquadSize] = useState(room.config.minSquadSize || 11);
-  const [maxSquadSize, setMaxSquadSize] = useState(room.config.maxSquadSize || 15);
-  const [maxOverseas, setMaxOverseas] = useState(room.config.maxOverseas || 8);
+  // Purse, squad limits and overseas cap are fixed IPL rules (server-enforced); shown read-only.
+  // Only the bid timer is adjustable.
+  const basePurse = room.config.basePurse ?? 120;
+  const [timerDuration, setTimerDuration] = useState(room.config.timerDuration || 20);
+  const minSquadSize = room.config.minSquadSize ?? 15;
+  const maxSquadSize = room.config.maxSquadSize ?? 25;
+  const maxOverseas = room.config.maxOverseas ?? 8;
 
   const copyRoomCode = () => {
     navigator.clipboard.writeText(room.roomCode);
@@ -28,13 +30,7 @@ export default function LobbyView({
 
   const handleSaveConfig = (e) => {
     e.preventDefault();
-    onUpdateConfig({
-      basePurse: Number(basePurse),
-      timerDuration: Number(timerDuration),
-      minSquadSize: Number(minSquadSize),
-      maxSquadSize: Number(maxSquadSize),
-      maxOverseas: Number(maxOverseas)
-    });
+    onUpdateConfig({ timerDuration: Number(timerDuration) });
     setShowConfig(false);
   };
 
@@ -92,12 +88,12 @@ export default function LobbyView({
         {/* Dynamic Purse Banner */}
         <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass-card rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Dynamic Purse Formula</span>
+            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Purse Per Franchise</span>
             <div className="text-sm text-slate-200 font-mono mt-1 font-bold">
-              Base (₹{room.config.basePurse} Cr) × ({activeCount} Active / 10)
+              Flat ₹{room.config.basePurse} Cr for every franchise
             </div>
             <div className="text-xs text-amber-300/90 mt-1">
-              Scales automatically based on participating franchises
+              Squad {room.config.minSquadSize}–{room.config.maxSquadSize} · max {room.config.maxOverseas} overseas · min {room.config.minWKs ?? 1} WK
             </div>
           </div>
 
@@ -142,7 +138,7 @@ export default function LobbyView({
             <h3 className="font-bold text-lg text-white flex items-center gap-2">
               <Settings className="w-5 h-5 text-amber-400" /> Configure Auction Rules
             </h3>
-            <span className="text-xs text-amber-400/80 font-medium">Rules lock once the auction begins</span>
+            <span className="text-xs text-amber-400/80 font-medium">Purse, squad and overseas limits are fixed IPL rules · timer locks once the auction begins</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
@@ -150,11 +146,11 @@ export default function LobbyView({
               <label className="text-xs font-semibold text-slate-400 block mb-1">Base Purse (₹ Cr)</label>
               <input
                 type="number"
-                min="20"
-                max="250"
                 value={basePurse}
-                onChange={e => setBasePurse(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 outline-none"
+                readOnly
+                disabled
+                title="Fixed by the IPL auction rules"
+                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 font-mono text-sm cursor-not-allowed"
               />
             </div>
             <div>
@@ -172,33 +168,33 @@ export default function LobbyView({
               <label className="text-xs font-semibold text-slate-400 block mb-1">Min Squad Size</label>
               <input
                 type="number"
-                min="5"
-                max="25"
                 value={minSquadSize}
-                onChange={e => setMinSquadSize(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 outline-none"
+                readOnly
+                disabled
+                title="Fixed by the IPL auction rules"
+                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 font-mono text-sm cursor-not-allowed"
               />
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-400 block mb-1">Max Squad Size</label>
               <input
                 type="number"
-                min="15"
-                max="30"
                 value={maxSquadSize}
-                onChange={e => setMaxSquadSize(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 outline-none"
+                readOnly
+                disabled
+                title="Fixed by the IPL auction rules"
+                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 font-mono text-sm cursor-not-allowed"
               />
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-400 block mb-1">Max Overseas</label>
               <input
                 type="number"
-                min="4"
-                max="10"
                 value={maxOverseas}
-                onChange={e => setMaxOverseas(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 outline-none"
+                readOnly
+                disabled
+                title="Fixed by the IPL auction rules"
+                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 font-mono text-sm cursor-not-allowed"
               />
             </div>
           </div>
@@ -237,7 +233,7 @@ export default function LobbyView({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {Object.values(room.franchises).map(f => {
-            const isMine = f.ownerToken === participant?.token;
+            const isMine = !!participant?.publicId && f.ownerId === participant.publicId;
             const isClaimedByOther = f.isClaimed && !isMine;
 
             return (

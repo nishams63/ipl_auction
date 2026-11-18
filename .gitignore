@@ -35,3 +35,18 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 server/data/persisted_rooms.json
+
+# Backups and temporary files
+*.bak
+Claude outputs/
+
+# Unity generated and build files
+unity/**/[Ll]ibrary/
+unity/**/[Tt]emp/
+unity/**/[Oo]bj/
+unity/**/[Bb]uild/
+unity/**/[Bb]uilds/
+unity/**/[Ll]ogs/
+unity/**/[Uu]ser[Ss]ettings/
+unity/**/[Mm]emoryCaptures/
+

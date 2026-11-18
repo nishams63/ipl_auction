@@ -1,6 +1,13 @@
 import assert from 'node:assert';
 import { RoomManager } from '../server/roomManager.js';
 import { validateBid, calculateNextBid } from '../server/auctionEngine.js';
+import os from 'node:os';
+import fsIso from 'node:fs';
+import pathIso from 'node:path';
+
+// Isolate storage so tests never write to server/data/persisted_rooms.json
+process.env.ROOM_STORAGE_FILE = process.env.ROOM_STORAGE_FILE ||
+  pathIso.join(fsIso.mkdtempSync(pathIso.join(os.tmpdir(), 'ipl-mods-')), 'rooms.json');
 
 // Mock io to allow testing RoomManager without network sockets
 const mockIo = {
@@ -43,11 +50,36 @@ async function runModificationsTests() {
   });
   assert.strictEqual(claimRes1.success, true, 'CSK selection should succeed');
 
-  // Select 11 players for Playing XI during auction setup from catalog (ensuring 1 WK, <= 4 OS)
-  const catalog1 = room1.playersCatalog;
-  const wkPlayer = catalog1.find(p => p.category === 'WK');
-  const indPlayers = catalog1.filter(p => !p.isOverseas && p.id !== wkPlayer.id).slice(0, 10);
-  const selectedXI = [wkPlayer.id, ...indPlayers.map(p => p.id)];
+  // Squad-ownership rule (approved 16 Nov 2026): a Playing XI may only contain players the
+  // franchise has PURCHASED. So instead of picking 11 catalogue players in the lobby, the host
+  // starts the auction and buys a valid squad first (1 WK + 10 Indian players).
+  const startRes1 = roomManager.startAuction({ roomCode: roomCode1, hostToken: hostToken1 });
+  assert.strictEqual(startRes1.success, true, 'Auction start should succeed');
+
+  // Before buying anyone, catalogue players are not selectable
+  const preBuy = roomManager.updatePlayingXI({ roomCode: roomCode1, participantToken: hostToken1, franchiseId: 'CSK', playingXI: [room1.playersCatalog[5].id] });
+  assert.strictEqual(preBuy.success, false, 'Unpurchased catalogue player must be rejected');
+
+  let boughtWK = 0, boughtOthers = 0;
+  for (let guard = 0; guard < 150 && (boughtWK < 1 || boughtOthers < 10); guard++) {
+    const lot = room1.currentLot;
+    roomManager.clearRoomTimer(roomCode1);
+    const p = lot.player;
+    const want = !p.isOverseas && ((p.category === 'WK' && boughtWK < 1) || (p.category !== 'WK' && boughtOthers < 10));
+    if (want) {
+      const r = roomManager.placeBid({ roomCode: roomCode1, participantToken: hostToken1, franchiseId: 'CSK', bidAmount: lot.nextValidBid, expectedVersion: lot.stateVersion });
+      assert.strictEqual(r.success, true, `Buying ${p.name} should succeed`);
+      if (p.category === 'WK') boughtWK++; else boughtOthers++;
+    }
+    roomManager.closeCurrentLot(room1);
+    roomManager.nextPlayer(room1);
+  }
+  roomManager.clearRoomTimer(roomCode1);
+  const squad1 = room1.franchises.CSK.squad;
+  assert.strictEqual(squad1.length, 11, 'CSK should have bought 11 players');
+
+  const wkPlayer = squad1.find(p => p.category === 'WK');
+  const selectedXI = [wkPlayer.id, ...squad1.filter(p => p.id !== wkPlayer.id).map(p => p.id)];
   const captain = selectedXI[0];
   const viceCaptain = selectedXI[1];
   const wk = wkPlayer.id;
@@ -62,22 +94,18 @@ async function runModificationsTests() {
     viceCaptainId: viceCaptain,
     wicketKeeperId: wk
   });
-  assert.strictEqual(updateRes.success, true, 'Playing XI setup should succeed');
+  assert.strictEqual(updateRes.success, true, 'Playing XI setup should succeed: ' + updateRes.error);
 
   // Verify Playing XI is saved in independent data structure
   const savedConfig = room1.playingXIConfigurations['CSK'];
   assert.deepStrictEqual(savedConfig.playingXI, selectedXI, 'Playing XI must match selected IDs');
   assert.strictEqual(savedConfig.captainId, captain, 'Captain must match');
   assert.strictEqual(savedConfig.viceCaptainId, viceCaptain, 'Vice Captain must match');
-  console.log('  ✅ Playing XI configured and saved during setup');
+  console.log('  ✅ Playing XI configured from purchased squad and saved');
 
-  // Start live auction
-  const startRes1 = roomManager.startAuction({ roomCode: roomCode1, hostToken: hostToken1 });
-  assert.strictEqual(startRes1.success, true, 'Auction start should succeed');
-
-  // Verify Playing XI is NOT reset by starting the auction
-  assert.deepStrictEqual(room1.playingXIConfigurations['CSK'].playingXI, selectedXI, 'Playing XI must survive auction start');
-  console.log('  ✅ Playing XI preserved when auction starts');
+  // Verify Playing XI is NOT reset as the auction continues to the next lot
+  assert.deepStrictEqual(room1.playingXIConfigurations['CSK'].playingXI, selectedXI, 'Playing XI must survive the auction continuing');
+  console.log('  ✅ Playing XI preserved while the auction continues');
 
   // Place bids on lot #1
   const bid1 = roomManager.placeBid({

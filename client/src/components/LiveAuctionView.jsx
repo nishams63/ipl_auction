@@ -6,6 +6,7 @@ import {
   Search, Filter, ArrowUp, RotateCcw, FastForward
 } from 'lucide-react';
 import { playGavel, playBidPing, playTick, playSoldFanfare, playUnsold } from '../utils/audio';
+import UnityArena from './UnityArena';
 
 // Franchise logo/emblem badges generator
 function FranchiseBadge({ code, size = "md" }) {
@@ -60,6 +61,30 @@ function CategoryBadge({ category }) {
   );
 }
 
+// Profile badge component
+function ProfileBadge({ profile }) {
+  const p = (profile || '').toLowerCase();
+  if (p === 'high') {
+    return (
+      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md border tracking-wider bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm">
+        HIGH-PROFILE
+      </span>
+    );
+  }
+  if (p === 'medium') {
+    return (
+      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md border tracking-wider bg-teal-500/20 text-teal-300 border-teal-500/40 shadow-sm">
+        MEDIUM-PROFILE
+      </span>
+    );
+  }
+  return (
+    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md border tracking-wider bg-slate-500/20 text-slate-300 border-slate-500/40 shadow-sm">
+      LOW-PROFILE / EMERGING
+    </span>
+  );
+}
+
 export default function LiveAuctionView({
   room,
   participant,
@@ -96,121 +121,13 @@ export default function LiveAuctionView({
     setBidError(null);
   }, [lot?.player?.id]);
 
-  if (!lot || !lot.player) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-24 text-center">
-        <div className="glass-panel p-12 rounded-3xl border border-slate-800 space-y-4">
-          <Clock className="w-12 h-12 text-amber-400 mx-auto animate-spin" />
-          <h2 className="text-2xl font-bold text-white">Preparing Next Player...</h2>
-          <p className="text-slate-400 text-sm">Synchronizing auction state with room participants</p>
-        </div>
-      </div>
-    );
-  }
-
-  const player = lot.player;
-  const highestBidderFranchise = lot.highestBidderFranchiseId
-    ? room.franchises[lot.highestBidderFranchiseId]
-    : null;
-
-  // Feasibility & eligibility check
-  const isMyFranchiseHighest = myFranchise && lot.highestBidderFranchiseId === myFranchise.id;
-  const isEliminated = myFranchise?.isEliminated;
-
-  let canBid = true;
-  let cannotBidReason = null;
-
-  if (!myFranchise) {
-    canBid = false;
-    cannotBidReason = "You have not claimed a franchise";
-  } else if (room.status !== 'active') {
-    canBid = false;
-    cannotBidReason = "Auction is paused";
-  } else if (lot.countdown <= 0) {
-    canBid = false;
-    cannotBidReason = "Bidding closed for this lot";
-  } else if (isMyFranchiseHighest) {
-    canBid = false;
-    cannotBidReason = "You already hold the highest bid";
-  } else if (isEliminated) {
-    canBid = false;
-    cannotBidReason = "Franchise is financially eliminated";
-  } else if (myFranchise.squad.length >= room.config.maxSquadSize) {
-    canBid = false;
-    cannotBidReason = `Max squad limit (${room.config.maxSquadSize}) reached`;
-  } else if (player.isOverseas && myFranchise.overseasCount >= room.config.maxOverseas) {
-    canBid = false;
-    cannotBidReason = `Max overseas slots (${room.config.maxOverseas}) filled`;
-  } else {
-    const projectedPurse = myFranchise.remainingPurse - lot.nextValidBid;
-    if (projectedPurse < 0) {
-      canBid = false;
-      cannotBidReason = "Insufficient purse balance";
-    } else {
-      const remainingSlots = Math.max(0, room.config.minSquadSize - (myFranchise.squad.length + 1));
-      const requiredReserve = remainingSlots * room.config.minPlayerPrice;
-      if (projectedPurse < requiredReserve) {
-        canBid = false;
-        cannotBidReason = `Must reserve ₹${requiredReserve.toFixed(2)} Cr for remaining ${remainingSlots} mandatory slots`;
-      }
-    }
-  }
-
-  const submitBid = (amount) => {
-    if (!myFranchise || submittingBid) return;
-    setSubmittingBid(true);
-    setBidError(null);
-    setPulseBid(true);
-    setTimeout(() => setPulseBid(false), 400);
-
-    onPlaceBid({
-      franchiseId: myFranchise.id,
-      bidAmount: amount,
-      expectedVersion: lot.stateVersion
-    }, (res) => {
-      setSubmittingBid(false);
-      if (!res?.success) {
-        setBidError(res?.error || "Bid could not be processed");
-      }
-    });
-  };
-
-  const handleMainBidClick = () => {
-    if (!canBid) return;
-    submitBid(lot.nextValidBid);
-  };
-
-  // Handle Skip Set host action
-  const handleConfirmSkipSet = () => {
-    setIsSkipSetConfirmOpen(false);
-    if (!participant?.isHost) return;
-    setIsSkippingSet(true);
-    if (onSkipSet) {
-      onSkipSet();
-    }
-    setTimeout(() => setIsSkippingSet(false), 1500);
-  };
-
-  const copyRoomCode = () => {
-    navigator.clipboard.writeText(room.roomCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
-  };
-
-  // Countdown timer calculations (15-second authoritative auction timer)
-  const timerRadius = 40;
-  const timerCircumference = 2 * Math.PI * timerRadius;
-  const timerDuration = room.config.timerDuration || 15;
-  const timerPct = Math.max(0, lot.countdown / timerDuration);
-  const strokeDashoffset = timerCircumference - timerPct * timerCircumference;
-  const isUrgent = lot.countdown <= 6;
-  const isCritical = lot.countdown <= 3;
-  const timerColor = isCritical ? "#EF4444" : isUrgent ? "#F59E0B" : "#10B981";
-
+  // All hooks run on every render (Rules of Hooks): they must stay ABOVE the early return below.
   // Complete catalogue & marquee list state (all ~300 players)
   const catalog = room.playersCatalog || [];
   const currentIdx = room.currentPlayerIndex >= 0 ? room.currentPlayerIndex : 0;
-  const currentLotPlayerId = player?.id || (catalog[currentIdx]?.id);
+  const currentLotPlayerId = lot?.player?.id || (catalog[currentIdx]?.id);
+  // The hammer has fallen (SOLD/UNSOLD): the lot stays on screen until the next one, but it is closed
+  const lotOpen = !!lot && lot.hammerStatus !== 'SOLD' && lot.hammerStatus !== 'UNSOLD' && !lot.closed;
 
   // Search and filter state for complete catalogue
   const [searchQuery, setSearchQuery] = useState('');
@@ -236,7 +153,8 @@ export default function LiveAuctionView({
   // Process all catalog players preserving exact round-robin sequence with dynamic statuses
   const processedCatalog = useMemo(() => {
     return catalog.map((p, idx) => {
-      const isCurrent = p.id === currentLotPlayerId;
+      // A hammered player shows its result (SOLD/UNSOLD), not "current"
+      const isCurrent = p.id === currentLotPlayerId && lotOpen;
       const historyItem = historyMap[p.id];
 
       let computedStatus = 'upcoming';
@@ -268,7 +186,7 @@ export default function LiveAuctionView({
         isCurrent
       };
     });
-  }, [catalog, currentLotPlayerId, historyMap, room.currentPlayerIndex]);
+  }, [catalog, currentLotPlayerId, lotOpen, historyMap, room.currentPlayerIndex]);
 
   // Overall catalog statistics
   const catalogStats = useMemo(() => {
@@ -325,6 +243,126 @@ export default function LiveAuctionView({
     }
   }, [currentLotPlayerId]);
 
+  if (!lot || !lot.player) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-24 text-center">
+        <div className="glass-panel p-12 rounded-3xl border border-slate-800 space-y-4">
+          <Clock className="w-12 h-12 text-amber-400 mx-auto animate-spin" />
+          <h2 className="text-2xl font-bold text-white">Preparing Next Player...</h2>
+          <p className="text-slate-400 text-sm">Synchronizing auction state with room participants</p>
+        </div>
+      </div>
+    );
+  }
+
+  const player = lot.player;
+  const highestBidderFranchise = lot.highestBidderFranchiseId
+    ? room.franchises[lot.highestBidderFranchiseId]
+    : null;
+
+  // Feasibility & eligibility check
+  const isMyFranchiseHighest = myFranchise && lot.highestBidderFranchiseId === myFranchise.id;
+  const isEliminated = myFranchise?.isEliminated;
+
+  let canBid = true;
+  let cannotBidReason = null;
+
+  if (!myFranchise) {
+    canBid = false;
+    cannotBidReason = "You have not claimed a franchise";
+  } else if (room.status !== 'active') {
+    canBid = false;
+    cannotBidReason = "Auction is paused";
+  } else if (!lotOpen || lot.countdown <= 0) {
+    canBid = false;
+    cannotBidReason = lot.hammerStatus === 'SOLD' ? "Player sold — next lot coming up" : "Bidding closed for this lot";
+  } else if (isMyFranchiseHighest) {
+    canBid = false;
+    cannotBidReason = "You already hold the highest bid";
+  } else if (isEliminated) {
+    canBid = false;
+    cannotBidReason = "Franchise is financially eliminated";
+  } else if (myFranchise.squad.length >= room.config.maxSquadSize) {
+    canBid = false;
+    cannotBidReason = `Max squad limit (${room.config.maxSquadSize}) reached`;
+  } else if (player.isOverseas && myFranchise.overseasCount >= room.config.maxOverseas) {
+    canBid = false;
+    cannotBidReason = `Max overseas slots (${room.config.maxOverseas}) filled`;
+  } else {
+    // Mirrors the server's checks (the server decides; this only explains a disabled button).
+    // Money is compared in integer lakhs (1 Cr = 100 lakh) to avoid floating-point errors.
+    const lakh = v => Math.round(v * 100);
+    const keepersNeeded = Math.max(0, (room.config.minWKs ?? 1) - myFranchise.squad.filter(p => p.category === 'WK').length - (player.category === 'WK' ? 1 : 0));
+    const slotsLeftAfter = room.config.maxSquadSize - (myFranchise.squad.length + 1);
+    const projectedPurseLakh = lakh(myFranchise.remainingPurse) - lakh(lot.nextValidBid);
+    // Same floor as the server: configured minimum, never below the cheapest base price
+    const cheapestLakh = catalog.reduce((m, p) => (typeof p.basePrice === 'number' && p.basePrice > 0 ? Math.min(m, lakh(p.basePrice)) : m), Infinity);
+    const floorLakh = Math.max(lakh(room.config.minPlayerPrice || 0), Number.isFinite(cheapestLakh) ? cheapestLakh : 0);
+    const remainingSlots = Math.max(0, room.config.minSquadSize - (myFranchise.squad.length + 1));
+    if (keepersNeeded > slotsLeftAfter) {
+      canBid = false;
+      cannotBidReason = "Keep a squad slot for a wicketkeeper";
+    } else if (projectedPurseLakh < 0) {
+      canBid = false;
+      cannotBidReason = "Insufficient purse balance";
+    } else if (projectedPurseLakh < remainingSlots * floorLakh) {
+      canBid = false;
+      cannotBidReason = `Must reserve ₹${(remainingSlots * floorLakh / 100).toFixed(2)} Cr for remaining ${remainingSlots} mandatory slots`;
+    }
+  }
+
+  const submitBid = (amount) => {
+    if (!myFranchise || submittingBid) return;
+    setSubmittingBid(true);
+    setBidError(null);
+    setPulseBid(true);
+    setTimeout(() => setPulseBid(false), 400);
+
+    onPlaceBid({
+      franchiseId: myFranchise.id,
+      bidAmount: amount,
+      expectedVersion: lot.stateVersion
+    }, (res) => {
+      setSubmittingBid(false);
+      if (!res?.success) {
+        setBidError(res?.error || "Bid could not be processed");
+      }
+    });
+  };
+
+  const handleMainBidClick = () => {
+    if (!canBid) return;
+    submitBid(lot.nextValidBid);
+  };
+
+  // Handle Skip Set host action
+  const handleConfirmSkipSet = () => {
+    setIsSkipSetConfirmOpen(false);
+    if (!participant?.isHost) return;
+    setIsSkippingSet(true);
+    if (onSkipSet) {
+      onSkipSet();
+    }
+    setTimeout(() => setIsSkippingSet(false), 1500);
+  };
+
+  const copyRoomCode = () => {
+    navigator.clipboard.writeText(room.roomCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  // Countdown timer calculations (server-authoritative; default 20 s)
+  const timerRadius = 40;
+  const timerCircumference = 2 * Math.PI * timerRadius;
+  const timerDuration = room.config.timerDuration || 20;
+  const timerPct = Math.max(0, lot.countdown / timerDuration);
+  const strokeDashoffset = timerCircumference - timerPct * timerCircumference;
+  const isUrgent = lot.countdown <= 6;
+  const isCritical = lot.countdown <= 3;
+  const timerColor = isCritical ? "#EF4444" : isUrgent ? "#F59E0B" : "#10B981";
+
+
   // Navigation handlers
   const jumpToActiveLot = () => {
     if (searchQuery || categoryFilter !== 'ALL' || nationalityFilter !== 'ALL' || statusFilter !== 'ALL') {
@@ -358,6 +396,9 @@ export default function LiveAuctionView({
 
   return (
     <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-4 space-y-4">
+      {/* 0. Optional 3D arena (display only; hidden automatically if the build or WebGL is missing) */}
+      <UnityArena room={room} />
+
       {/* 1. TOP STADIUM ARENA BANNER (Matches Reference Image) */}
       <div className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-gradient-to-b from-[#0a153a] via-[#050b25] to-[#04081a]">
         {/* Spotlight Arena Backdrop */}
@@ -428,8 +469,14 @@ export default function LiveAuctionView({
               Private Room
             </span>
 
-            {/* Complete Auction Category & Set Navigation Info */}
-            <div className="hidden sm:flex items-center gap-2 bg-slate-900/95 border border-slate-700/80 px-3.5 py-1.5 rounded-xl text-slate-300 font-medium text-xs shadow-inner">
+            {/* Complete Auction Profile, Round, Category & Set Navigation Info */}
+            <div className="hidden sm:flex flex-wrap items-center gap-2 bg-slate-900/95 border border-slate-700/80 px-3.5 py-1.5 rounded-xl text-slate-300 font-medium text-xs shadow-inner">
+              <ProfileBadge profile={lot.profile || player.profile} />
+              <span className="text-slate-600">|</span>
+              <span className="text-cyan-400 font-bold uppercase tracking-wider">
+                ROUND {lot.round || player.round || 1}
+              </span>
+              <span className="text-slate-600">|</span>
               <span className="text-amber-400 font-extrabold uppercase tracking-wider">
                 CATEGORY: <strong className="text-white">{player.category}</strong>
               </span>
@@ -439,15 +486,19 @@ export default function LiveAuctionView({
               </span>
               <span className="text-slate-600">|</span>
               <span className="font-mono">
-                LOT: <strong className="text-white">{String(player.lotInSet || 1).padStart(2, '0')} / {String(player.setTotal || 8).padStart(2, '0')}</strong>
+                LOT: <strong className="text-white">{String(player.lotInSet || 1).padStart(2, '0')} / {String(player.setTotal || 6).padStart(2, '0')}</strong>
               </span>
               <span className="text-slate-600">|</span>
-              <span className="font-mono text-[11px] text-slate-400">
-                COMPLETED: <strong className="text-emerald-400">{String((player.lotInSet || 1) - 1).padStart(2, '0')}</strong>
+              <span className="font-mono text-[11px] text-slate-400" title="Players remaining in set">
+                SET REMAINING: <strong className="text-amber-400">{lot.remainingInSet ?? Math.max(1, (player.setTotal || 6) - ((player.lotInSet || 1) - 1))}</strong>
               </span>
               <span className="text-slate-600">|</span>
-              <span className="font-mono text-[11px] text-slate-400">
-                REMAINING: <strong className="text-amber-400">{String((player.setTotal || 8) - ((player.lotInSet || 1) - 1)).padStart(2, '0')}</strong>
+              <span className="font-mono text-[11px] text-slate-400" title="Players remaining in this round">
+                ROUND REMAINING: <strong className="text-cyan-300">{lot.remainingInRound ?? '—'}</strong>
+              </span>
+              <span className="text-slate-600">|</span>
+              <span className="font-mono text-[11px] text-slate-400" title="Players remaining in auction">
+                AUCTION REMAINING: <strong className="text-emerald-400">{lot.remainingInAuction ?? (catalog.length - currentIdx)}</strong>
               </span>
             </div>
           </div>
@@ -889,7 +940,7 @@ export default function LiveAuctionView({
                 {/* Golden Laurel Wreath Rating */}
                 <div className="flex flex-col items-center justify-center px-2 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 shadow-md">
                   <span className="text-[8px] font-extrabold text-amber-400 uppercase tracking-wider">OVR</span>
-                  <span className="text-lg font-black text-amber-300 font-mono leading-none">{player.rating}</span>
+                  <span className="text-lg font-black text-amber-300 font-mono leading-none">{player.rating || "—"}</span>
                 </div>
               </div>
 
@@ -897,37 +948,37 @@ export default function LiveAuctionView({
               <div className="grid grid-cols-4 gap-1.5 mt-3 text-center">
                 <div className="bg-slate-900/80 border border-slate-800 p-1.5 rounded-lg">
                   <span className="text-[9px] text-slate-400 uppercase font-semibold block">Matches</span>
-                  <span className="text-xs font-bold text-white font-mono">{player.stats.matches || 0}</span>
+                  <span className="text-xs font-bold text-white font-mono">{player.stats?.matches ?? "—"}</span>
                 </div>
 
                 {player.category === 'BAT' || player.category === 'WK' ? (
                   <>
                     <div className="bg-slate-900/80 border border-slate-800 p-1.5 rounded-lg">
                       <span className="text-[9px] text-slate-400 uppercase font-semibold block">Runs</span>
-                      <span className="text-xs font-bold text-white font-mono">{player.stats.runs || 0}</span>
+                      <span className="text-xs font-bold text-white font-mono">{player.stats?.runs ?? "—"}</span>
                     </div>
                     <div className="bg-slate-900/80 border border-slate-800 p-1.5 rounded-lg">
                       <span className="text-[9px] text-slate-400 uppercase font-semibold block">SR</span>
-                      <span className="text-xs font-black text-emerald-400 font-mono">{player.stats.sr || "130.0"}</span>
+                      <span className="text-xs font-black text-emerald-400 font-mono">{player.stats?.sr ?? "—"}</span>
                     </div>
                     <div className="bg-slate-900/80 border border-slate-800 p-1.5 rounded-lg">
                       <span className="text-[9px] text-slate-400 uppercase font-semibold block">HS</span>
-                      <span className="text-xs font-bold text-amber-400 font-mono">{player.stats.hs || "75*"}</span>
+                      <span className="text-xs font-bold text-amber-400 font-mono">{player.stats?.hs ?? "—"}</span>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="bg-slate-900/80 border border-slate-800 p-1.5 rounded-lg">
                       <span className="text-[9px] text-slate-400 uppercase font-semibold block">Wickets</span>
-                      <span className="text-xs font-bold text-white font-mono">{player.stats.wickets || 0}</span>
+                      <span className="text-xs font-bold text-white font-mono">{player.stats?.wickets ?? "—"}</span>
                     </div>
                     <div className="bg-slate-900/80 border border-slate-800 p-1.5 rounded-lg">
                       <span className="text-[9px] text-slate-400 uppercase font-semibold block">Economy</span>
-                      <span className="text-xs font-black text-emerald-400 font-mono">{player.stats.econ || "7.50"}</span>
+                      <span className="text-xs font-black text-emerald-400 font-mono">{player.stats?.econ ?? "—"}</span>
                     </div>
                     <div className="bg-slate-900/80 border border-slate-800 p-1.5 rounded-lg">
                       <span className="text-[9px] text-slate-400 uppercase font-semibold block">BBI</span>
-                      <span className="text-xs font-bold text-amber-400 font-mono">{player.stats.bbi || "3/20"}</span>
+                      <span className="text-xs font-bold text-amber-400 font-mono">{player.stats?.bbi ?? "—"}</span>
                     </div>
                   </>
                 )}

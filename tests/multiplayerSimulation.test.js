@@ -1,15 +1,16 @@
 // Real-time End-to-End Multiplayer Simulation using Socket.io clients
 import assert from 'assert';
 import { io } from 'socket.io-client';
+import { calculateNextBid } from '../server/auctionEngine.js';
 
-const SERVER_URL = 'http://localhost:4000';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:4000';
 
 async function runMultiplayerSimulation() {
   console.log('🚀 Launching Real-time Multiplayer Auction Simulation...\n');
 
   // 1. Create Room via REST API
-  const hostToken = 'usr_dhoni_777';
-  const joinToken = 'usr_gambhir_888';
+  const hostToken = 'usr_dhoni_777_simulation_host'; // tokens must be >= 16 chars
+  const joinToken = 'usr_gambhir_888_simulation_join';
 
   const createRes = await fetch(`${SERVER_URL}/api/rooms`, {
     method: 'POST',
@@ -17,7 +18,7 @@ async function runMultiplayerSimulation() {
     body: JSON.stringify({
       hostName: 'MS Dhoni',
       hostToken,
-      config: { basePurse: 120.0, timerDuration: 15, minParticipants: 2, minSquadSize: 1 }
+      config: { basePurse: 120.0, timerDuration: 15, minParticipants: 2 } // squad limits are fixed IPL rules (Stage 2)
     })
   });
 
@@ -80,11 +81,17 @@ async function runMultiplayerSimulation() {
 
   const lotState = await startPromise;
   console.log(`  🎯 Auction Started! Presented Lot #1: ${lotState.currentLot.player.name} (${lotState.currentLot.setName})`);
-  assert.strictEqual(lotState.currentLot.player.name, 'Virat Kohli');
+  // Lot order is shuffled within each set at start: lot #1 is a player from the first set (High-Profile Round 1 Batters)
+  assert.strictEqual(lotState.currentLot.player.categorySet, 'HIGH-R01-BAT');
+  assert.strictEqual(lotState.currentLot.player.category, 'BAT');
+  assert.strictEqual(lotState.currentLot.lotNumber, 1);
   assert.strictEqual(lotState.currentLot.countdown, 15);
   console.log(`  ⏱️ Verified 15-second initial countdown on Lot #1`);
 
-  // 7. Dhoni places opening bid (₹2.00 Cr) - resets timer to 15s
+  // 7. Dhoni places opening bid (the lot's base price; lot 1 is any first-set player since the
+  //    order is shuffled within sets) - resets timer to 15s
+  const opening = lotState.currentLot.player.basePrice;
+  const second = calculateNextBid(opening, opening);
   const bid1Promise = new Promise((res) => {
     socket2.on('bid_accepted', (payload) => res(payload));
   });
@@ -94,7 +101,7 @@ async function runMultiplayerSimulation() {
       roomCode,
       participantToken: hostToken,
       franchiseId: 'CSK',
-      bidAmount: 2.0,
+      bidAmount: opening,
       expectedVersion: lotState.currentLot.stateVersion
     }, res);
   });
@@ -102,8 +109,8 @@ async function runMultiplayerSimulation() {
 
   const bid1Payload = await bid1Promise;
   console.log(`  🔨 Bid #1 Accepted: CSK bid ₹${bid1Payload.bid.bidAmount} Cr on ${bid1Payload.bid.playerName}`);
-  assert.strictEqual(bid1Payload.currentLot.highestBid, 2.0);
-  assert.strictEqual(bid1Payload.nextValidBid, 2.25);
+  assert.strictEqual(bid1Payload.currentLot.highestBid, opening);
+  assert.strictEqual(bid1Payload.nextValidBid, second);
   assert.strictEqual(bid1Payload.currentLot.countdown, 15);
   console.log(`  ⏱️ Verified countdown reset to 15 seconds after bid #1`);
 
@@ -122,7 +129,7 @@ async function runMultiplayerSimulation() {
   assert.strictEqual(resumeRes.room.status, 'active');
   console.log(`  ▶️ Auction Resumed successfully`);
 
-  // 9. Gambhir places automatic increment bid (+₹0.25 Cr -> ₹2.25 Cr)
+  // 9. Gambhir places the automatic next increment bid
   const bid2Promise = new Promise((res) => {
     socket1.on('bid_accepted', (payload) => res(payload));
   });
@@ -132,7 +139,7 @@ async function runMultiplayerSimulation() {
       roomCode,
       participantToken: joinToken,
       franchiseId: 'KKR',
-      bidAmount: 2.25,
+      bidAmount: second,
       expectedVersion: bid1Payload.currentLot.stateVersion
     }, res);
   });
@@ -140,8 +147,8 @@ async function runMultiplayerSimulation() {
 
   const bid2Payload = await bid2Promise;
   console.log(`  🔨 Bid #2 Accepted: KKR outbid with automatic increment ₹${bid2Payload.bid.bidAmount} Cr`);
-  assert.strictEqual(bid2Payload.currentLot.highestBid, 2.25);
-  assert.strictEqual(bid2Payload.nextValidBid, 2.50);
+  assert.strictEqual(bid2Payload.currentLot.highestBid, second);
+  assert.strictEqual(bid2Payload.nextValidBid, calculateNextBid(second, opening));
   assert.strictEqual(bid2Payload.currentLot.countdown, 15);
   console.log(`  ⏱️ Verified countdown reset to 15 seconds after bid #2`);
 
@@ -159,10 +166,10 @@ async function runMultiplayerSimulation() {
   assert.strictEqual(soldResult.result, 'SOLD');
   assert.strictEqual(soldResult.historyEntry.winningFranchiseCode, 'KKR');
 
-  // Verify KKR Purse deducted from ₹120.00 Cr to ₹117.75 Cr
-  assert.strictEqual(soldResult.franchises.KKR.remainingPurse, 117.75);
+  // Verify KKR Purse deducted exactly once, exactly (integer lakhs): ₹120 Cr − winning bid
+  assert.strictEqual(soldResult.franchises.KKR.remainingPurse, (12000 - Math.round(second * 100)) / 100);
   assert.strictEqual(soldResult.franchises.KKR.squad.length, 1);
-  console.log(`  💳 KKR Purse updated: Remaining ₹${soldResult.franchises.KKR.remainingPurse} Cr (₹2.25 Cr deducted from ₹120 Cr)`);
+  console.log(`  💳 KKR Purse updated: Remaining ₹${soldResult.franchises.KKR.remainingPurse} Cr (₹${second} Cr deducted from ₹120 Cr)`);
 
   // 10. Finish Auction & Verify Evaluation & Podium
   const finishPromise = new Promise((res) => {

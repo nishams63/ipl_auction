@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { socket, getUserSession, saveUserSession, SERVER_URL } from './utils/socket';
 import { playGavel, playBidPing, playSoldFanfare, playUnsold } from './utils/audio';
 import Navbar from './components/Navbar';
@@ -19,33 +19,51 @@ export default function App() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [inspectFranchiseId, setInspectFranchiseId] = useState(null);
   const [completedLotEvent, setCompletedLotEvent] = useState(null);
+  const [sessionReplaced, setSessionReplaced] = useState(false);
 
-  // Auto reconnect to room if stored in session
+  // Latest values for socket handlers registered once
+  const sessionRef = useRef(session);
+  const participantRef = useRef(participant);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { participantRef.current = participant; }, [participant]);
+
+  // (Re)join the stored room on every socket connect: first load, and after any
+  // network drop / server restart, since a new socket is not in the room channel.
   useEffect(() => {
-    if (session.lastRoom && session.name) {
+    const rejoin = () => {
+      const s = sessionRef.current;
+      if (!s.lastRoom || !s.name) return;
       socket.emit('join_room', {
-        roomCode: session.lastRoom,
-        participantName: session.name,
-        participantToken: session.token
+        roomCode: s.lastRoom,
+        participantName: s.name,
+        participantToken: s.token
       }, (res) => {
         if (res?.success) {
+          setSessionReplaced(false);
           setRoom(res.room);
           setParticipant(res.participant);
         }
       });
-    }
+    };
+    socket.on('connect', rejoin);
+    if (socket.connected) rejoin();
+    const onReplaced = () => setSessionReplaced(true);
+    socket.on('session_replaced', onReplaced);
+    return () => {
+      socket.off('connect', rejoin);
+      socket.off('session_replaced', onReplaced);
+    };
   }, []);
 
   // Listen to server socket events
   useEffect(() => {
     socket.on('state_updated', (updatedRoom) => {
       setRoom(updatedRoom);
-      // Synchronize my participant state
-      if (updatedRoom && session.token) {
-        const found = Object.values(updatedRoom.franchises).find(f => f.ownerToken === session.token);
-        if (found) {
-          setParticipant(prev => prev ? { ...prev, franchiseId: found.id } : null);
-        }
+      // Synchronize my franchise via my public id (tokens are never broadcast)
+      const me = participantRef.current;
+      if (updatedRoom && me?.publicId) {
+        const found = Object.values(updatedRoom.franchises).find(f => f.ownerId === me.publicId);
+        setParticipant(prev => prev ? { ...prev, franchiseId: found ? found.id : null } : prev);
       }
     });
 
@@ -118,6 +136,11 @@ export default function App() {
       setRoom(updatedRoom);
     });
 
+    // Post-auction: the AI analysis started, finished or failed (scores never change)
+    socket.on('analysis_updated', (updatedRoom) => {
+      setRoom(updatedRoom);
+    });
+
     socket.on('set_skipped', (data) => {
       setRoom(prev => {
         if (!prev) return prev;
@@ -136,6 +159,7 @@ export default function App() {
       socket.off('lot_completed');
       socket.off('timer_tick');
       socket.off('auction_completed');
+      socket.off('analysis_updated');
       socket.off('set_skipped');
     };
   }, [session.token]);
@@ -153,6 +177,10 @@ export default function App() {
         })
       });
       const data = await res.json();
+      if (!res.ok) {
+        alert(data.errors?.join('\n') || data.error || 'Could not create room');
+        return;
+      }
       if (data.roomCode) {
         saveUserSession({ name: hostName, roomCode: data.roomCode });
         setSession(prev => ({ ...prev, name: hostName, lastRoom: data.roomCode }));
@@ -221,6 +249,10 @@ export default function App() {
       roomCode: room.roomCode,
       hostToken: session.token,
       config
+    }, (res) => {
+      if (!res?.success) {
+        alert(res?.errors?.join('\n') || res?.error || 'Settings were not saved');
+      }
     });
   };
 
@@ -240,6 +272,14 @@ export default function App() {
     socket.emit('advance_lot', {
       roomCode: room.roomCode,
       hostToken: session.token
+    });
+  };
+
+  // Ask the server for AI reports (server-side; the browser never sees an API key)
+  const handleRequestAiAnalysis = (force, callback) => {
+    if (!room) return;
+    socket.emit('request_ai_analysis', { roomCode: room.roomCode, force: !!force }, (res) => {
+      if (callback) callback(res);
     });
   };
 
@@ -280,7 +320,7 @@ export default function App() {
 
   const myFranchise = room && participant?.franchiseId
     ? room.franchises[participant.franchiseId]
-    : (room && Object.values(room.franchises).find(f => f.ownerToken === session.token));
+    : (room && participant?.publicId && Object.values(room.franchises).find(f => f.ownerId === participant.publicId));
 
   const openSquadModal = (franchiseId) => {
     setInspectFranchiseId(franchiseId || myFranchise?.id);
@@ -304,6 +344,23 @@ export default function App() {
         }}
       />
 
+      {sessionReplaced && (
+        <div role="alert" className="bg-amber-500/15 border-b border-amber-500/40 text-amber-200 text-sm px-4 py-2 flex items-center justify-center gap-3">
+          <span>This room was opened in another tab or device. This tab can no longer bid.</span>
+          <button
+            className="font-bold underline"
+            onClick={() => {
+              const s = sessionRef.current;
+              socket.emit('join_room', { roomCode: s.lastRoom, participantName: s.name, participantToken: s.token }, (res) => {
+                if (res?.success) { setSessionReplaced(false); setRoom(res.room); setParticipant(res.participant); }
+              });
+            }}
+          >
+            Use this tab
+          </button>
+        </div>
+      )}
+
       <main className="flex-1">
         {!room ? (
           <LandingView
@@ -324,8 +381,10 @@ export default function App() {
         ) : room.status === 'completed' ? (
           <FinalResultsView
             room={room}
+            participant={participant}
             onInspectSquad={openSquadModal}
             onBackToLobby={() => setRoom(null)}
+            onRequestAiAnalysis={handleRequestAiAnalysis}
           />
         ) : (
           <LiveAuctionView

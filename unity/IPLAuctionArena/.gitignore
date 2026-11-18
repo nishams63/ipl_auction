@@ -1,0 +1,9 @@
+# Unity-generated folders (recreated when the project is opened)
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/Builds/
+*.csproj
+*.sln

@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { createSessionStore } from './session.js';
 
 export const SERVER_URL = import.meta.env.VITE_SERVER_URL || (
   typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '5173'
@@ -11,18 +12,7 @@ export const socket = io(SERVER_URL || (typeof window !== 'undefined' ? window.l
   transports: ['websocket', 'polling']
 });
 
-export function getUserSession() {
-  let token = localStorage.getItem('ipl_user_token');
-  if (!token) {
-    token = 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
-    localStorage.setItem('ipl_user_token', token);
-  }
-  const name = localStorage.getItem('ipl_user_name') || '';
-  const lastRoom = localStorage.getItem('ipl_room_code') || '';
-  return { token, name, lastRoom };
-}
-
-export function saveUserSession({ name, roomCode }) {
-  if (name) localStorage.setItem('ipl_user_name', name);
-  if (roomCode) localStorage.setItem('ipl_room_code', roomCode);
-}
+// Session identity lives in ./session.js (pure, unit-tested in tests/compatibility.test.js)
+const store = createSessionStore(localStorage);
+export const getUserSession = () => store.getUserSession();
+export const saveUserSession = (args) => store.saveUserSession(args);

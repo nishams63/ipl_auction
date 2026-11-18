@@ -16,7 +16,8 @@ export default function LandingView({
   const [mode, setMode] = useState(null); // null | 'create' | 'join'
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [basePurse, setBasePurse] = useState(120);
+  // Fixed IPL rule (server-enforced): every franchise starts with ₹120 Cr
+  const basePurse = 120;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -343,20 +344,9 @@ export default function LandingView({
                       ₹{basePurse} Cr
                     </span>
                   </div>
-                  <input
-                    type="range"
-                    min="60"
-                    max="180"
-                    step="5"
-                    value={basePurse}
-                    onChange={e => setBasePurse(e.target.value)}
-                    className="w-full accent-amber-400 cursor-pointer"
-                  />
-                  <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-                    <span>₹60 Cr</span>
-                    <span>Standard: ₹120 Cr</span>
-                    <span>₹180 Cr</span>
-                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Fixed by the IPL auction rules for all 10 franchises (squad 15–25, max 8 overseas, at least 1 wicketkeeper).
+                  </p>
                 </div>
               )}
 

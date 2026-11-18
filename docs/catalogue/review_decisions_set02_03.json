@@ -1,0 +1,1756 @@
+{
+  "status": "PROPOSED \u2014 awaiting owner approval; nothing imported",
+  "distinctButSimilar": [
+    {
+      "candidate": "Kuldip Yadav",
+      "similarTo": "PL_025 Kuldeep Yadav",
+      "why": "different role: fast bowler vs left-arm wrist spinner"
+    },
+    {
+      "candidate": "Shubham Garhwal",
+      "similarTo": "PL_229 Shubham Agarwal",
+      "why": "different surname; batter vs leg-spinner"
+    },
+    {
+      "candidate": "Mandeep Singh",
+      "similarTo": "PL_097 Ramandeep Singh",
+      "why": "different first name; batter vs all-rounder"
+    },
+    {
+      "candidate": "Mohit Sharma",
+      "similarTo": "PL_003 Rohit Sharma",
+      "why": "different first name; fast bowler vs batter"
+    },
+    {
+      "candidate": "Fabian Allen",
+      "similarTo": "PL_114 Finn Allen",
+      "why": "West Indies all-rounder vs New Zealand wicketkeeper"
+    },
+    {
+      "candidate": "Dwaine Pretorius",
+      "similarTo": "PL_194 Lhuan-dre Pretorius",
+      "why": "all-rounder vs wicketkeeper"
+    },
+    {
+      "candidate": "Duan Jansen",
+      "similarTo": "Marco Jansen (Set 02)",
+      "why": "twin brothers; both candidates are distinct players"
+    },
+    {
+      "candidate": "Kusal Mendis",
+      "similarTo": "PL_088 Kusal Perera / PL_177 Kamindu Mendis",
+      "why": "three distinct Sri Lankan players"
+    },
+    {
+      "candidate": "Mukesh Choudhary",
+      "similarTo": "PL_158 Mukul Choudhary",
+      "why": "fast bowler vs wicketkeeper"
+    },
+    {
+      "candidate": "Abhishek Sharma",
+      "similarTo": "PL_113 Abhishek Porel",
+      "why": "different surnames"
+    },
+    {
+      "candidate": "Kuldeep Sen",
+      "similarTo": "PL_025 Kuldeep Yadav",
+      "why": "different surnames"
+    },
+    {
+      "candidate": "Harpreet Singh Bhatia",
+      "similarTo": "PL_269 Harpreet Brar",
+      "why": "batter vs spinner; different surnames"
+    },
+    {
+      "candidate": "KS Bharat",
+      "similarTo": "Krish Bhagat (Set 03)",
+      "why": "wicketkeeper vs fast bowler"
+    },
+    {
+      "candidate": "David Willey",
+      "similarTo": "David Wiese (Set 03)",
+      "why": "England vs Namibia"
+    },
+    {
+      "candidate": "Ravichandran Ashwin",
+      "similarTo": "PL_111 Murugan Ashwin",
+      "why": "different players; shared name only"
+    }
+  ],
+  "decisions": [
+    {
+      "index": 0,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Ajinkya Rahane",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 1,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Rilee Rossouw",
+      "category": "BAT",
+      "country": "South Africa",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 2,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Ripal Patel",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 3,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Priyam Garg",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 4,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Jason Roy",
+      "category": "BAT",
+      "country": "England",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 5,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Mandeep Singh",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 6,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Jamie Overton",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 7,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Kulwant Khejroliya",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 8,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Ishant Sharma",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 9,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Chetan Sakariya",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 10,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Mohit Sharma",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 11,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Arshad Khan",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 12,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Raghav Goyal",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 13,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Hrithik Shokeen",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 14,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Piyush Chawla",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 15,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Karan Sharma",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "MANUAL_REVIEW_POSSIBLE_DUPLICATE",
+      "confidence": "medium",
+      "existingId": "PL_145",
+      "existingName": "Karn Sharma",
+      "reason": "\"Karan\"/\"Karn\" spelling variant; both Indian spinners. \"Sharma\" is very common, so it could be a different player"
+    },
+    {
+      "index": 16,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Vijayakanth Viyaskanth",
+      "category": "SP",
+      "country": "Sri Lanka",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 17,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Aman Hakim Khan",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "MANUAL_REVIEW_POSSIBLE_DUPLICATE",
+      "confidence": "medium",
+      "existingId": "PL_183",
+      "existingName": "Aman Khan",
+      "reason": "Existing \"Aman Khan\" (AR, India, medium pace and power batting) matches this all-rounder profile; the middle name is missing from the existing record"
+    },
+    {
+      "index": 18,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Lalit Yadav",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 19,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Matthew Short",
+      "category": "AR",
+      "country": "Australia",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 20,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Michael Bracewell",
+      "category": "AR",
+      "country": "New Zealand",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 21,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Abdul Basith",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 22,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Mohit Rathee",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 23,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Kusal Mendis",
+      "category": "WK",
+      "country": "Sri Lanka",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 24,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Litton Das",
+      "category": "WK",
+      "country": "Bangladesh",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 25,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Tom Kohler-Cadmore",
+      "category": "WK",
+      "country": "England",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 26,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Salil Arora",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 27,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Jordan Cox",
+      "category": "WK",
+      "country": "England",
+      "sourceNote": "IPL 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 28,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Harpreet Singh Bhatia",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 29,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Joe Root",
+      "category": "BAT",
+      "country": "England",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 30,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Manan Vohra",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 31,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Sherfane Rutherford",
+      "category": "BAT",
+      "country": "West Indies",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 32,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Tristan Stubbs",
+      "category": "BAT",
+      "country": "South Africa",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 33,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Sediqullah Atal",
+      "category": "BAT",
+      "country": "Afghanistan",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 34,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Jason Behrendorff",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 35,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Riley Meredith",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 36,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Duan Jansen",
+      "category": "BOWL",
+      "country": "South Africa",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 37,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Gurnoor Brar",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 38,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "KM Asif",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 39,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Obed McCoy",
+      "category": "BOWL",
+      "country": "West Indies",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 40,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Krishnappa Gowtham",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 41,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Suyash Prabhudessai",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 42,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Prerak Mankad",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 43,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Yudhvir Singh",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 44,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Marco Jansen",
+      "category": "AR",
+      "country": "South Africa",
+      "sourceNote": "IPL 2023, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 45,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Manoj Bhandage",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 46,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Shaik Rasheed",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 47,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Shubham Dubey",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2024, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 48,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Aniket Verma",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2025, 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 49,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Saurav Chauhan",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 50,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Ravichandran Smaran",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 51,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Cooper Connolly",
+      "category": "BAT",
+      "country": "Australia",
+      "sourceNote": "IPL 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 52,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Darshan Nalkande",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 53,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Alzarri Joseph",
+      "category": "BOWL",
+      "country": "West Indies",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 54,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Arjun Tendulkar",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 55,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Jaydev Unadkat",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 56,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Yash Thakur",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023, 2024, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 57,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Kwena Maphaka",
+      "category": "BOWL",
+      "country": "South Africa",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 58,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Jacob Bethell",
+      "category": "AR",
+      "country": "England",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 59,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Mitchell Owen",
+      "category": "AR",
+      "country": "Australia",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 60,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Corbin Bosch",
+      "category": "AR",
+      "country": "South Africa",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 61,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Madhav Tiwari",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 62,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Brydon Carse",
+      "category": "AR",
+      "country": "England",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 63,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Shivang Kumar",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 64,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Shamar Joseph",
+      "category": "BOWL",
+      "country": "West Indies",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 65,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Sandeep Warrier",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 66,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Luke Wood",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 67,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Nuwan Thushara",
+      "category": "BOWL",
+      "country": "Sri Lanka",
+      "sourceNote": "IPL 2024, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 68,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Vidwath Kaverappa",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 69,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Xavier Bartlett",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 70,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Harsh Dubey",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL 2025, 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 71,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Reece Topley",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL 2024, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 72,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Richard Gleeson",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL 2024, 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 73,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Ashwani Kumar",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2025, 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 74,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Eshan Malinga",
+      "category": "BOWL",
+      "country": "Sri Lanka",
+      "sourceNote": "IPL 2025, 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 75,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Praful Hinge",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 76,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "David Payne",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 77,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Satyanarayana Raju",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 78,
+      "source": "ipl_auction_set_02 (1).html",
+      "name": "Kuldip Yadav",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 79,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ambati Rayudu",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 80,
+      "source": "ipl_auction_set_03.html",
+      "name": "Robin Uthappa",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 81,
+      "source": "ipl_auction_set_03.html",
+      "name": "David Warner",
+      "category": "BAT",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 82,
+      "source": "ipl_auction_set_03.html",
+      "name": "Chris Jordan",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 83,
+      "source": "ipl_auction_set_03.html",
+      "name": "Mukesh Choudhary",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 84,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kamlesh Nagarkoti",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 85,
+      "source": "ipl_auction_set_03.html",
+      "name": "Pradeep Sangwan",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 86,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kumar Kartikeya",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 87,
+      "source": "ipl_auction_set_03.html",
+      "name": "Dwaine Pretorius",
+      "category": "AR",
+      "country": "South Africa",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 88,
+      "source": "ipl_auction_set_03.html",
+      "name": "Dwayne Bravo",
+      "category": "AR",
+      "country": "West Indies",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 89,
+      "source": "ipl_auction_set_03.html",
+      "name": "Devon Conway",
+      "category": "WK",
+      "country": "New Zealand",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 90,
+      "source": "ipl_auction_set_03.html",
+      "name": "KS Bharat",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 91,
+      "source": "ipl_auction_set_03.html",
+      "name": "Aaron Finch",
+      "category": "BAT",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 92,
+      "source": "ipl_auction_set_03.html",
+      "name": "Abhijeet Tomar",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 93,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ayush Badoni",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 94,
+      "source": "ipl_auction_set_03.html",
+      "name": "Varun Aaron",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 95,
+      "source": "ipl_auction_set_03.html",
+      "name": "Rasikh Salam",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "MANUAL_REVIEW_POSSIBLE_DUPLICATE",
+      "confidence": "medium",
+      "existingId": "PL_252",
+      "existingName": "Rasikh Dar",
+      "reason": "Existing \"Rasikh Dar\" shares the distinctive first name; same country (India) and role (fast bowler). The two surnames are plausibly parts of one full name, but the files give no full names"
+    },
+    {
+      "index": 96,
+      "source": "ipl_auction_set_03.html",
+      "name": "Tim Southee",
+      "category": "BOWL",
+      "country": "New Zealand",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 97,
+      "source": "ipl_auction_set_03.html",
+      "name": "Andrew Tye",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 98,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ravichandran Ashwin",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 99,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kieron Pollard",
+      "category": "AR",
+      "country": "West Indies",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 100,
+      "source": "ipl_auction_set_03.html",
+      "name": "Fabian Allen",
+      "category": "AR",
+      "country": "West Indies",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 101,
+      "source": "ipl_auction_set_03.html",
+      "name": "Wriddhiman Saha",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 102,
+      "source": "ipl_auction_set_03.html",
+      "name": "Matthew Wade",
+      "category": "WK",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 103,
+      "source": "ipl_auction_set_03.html",
+      "name": "Evin Lewis",
+      "category": "BAT",
+      "country": "West Indies",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 104,
+      "source": "ipl_auction_set_03.html",
+      "name": "Shikhar Dhawan",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 105,
+      "source": "ipl_auction_set_03.html",
+      "name": "Bhanuka Rajapaksa",
+      "category": "BAT",
+      "country": "Sri Lanka",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 106,
+      "source": "ipl_auction_set_03.html",
+      "name": "Basil Thampi",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 107,
+      "source": "ipl_auction_set_03.html",
+      "name": "Tymal Mills",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 108,
+      "source": "ipl_auction_set_03.html",
+      "name": "Nathan Coulter-Nile",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 109,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kuldeep Sen",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 110,
+      "source": "ipl_auction_set_03.html",
+      "name": "Amit Mishra",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 111,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sanjay Yadav",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 112,
+      "source": "ipl_auction_set_03.html",
+      "name": "Odean Smith",
+      "category": "AR",
+      "country": "West Indies",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 113,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sam Billings",
+      "category": "WK",
+      "country": "England",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 114,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sheldon Jackson",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 115,
+      "source": "ipl_auction_set_03.html",
+      "name": "Rassie van der Dussen",
+      "category": "BAT",
+      "country": "South Africa",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 116,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kane Williamson",
+      "category": "BAT",
+      "country": "New Zealand",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 117,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kedar Jadhav",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 118,
+      "source": "ipl_auction_set_03.html",
+      "name": "Siddarth Kaul",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 119,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sean Abbott",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 120,
+      "source": "ipl_auction_set_03.html",
+      "name": "Akash Singh",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 121,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sisanda Magala",
+      "category": "BOWL",
+      "country": "South Africa",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 122,
+      "source": "ipl_auction_set_03.html",
+      "name": "Adil Rashid",
+      "category": "SP",
+      "country": "England",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 123,
+      "source": "ipl_auction_set_03.html",
+      "name": "David Willey",
+      "category": "AR",
+      "country": "England",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 124,
+      "source": "ipl_auction_set_03.html",
+      "name": "Abhishek Sharma",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 125,
+      "source": "ipl_auction_set_03.html",
+      "name": "Baba Indrajith",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 126,
+      "source": "ipl_auction_set_03.html",
+      "name": "Dinesh Karthik",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2022",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 127,
+      "source": "ipl_auction_set_03.html",
+      "name": "Vivrant Sharma",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 128,
+      "source": "ipl_auction_set_03.html",
+      "name": "Vaibhav Suryavanshi",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "SKIP_PROBABLE_DUPLICATE",
+      "confidence": "high",
+      "existingId": "PL_167",
+      "existingName": "Vaibhav Sooryavanshi",
+      "reason": "Transliteration variant Surya-/Soorya-; same country (India) and role (BAT)"
+    },
+    {
+      "index": 129,
+      "source": "ipl_auction_set_03.html",
+      "name": "Joshua Little",
+      "category": "BOWL",
+      "country": "Ireland",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 130,
+      "source": "ipl_auction_set_03.html",
+      "name": "Mark Wood",
+      "category": "BOWL",
+      "country": "England",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 131,
+      "source": "ipl_auction_set_03.html",
+      "name": "Vyshak Vijay Kumar",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "SKIP_PROBABLE_DUPLICATE",
+      "confidence": "high",
+      "existingId": "PL_253",
+      "existingName": "Vijaykumar Vyshak",
+      "reason": "Same tokens in different order (\"Vijaykumar Vyshak\"); same country and role (fast bowler)"
+    },
+    {
+      "index": 132,
+      "source": "ipl_auction_set_03.html",
+      "name": "Wayne Parnell",
+      "category": "BOWL",
+      "country": "South Africa",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 133,
+      "source": "ipl_auction_set_03.html",
+      "name": "Vignesh Puthur",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 134,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sanvir Singh",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 135,
+      "source": "ipl_auction_set_03.html",
+      "name": "David Wiese",
+      "category": "AR",
+      "country": "Namibia",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 136,
+      "source": "ipl_auction_set_03.html",
+      "name": "Philip Salt",
+      "category": "WK",
+      "country": "England",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "SKIP_PROBABLE_DUPLICATE",
+      "confidence": "high",
+      "existingId": "PL_040",
+      "existingName": "Phil Salt",
+      "reason": "\"Phil\" is the short form of \"Philip\"; same country (England) and role (WK)"
+    },
+    {
+      "index": 137,
+      "source": "ipl_auction_set_03.html",
+      "name": "Abishek Porel",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2023",
+      "proposal": "SKIP_PROBABLE_DUPLICATE",
+      "confidence": "high",
+      "existingId": "PL_113",
+      "existingName": "Abhishek Porel",
+      "reason": "Transliteration variant Abishek/Abhishek; same country (India) and role (WK)"
+    },
+    {
+      "index": 138,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ashton Turner",
+      "category": "BAT",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 139,
+      "source": "ipl_auction_set_03.html",
+      "name": "Himmat Singh",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 140,
+      "source": "ipl_auction_set_03.html",
+      "name": "Auqib Nabi Dar",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "SKIP_PROBABLE_DUPLICATE",
+      "confidence": "high",
+      "existingId": "PL_255",
+      "existingName": "Auqib Nabi",
+      "reason": "Existing record omits the surname \"Dar\"; same country and role (fast bowler)"
+    },
+    {
+      "index": 141,
+      "source": "ipl_auction_set_03.html",
+      "name": "Lizaad Williams",
+      "category": "BOWL",
+      "country": "South Africa",
+      "sourceNote": "IPL appearance \u00b7 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 142,
+      "source": "ipl_auction_set_03.html",
+      "name": "Jhye Richardson",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 143,
+      "source": "ipl_auction_set_03.html",
+      "name": "Digvesh Rathi",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "SKIP_PROBABLE_DUPLICATE",
+      "confidence": "high",
+      "existingId": "PL_187",
+      "existingName": "Digvesh Singh Rathi",
+      "reason": "Existing record includes the middle name \"Singh\"; same country and role (spinner)"
+    },
+    {
+      "index": 144,
+      "source": "ipl_auction_set_03.html",
+      "name": "Gulbadin Naib",
+      "category": "AR",
+      "country": "Afghanistan",
+      "sourceNote": "IPL appearance \u00b7 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 145,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sumit Kumar",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2024",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 146,
+      "source": "ipl_auction_set_03.html",
+      "name": "BR Sharath",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2024",
+      "proposal": "HOLD_INCOMPLETE_IDENTITY",
+      "reason": "Only initials and a given name; full name needed for a stable identity"
+    },
+    {
+      "index": 147,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sachin Baby",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 148,
+      "source": "ipl_auction_set_03.html",
+      "name": "SU Parakh",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "HOLD_INCOMPLETE_IDENTITY",
+      "reason": "Only initials and surname given; full name needed for a stable identity"
+    },
+    {
+      "index": 149,
+      "source": "ipl_auction_set_03.html",
+      "name": "William O'Rourke",
+      "category": "BOWL",
+      "country": "New Zealand",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 150,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kyle Jamieson",
+      "category": "BOWL",
+      "country": "New Zealand",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 151,
+      "source": "ipl_auction_set_03.html",
+      "name": "Abhinandan Singh",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 152,
+      "source": "ipl_auction_set_03.html",
+      "name": "Allah Mohammad Ghazanfar",
+      "category": "SP",
+      "country": "Afghanistan",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 153,
+      "source": "ipl_auction_set_03.html",
+      "name": "Gulbudeen Naib",
+      "category": "AR",
+      "country": "Afghanistan",
+      "sourceNote": "IPL appearance \u00b7 2024",
+      "proposal": "SKIP_INTERNAL_DUPLICATE",
+      "confidence": "high",
+      "sameAs": "Gulbadin Naib",
+      "reason": "Two spellings of the same Afghan all-rounder; both listed in Set 03 (AR-11 and AR-13) with identical country and season"
+    },
+    {
+      "index": 154,
+      "source": "ipl_auction_set_03.html",
+      "name": "T Dahiya",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "MANUAL_REVIEW_POSSIBLE_DUPLICATE",
+      "confidence": "medium",
+      "existingId": "PL_233",
+      "existingName": "Tejasvi Dahiya",
+      "reason": "Initial \"T\" matches \"Tejasvi\"; same surname, country and role (WK); the initial alone cannot prove identity"
+    },
+    {
+      "index": 155,
+      "source": "ipl_auction_set_03.html",
+      "name": "Akshat Raghuwanshi",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 156,
+      "source": "ipl_auction_set_03.html",
+      "name": "DV Malewar",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "HOLD_INCOMPLETE_IDENTITY",
+      "reason": "Only initials and surname given; full name needed for a stable identity"
+    },
+    {
+      "index": 157,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ashok Sharma",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 158,
+      "source": "ipl_auction_set_03.html",
+      "name": "Tripurana Vijay",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 159,
+      "source": "ipl_auction_set_03.html",
+      "name": "RS Ghosh",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "HOLD_INCOMPLETE_IDENTITY",
+      "reason": "Only initials and surname given; very common surname; full name needed"
+    },
+    {
+      "index": 160,
+      "source": "ipl_auction_set_03.html",
+      "name": "Raghu Sharma",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 161,
+      "source": "ipl_auction_set_03.html",
+      "name": "Yuvraj Chaudhary",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2025 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 162,
+      "source": "ipl_auction_set_03.html",
+      "name": "LG Pretorius",
+      "category": "WK",
+      "country": "South Africa",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "MANUAL_REVIEW_POSSIBLE_DUPLICATE",
+      "confidence": "medium",
+      "existingId": "PL_194",
+      "existingName": "Lhuan-dre Pretorius",
+      "reason": "Same surname, country (South Africa) and role (WK); the \"L\" matches \"Lhuan-dre\" but the \"G\" cannot be checked"
+    },
+    {
+      "index": 163,
+      "source": "ipl_auction_set_03.html",
+      "name": "Pyla Avinash",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2025 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 164,
+      "source": "ipl_auction_set_03.html",
+      "name": "Andre Siddarth",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2025 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 165,
+      "source": "ipl_auction_set_03.html",
+      "name": "Saurabh Dubey",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 166,
+      "source": "ipl_auction_set_03.html",
+      "name": "Krish Bhagat",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 167,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ben Dwarshuis",
+      "category": "BOWL",
+      "country": "Australia",
+      "sourceNote": "IPL appearance \u00b7 2025",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 168,
+      "source": "ipl_auction_set_03.html",
+      "name": "Tejas Baroka",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2022 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 169,
+      "source": "ipl_auction_set_03.html",
+      "name": "Aneeshwar Gautam",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2022 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 170,
+      "source": "ipl_auction_set_03.html",
+      "name": "Kunal Rathore",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2025 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 171,
+      "source": "ipl_auction_set_03.html",
+      "name": "Pratham Singh",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2022 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 172,
+      "source": "ipl_auction_set_03.html",
+      "name": "Shubham Garhwal",
+      "category": "BAT",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2022 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 173,
+      "source": "ipl_auction_set_03.html",
+      "name": "Brijesh Sharma",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 174,
+      "source": "ipl_auction_set_03.html",
+      "name": "Sushant Mishra",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "IPL appearance \u00b7 2026",
+      "proposal": "ADD_NEW"
+    },
+    {
+      "index": 175,
+      "source": "ipl_auction_set_03.html",
+      "name": "Anunay Singh",
+      "category": "BOWL",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2022 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 176,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ansh Patel",
+      "category": "SP",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2022 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 177,
+      "source": "ipl_auction_set_03.html",
+      "name": "Ramesh Kumar",
+      "category": "AR",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2022 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    },
+    {
+      "index": 178,
+      "source": "ipl_auction_set_03.html",
+      "name": "Krishnan Shrijith",
+      "category": "WK",
+      "country": "India",
+      "sourceNote": "Domestic prospect \u00b7 2025 squad \u00b7 no IPL match confirmed",
+      "proposal": "POLICY_DECISION_DOMESTIC_PROSPECT",
+      "reason": "Source says: no IPL match confirmed"
+    }
+  ]
+}

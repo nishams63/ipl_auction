@@ -1,5 +1,7 @@
 // Comprehensive Automated Test Suite for IPL Auction Simulator
 import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
 import {
   calculateDynamicPurse,
   calculateNextBid,
@@ -16,7 +18,11 @@ let passedTests = 0;
 
 function it(description, fn) {
   try {
-    fn();
+    const result = fn();
+    // This runner is synchronous: an async test would log PASS before its assertions ran
+    if (result && typeof result.then === 'function') {
+      throw new Error('Async test functions are not supported by this runner; make the test synchronous');
+    }
     console.log(`  ✅ PASS: ${description}`);
     passedTests++;
   } catch (err) {
@@ -26,47 +32,59 @@ function it(description, fn) {
   }
 }
 
-// 1. Initial Franchise Purse & 15-Second Timer Tests
+// 1. Initial Franchise Purse, Squad Limits & 20-Second Timer Tests (rules approved 16 Nov 2026)
 it('Initial franchise purse is flat ₹120.0 Crore across all franchises (Total ₹1,200 Cr)', () => {
   assert.strictEqual(calculateDynamicPurse(120), 120.0);
   assert.strictEqual(DEFAULT_CONFIG.basePurse, 120.0);
-  assert.strictEqual(DEFAULT_CONFIG.maxSquadSize, 15);
-  assert.strictEqual(DEFAULT_CONFIG.timerDuration, 15);
+  assert.strictEqual(DEFAULT_CONFIG.minSquadSize, 15);
+  assert.strictEqual(DEFAULT_CONFIG.maxSquadSize, 25);
+  assert.strictEqual(DEFAULT_CONFIG.maxOverseas, 8);
+  assert.strictEqual(DEFAULT_CONFIG.minWKs, 1);
+  assert.strictEqual(DEFAULT_CONFIG.timerDuration, 20);
 });
 
-it('Preserves 8-player standard sets in Round-Robin order (BAT 1 -> BOWL 1 -> AR 1 -> SP 1 -> WK 1 -> BAT 2...)', async () => {
-  const fs = await import('fs');
-  const path = await import('path');
+it('Preserves round-wise profile sets from new catalogue (409 players across High, Medium, Low profiles)', () => {
   const players = JSON.parse(fs.readFileSync(path.resolve('./server/data/players.json'), 'utf-8'));
-  assert.strictEqual(players.length, 290);
+  assert.strictEqual(players.length, 409);
 
-  // Round 1 (Lots 1 to 40)
+  // Profile counts
+  const high = players.filter(p => p.profile === 'high');
+  const medium = players.filter(p => p.profile === 'medium');
+  const low = players.filter(p => p.profile === 'low');
+  assert.strictEqual(high.length, 134);
+  assert.strictEqual(medium.length, 155);
+  assert.strictEqual(low.length, 120);
+
+  // Round 1 High-Profile sets (6 players each)
   assert.strictEqual(players[0].category, 'BAT');
-  assert.strictEqual(players[0].setName, 'Batter Set 1');
   assert.strictEqual(players[0].round, 1);
-  assert.strictEqual(players[7].category, 'BAT');
+  assert.strictEqual(players[0].profile, 'high');
+  assert.strictEqual(players[5].category, 'BAT');
 
-  assert.strictEqual(players[8].category, 'BOWL');
-  assert.strictEqual(players[8].setName, 'Bowler Set 1');
-  assert.strictEqual(players[8].round, 1);
+  assert.strictEqual(players[6].category, 'BOWL');
+  assert.strictEqual(players[6].round, 1);
+  assert.strictEqual(players[11].category, 'BOWL');
 
-  assert.strictEqual(players[16].category, 'AR');
-  assert.strictEqual(players[16].setName, 'All-rounder Set 1');
+  assert.strictEqual(players[12].category, 'SP');
+  assert.strictEqual(players[12].round, 1);
+  assert.strictEqual(players[17].category, 'SP');
 
-  assert.strictEqual(players[24].category, 'SP');
-  assert.strictEqual(players[24].setName, 'Spinner Set 1');
+  assert.strictEqual(players[18].category, 'AR');
+  assert.strictEqual(players[18].round, 1);
+  assert.strictEqual(players[23].category, 'AR');
 
-  assert.strictEqual(players[32].category, 'WK');
-  assert.strictEqual(players[32].setName, 'Wicketkeeper Set 1');
+  assert.strictEqual(players[24].category, 'WK');
+  assert.strictEqual(players[24].round, 1);
+  assert.strictEqual(players[29].category, 'WK');
 
-  // Round 2 (Lot 41 begins Batter Set 2)
-  assert.strictEqual(players[40].category, 'BAT');
-  assert.strictEqual(players[40].setName, 'Batter Set 2');
-  assert.strictEqual(players[40].round, 2);
-
-  // Round 8 (Final Incomplete Sets)
-  const round8Players = players.filter(p => p.round === 8);
-  assert.strictEqual(round8Players.length, 10); // 1 BAT + 4 BOWL + 2 AR + 2 SP + 1 WK
+  // Incomplete set preserved: Low-Profile Round 7 Fast Bowlers has exactly 1 player
+  const lastPlayer = players[408];
+  assert.strictEqual(lastPlayer.name, 'Simarjeet Singh');
+  assert.strictEqual(lastPlayer.profile, 'low');
+  assert.strictEqual(lastPlayer.round, 7);
+  assert.strictEqual(lastPlayer.category, 'BOWL');
+  assert.strictEqual(lastPlayer.setTotal, 1);
+  assert.strictEqual(lastPlayer.isIncomplete, true);
 });
 
 // 2. Automatic Bid Increment Tests
