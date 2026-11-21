@@ -3,11 +3,11 @@
 // and lobby updates (RoomManager.updateConfig / update_config).
 //
 // Purse, squad limits, overseas cap and minimum keepers are FIXED IPL rules (FIXED_RULES).
-// Host-adjustable: timer 10–90 s (default 20), delay between lots, minimum participants.
+// Host-adjustable: timer 10–90 s (default 15), delay between lots, minimum participants.
 // Settings with no UI control (minParticipants, minPlayerPrice, autoAdvanceDelay, minWKs)
 // keep their defaults unless set at creation, and are still range-checked.
 
-// Approved defaults (16 Nov 2026): ₹120 Cr flat purse, squad 15–25, 8 overseas, 20 s timer.
+// Approved defaults (16 Nov 2026): ₹120 Cr flat purse, squad 15–25, 8 overseas, 15 s timer.
 export const DEFAULT_CONFIG = Object.freeze({
   basePurse: 120.0,
   maxFranchises: 10,
@@ -17,7 +17,7 @@ export const DEFAULT_CONFIG = Object.freeze({
   maxOverseas: 8,
   minWKs: 1,
   minPlayerPrice: 0.20, // ₹ Cr floor used for the squad-completion reserve
-  timerDuration: 20, // seconds
+  timerDuration: 15, // seconds
   autoAdvanceDelay: 4 // seconds between lots
 });
 

@@ -52,7 +52,7 @@ await t.it('defaults are the approved values and pass validation', () => {
   assert.strictEqual(DEFAULT_CONFIG.minSquadSize, 15);
   assert.strictEqual(DEFAULT_CONFIG.maxSquadSize, 25);
   assert.strictEqual(DEFAULT_CONFIG.maxOverseas, 8);
-  assert.strictEqual(DEFAULT_CONFIG.timerDuration, 20);
+  assert.strictEqual(DEFAULT_CONFIG.timerDuration, 15);
   assert.ok(validateConfig({}).ok);
   assert.throws(() => { DEFAULT_CONFIG.basePurse = 1; }, TypeError, 'defaults are mutable');
 });
@@ -106,7 +106,7 @@ await t.it('approved defaults apply when a room is created without config, over 
   const rm = trackManager(new RoomManager(mockIo(), { storageFile: tempStorageFile('cfg-def') }));
   const room = rm.createRoom({ hostName: 'H', hostToken: strongToken('h') });
   const pick = c => [c.basePurse, c.minSquadSize, c.maxSquadSize, c.maxOverseas, c.timerDuration, c.minWKs];
-  assert.deepStrictEqual(pick(room.config), [120, 15, 25, 8, 20, 1]);
+  assert.deepStrictEqual(pick(room.config), [120, 15, 25, 8, 15, 1]);
   assert.strictEqual(room.franchises.MI.initialPurse, 120);
 });
 
@@ -167,7 +167,7 @@ await t.it('update_config over socket rejects invalid values with reasons; confi
   const pub = await (await fetch(`${srv.url}/api/rooms/${body.roomCode}`)).json();
   assert.deepStrictEqual(
     { p: pub.config.basePurse, min: pub.config.minSquadSize, max: pub.config.maxSquadSize, o: pub.config.maxOverseas, t: pub.config.timerDuration },
-    { p: 120, min: 15, max: 25, o: 8, t: 20 });
+    { p: 120, min: 15, max: 25, o: 8, t: 15 });
   // The payload an older LobbyView sends (all five fields, fixed values) and the current one (timer only)
   const old = await emit(s, 'update_config', { roomCode: body.roomCode, config: { basePurse: 120, timerDuration: 30, minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8 } });
   assert.ok(old.success, old.error);

@@ -9,7 +9,12 @@ export const SERVER_URL = import.meta.env.VITE_SERVER_URL || (
 
 export const socket = io(SERVER_URL || (typeof window !== 'undefined' ? window.location.origin : ''), {
   autoConnect: true,
-  transports: ['websocket', 'polling']
+  transports: ['polling', 'websocket'],
+  reconnection: true,
+  reconnectionAttempts: 15,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000
 });
 
 // Session identity lives in ./session.js (pure, unit-tested in tests/compatibility.test.js)

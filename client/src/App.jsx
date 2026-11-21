@@ -166,55 +166,81 @@ export default function App() {
 
   // Actions
   const handleCreateRoom = async ({ hostName, basePurse }) => {
-    try {
-      const res = await fetch(`${SERVER_URL}/api/rooms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hostName,
-          hostToken: session.token,
-          config: { basePurse }
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.errors?.join('\n') || data.error || 'Could not create room');
-        return;
-      }
-      if (data.roomCode) {
-        saveUserSession({ name: hostName, roomCode: data.roomCode });
-        setSession(prev => ({ ...prev, name: hostName, lastRoom: data.roomCode }));
+    const createReq = () => fetch(`${SERVER_URL}/api/rooms`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostName,
+        hostToken: session.token,
+        config: { basePurse }
+      })
+    });
 
-        socket.emit('join_room', {
-          roomCode: data.roomCode,
-          participantName: hostName,
-          participantToken: session.token
-        }, (joinRes) => {
-          if (joinRes?.success) {
-            setRoom(joinRes.room);
-            setParticipant(joinRes.participant);
-          }
-        });
+    let res;
+    try {
+      res = await createReq();
+    } catch (firstErr) {
+      // Free-tier Render instances sleep after inactivity and take ~50s to wake up.
+      // If the edge dropped the first preflight while booting, wait 3 seconds and retry once.
+      console.warn("First create room request failed, retrying in 3s...", firstErr);
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        res = await createReq();
+      } catch (secondErr) {
+        console.error("Second create room request failed:", secondErr);
+        throw new Error(
+          "Unable to reach the backend server. The free-tier server on Render may be waking up from sleep (~50s). Please wait a few seconds and try again."
+        );
       }
-    } catch (err) {
-      console.error("Room creation error:", err);
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const msg = data.errors?.join('\n') || data.error || `Server error (${res.status})`;
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    if (data.roomCode) {
+      saveUserSession({ name: hostName, roomCode: data.roomCode });
+      setSession(prev => ({ ...prev, name: hostName, lastRoom: data.roomCode }));
+
+      if (!socket.connected) socket.connect();
+      socket.emit('join_room', {
+        roomCode: data.roomCode,
+        participantName: hostName,
+        participantToken: session.token
+      }, (joinRes) => {
+        if (joinRes?.success) {
+          setRoom(joinRes.room);
+          setParticipant(joinRes.participant);
+        }
+      });
     }
   };
 
   const handleJoinRoom = ({ participantName, roomCode }) => {
-    socket.emit('join_room', {
-      roomCode,
-      participantName,
-      participantToken: session.token
-    }, (res) => {
-      if (res?.success) {
-        saveUserSession({ name: participantName, roomCode });
-        setSession(prev => ({ ...prev, name: participantName, lastRoom: roomCode }));
-        setRoom(res.room);
-        setParticipant(res.participant);
-      } else {
-        alert(res?.error || "Could not join room");
-      }
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("Join request timed out. The backend server may be waking up. Please retry in a moment."));
+      }, 15000);
+
+      if (!socket.connected) socket.connect();
+      socket.emit('join_room', {
+        roomCode,
+        participantName,
+        participantToken: session.token
+      }, (res) => {
+        clearTimeout(timer);
+        if (res?.success) {
+          saveUserSession({ name: participantName, roomCode });
+          setSession(prev => ({ ...prev, name: participantName, lastRoom: roomCode }));
+          setRoom(res.room);
+          setParticipant(res.participant);
+          resolve();
+        } else {
+          reject(new Error(res?.error || "Could not join room"));
+        }
+      });
     });
   };
 
@@ -430,7 +456,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-[#040814] py-6 px-4 text-center text-xs text-slate-500">
-        IPL Multiplayer Real-Time Auction Simulator • 290 Verified Candidate Players • Server-Authoritative Engine
+        IPL Multiplayer Real-Time Auction Simulator • 409 Verified Candidate Players • Server-Authoritative Engine
       </footer>
     </div>
   );

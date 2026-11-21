@@ -1648,7 +1648,10 @@ export class RoomManager {
     room.status = 'completed';
     room.currentLot = null;
 
-    // Run deterministic squad evaluations
+    // Post-auction Cricket Mastermind evaluation snapshot (deterministic, saved once, never recomputed)
+    room.analysis = evaluateAuction(room);
+
+    // Backward-compatible evaluationResults aligned with Cricket Mastermind
     const activeFranchises = Object.values(room.franchises).filter(f => f.isClaimed);
     const initialPurse = activeFranchises[0]?.initialPurse || room.config.basePurse;
 
@@ -1657,14 +1660,20 @@ export class RoomManager {
     );
 
     const rankingResult = rankFranchises(evaluations);
+    if (room.analysis?.rankings?.length) {
+      rankingResult.podium = room.analysis.rankings.slice(0, 3).map(r => ({
+        franchiseId: r.franchiseId,
+        franchiseName: r.franchiseName,
+        rank: r.rank
+      }));
+    }
     room.evaluationResults = rankingResult;
-    // Stage 3: deterministic evaluation snapshot of all ten franchises (saved once, never recomputed)
-    room.analysis = evaluateAuction(room);
 
+    const winnerAnnounced = room.analysis?.verdict?.winnerFranchiseName || rankingResult.podium[0]?.franchiseName || 'No eligible team';
     this.addAuditLog(
       room,
       'AUCTION_FINISHED',
-      `Auction complete! Winner: ${rankingResult.podium[0]?.franchiseName || 'No eligible team'}`
+      `Auction complete! Winner: ${winnerAnnounced}`
     );
     this.scheduleSave(room); // persist: auction completed
 

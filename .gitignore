@@ -38,6 +38,7 @@ server/data/persisted_rooms.json
 
 # Backups and temporary files
 *.bak
+backups/
 Claude outputs/
 
 # Unity generated and build files

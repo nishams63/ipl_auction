@@ -6,13 +6,15 @@ import fs from 'node:fs';
 import { makeRunner, trackManager, mockIo, tempStorageFile, strongToken, sleep } from './helpers/harness.js';
 import { liveRoom, sellCurrent, passCurrent } from './helpers/auctionRooms.js';
 
+process.env.ANALYSIS_ENGINE = 'eval-2';
 const { RoomManager } = await import('../server/roomManager.js');
 const { validateBid } = await import('../server/auctionEngine.js');
-const { evaluateAuction, evaluateFranchise, classifyPlayer, WEIGHTS } = await import('../server/analysis/evaluation.js');
+const { evaluateAuction: _evaluateAuction, evaluateFranchise, classifyPlayer, WEIGHTS } = await import('../server/analysis/evaluation.js');
+const evaluateAuction = (r, opts) => _evaluateAuction(r, { engine: 'eval-2', ...opts });
 const { validateAiOutput, buildAiInput, buildPrompt, aiConfig } = await import('../server/analysis/aiAnalysis.js');
 
 const t = makeRunner('Stage 3 Analysis Suite — engine UNIT tests + AI service with MOCKED Anthropic responses');
-const RULES = { minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8, minWKs: 1, basePurse: 120 };
+const RULES = { minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8, minWKs: 1, basePurse: 120, analysisEngine: 'eval-2' };
 let seq = 0;
 const P = (category, role, isOverseas = false, price = 1) => ({ id: `T_${String(++seq).padStart(3, '0')}`, name: `Test ${seq}`, category, role, isOverseas, basePrice: price, boughtPrice: price });
 const strip = a => JSON.parse(JSON.stringify({ ...a, generatedAt: null }));

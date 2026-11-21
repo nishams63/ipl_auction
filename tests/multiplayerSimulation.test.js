@@ -3,12 +3,27 @@ import assert from 'assert';
 import { io } from 'socket.io-client';
 import { calculateNextBid } from '../server/auctionEngine.js';
 
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:4000';
+const DEFAULT_PORT = 4000;
+
+async function resolveServerUrl() {
+  if (process.env.SERVER_URL) return { url: process.env.SERVER_URL, srv: null };
+  try {
+    const probe = await fetch(`http://localhost:${DEFAULT_PORT}/api/health`, { signal: AbortSignal.timeout(500) });
+    if (probe.ok) return { url: `http://localhost:${DEFAULT_PORT}`, srv: null };
+  } catch {
+    // Local server not running
+  }
+  const { startServer, tempStorageFile } = await import('./helpers/harness.js');
+  const srv = await startServer({ storageFile: tempStorageFile('sim-live') });
+  return { url: srv.url, srv };
+}
 
 async function runMultiplayerSimulation() {
   console.log('🚀 Launching Real-time Multiplayer Auction Simulation...\n');
+  const { url: SERVER_URL, srv } = await resolveServerUrl();
 
-  // 1. Create Room via REST API
+  try {
+    // 1. Create Room via REST API
   const hostToken = 'usr_dhoni_777_simulation_host'; // tokens must be >= 16 chars
   const joinToken = 'usr_gambhir_888_simulation_join';
 
@@ -187,10 +202,13 @@ async function runMultiplayerSimulation() {
   console.log(`  📊 Rankings evaluated: ${finalState.evaluationResults.rankings.length} teams assessed`);
   console.log(`  ℹ️ Eligibility check: KKR has 0 WKs so eligible = ${finalState.evaluationResults.rankings[0].isEligible}`);
 
-  socket1.disconnect();
-  socket2.disconnect();
+    socket1.disconnect();
+    socket2.disconnect();
 
-  console.log('\n🌟 Complete Multiplayer Real-Time Auction Lifecycle Verified Successfully!\n');
+    console.log('\n🌟 Complete Multiplayer Real-Time Auction Lifecycle Verified Successfully!\n');
+  } finally {
+    if (srv) await srv.stop();
+  }
 }
 
 runMultiplayerSimulation().catch(err => {

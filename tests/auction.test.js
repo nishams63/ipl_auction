@@ -32,7 +32,7 @@ function it(description, fn) {
   }
 }
 
-// 1. Initial Franchise Purse, Squad Limits & 20-Second Timer Tests (rules approved 16 Nov 2026)
+// 1. Initial Franchise Purse, Squad Limits & 15-Second Timer Tests (rules approved 16 Nov 2026)
 it('Initial franchise purse is flat ₹120.0 Crore across all franchises (Total ₹1,200 Cr)', () => {
   assert.strictEqual(calculateDynamicPurse(120), 120.0);
   assert.strictEqual(DEFAULT_CONFIG.basePurse, 120.0);
@@ -40,7 +40,7 @@ it('Initial franchise purse is flat ₹120.0 Crore across all franchises (Total 
   assert.strictEqual(DEFAULT_CONFIG.maxSquadSize, 25);
   assert.strictEqual(DEFAULT_CONFIG.maxOverseas, 8);
   assert.strictEqual(DEFAULT_CONFIG.minWKs, 1);
-  assert.strictEqual(DEFAULT_CONFIG.timerDuration, 20);
+  assert.strictEqual(DEFAULT_CONFIG.timerDuration, 15);
 });
 
 it('Preserves round-wise profile sets from new catalogue (409 players across High, Medium, Low profiles)', () => {

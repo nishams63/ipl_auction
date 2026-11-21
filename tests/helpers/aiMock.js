@@ -39,7 +39,7 @@ export async function startAiMock() {
   return {
     state,
     url: `http://127.0.0.1:${port}`,
-    env: extra => ({ ANTHROPIC_API_KEY: MOCK_KEY, AI_ANALYSIS_ENABLED: 'true', ANTHROPIC_BASE_URL: `http://127.0.0.1:${port}`, ANTHROPIC_MODEL: 'mock-model', AI_REGENERATE_COOLDOWN_MS: '0', ...extra }),
+    env: extra => ({ ANTHROPIC_API_KEY: MOCK_KEY, AI_ANALYSIS_ENABLED: 'true', ANTHROPIC_BASE_URL: `http://127.0.0.1:${port}`, ANTHROPIC_MODEL: 'mock-model', AI_REGENERATE_COOLDOWN_MS: '0', ANALYSIS_ENGINE: 'eval-2', ...extra }),
     close: () => new Promise(r => { server.closeAllConnections?.(); server.close(r); })
   };
 }

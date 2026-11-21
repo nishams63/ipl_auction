@@ -18,13 +18,23 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: (origin, callback) => callback(null, true),
+    methods: ['GET', 'POST'],
+    credentials: true
   },
   maxHttpBufferSize: 100 * 1024 // no legitimate client message is anywhere near this
 });
 
-app.use(cors());
+const corsOptions = {
+  origin: (origin, callback) => callback(null, true),
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '20kb' }));
 
 // Storage authority: JSON file (default) or PostgreSQL (PERSISTENCE=postgres + DATABASE_URL).
@@ -361,6 +371,16 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Socket disconnected: ${socket.id}`);
   });
+});
+
+// Global error handling middleware for API routes (ensures JSON response with CORS headers)
+app.use((err, req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    console.error('[API error]', err);
+    if (res.headersSent) return next(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+  }
+  next(err);
 });
 
 // Serve static build in production if available

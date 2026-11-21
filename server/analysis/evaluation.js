@@ -14,7 +14,9 @@
 // the rules they started with).
 import crypto from 'node:crypto';
 import { toLakh, fromLakh } from '../money.js';
+import { runCricketMastermind, MASTERMIND_ENGINE_VERSION } from './cricketMastermind.js';
 
+export { runCricketMastermind, MASTERMIND_ENGINE_VERSION };
 export const ENGINE_VERSION = 'eval-2';
 
 // Normalisation targets: a standard T20 squad template (documented in the methodology).
@@ -274,10 +276,10 @@ const uniqueLeader = (items, key, tooFew = 'Fewer than two participating franchi
 };
 
 /**
- * Evaluate a completed auction: all ten franchises, ranking, awards, summary.
- * Pure apart from generatedAt (metadata, not used in any score).
+ * Legacy Stage 3 evaluation: score-based evaluation engine ("eval-2").
+ * Preserved for historical compatibility and regression tests.
  */
-export function evaluateAuction(room, { now = () => new Date().toISOString() } = {}) {
+export function evaluateAuctionLegacy(room, { now = () => new Date().toISOString() } = {}) {
   const config = room.config;
   const evaluations = Object.keys(room.franchises).sort().map(id => {
     const f = room.franchises[id];
@@ -365,5 +367,54 @@ export function evaluateAuction(room, { now = () => new Date().toISOString() } =
       'The catalogue also contains player ratings and career statistics, but they have no stated source or date, so they are not used in any score.',
       'All-rounders whose role label does not say pace or spin count as bowling options but not as pace or spin options.'
     ]
+  };
+}
+
+/**
+ * Authoritative post-auction evaluation: Cricket Mastermind IPL Auction Verdict.
+ * Pure function of the room squads and rules: identical input -> identical output.
+ * Evaluates all 10 franchises qualitatively using cricket principles, head-to-head
+ * tactical matchups, and strict 1st-to-10th rankings with NO overall numerical scores.
+ */
+export function evaluateAuction(room, options = {}) {
+  const engine = options.engine || room.engineVersion || (room.config && room.config.analysisEngine) || process.env.ANALYSIS_ENGINE;
+  if (engine === 'eval-2') {
+    return evaluateAuctionLegacy(room, options);
+  }
+
+  const mastermindResult = runCricketMastermind(room, options);
+
+  // Maintain backward-compatible awards and dataNotes for consumers
+  const awards = {
+    winner: mastermindResult.verdict?.winnerFranchiseId || null,
+    bestBalanced: {
+      winner: mastermindResult.verdict?.winnerFranchiseId || null,
+      reason: mastermindResult.verdict?.expertVerdict || ''
+    },
+    strongestBatting: {
+      winner: mastermindResult.rankings[0]?.franchiseId || null
+    },
+    strongestBowling: {
+      winner: mastermindResult.rankings[0]?.franchiseId || null
+    },
+    basePriceBuys: {
+      players: (mastermindResult.bestAcquisitions || [])
+        .filter(b => b.type.includes('Base Price'))
+        .map(b => ({
+          franchiseId: b.franchiseId,
+          playerId: b.playerId,
+          playerName: b.playerName,
+          category: b.category,
+          price: b.priceCr
+        })),
+      note: 'Bought at base price without competing bids.'
+    },
+    biggestWeakness: { league: null, byFranchise: {} }
+  };
+
+  return {
+    ...mastermindResult,
+    awards,
+    dataNotes: mastermindResult.limitations
   };
 }

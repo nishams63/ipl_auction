@@ -352,10 +352,10 @@ export default function LiveAuctionView({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // Countdown timer calculations (server-authoritative; default 20 s)
+  // Countdown timer calculations (server-authoritative; default 15 s)
   const timerRadius = 40;
   const timerCircumference = 2 * Math.PI * timerRadius;
-  const timerDuration = room.config.timerDuration || 20;
+  const timerDuration = room.config.timerDuration || 15;
   const timerPct = Math.max(0, lot.countdown / timerDuration);
   const strokeDashoffset = timerCircumference - timerPct * timerCircumference;
   const isUrgent = lot.countdown <= 6;

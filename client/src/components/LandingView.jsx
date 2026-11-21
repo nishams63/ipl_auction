@@ -6,6 +6,7 @@ import {
 import auctionBg from '../assets/ipl_auction_arena_bg.jpg';
 import trophyHeroImg from '../assets/ipl_trophy_hero.jpg';
 import { IPL_FRANCHISES } from '../../../server/data/franchises';
+import { SERVER_URL } from '../utils/socket';
 
 export default function LandingView({
   onCreateRoom,
@@ -25,6 +26,13 @@ export default function LandingView({
   const [showTeamsModal, setShowTeamsModal] = useState(false);
   const [showHowItWorksModal, setShowHowItWorksModal] = useState(false);
 
+  // Proactively ping the server on mount to wake up sleeping free-tier containers (e.g. Render)
+  React.useEffect(() => {
+    if (SERVER_URL) {
+      fetch(`${SERVER_URL}/api/health`, { method: 'GET', mode: 'cors' }).catch(() => {});
+    }
+  }, []);
+
   // Respond to activeSection prop if passed from parent/navbar
   React.useEffect(() => {
     if (activeSection === 'teams') setShowTeamsModal(true);
@@ -35,7 +43,7 @@ export default function LandingView({
     }
   }, [activeSection]);
 
-  const handleCreateSubmit = (e) => {
+  const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
       setError("Please enter your display name");
@@ -43,10 +51,16 @@ export default function LandingView({
     }
     setError(null);
     setLoading(true);
-    onCreateRoom({ hostName: name.trim(), basePurse: Number(basePurse) });
+    try {
+      await onCreateRoom({ hostName: name.trim(), basePurse: Number(basePurse) });
+    } catch (err) {
+      setError(err?.message || "Could not connect to the backend server. The server on Render may be waking up from sleep (~50s). Please wait a moment and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleJoinSubmit = (e) => {
+  const handleJoinSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
       setError("Please enter your display name");
@@ -58,10 +72,16 @@ export default function LandingView({
     }
     setError(null);
     setLoading(true);
-    onJoinRoom({
-      participantName: name.trim(),
-      roomCode: roomCode.trim().toUpperCase()
-    });
+    try {
+      await onJoinRoom({
+        participantName: name.trim(),
+        roomCode: roomCode.trim().toUpperCase()
+      });
+    } catch (err) {
+      setError(err?.message || "Could not join room. Please check the code and ensure the backend server is online.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -298,8 +318,11 @@ export default function LandingView({
             </p>
 
             {error && (
-              <div className="p-3 mb-4 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs">
-                {error}
+              <div className="p-3.5 mb-4 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-start gap-2.5">
+                <span className="text-red-400 font-bold shrink-0 mt-0.5">⚠</span>
+                <div className="flex-1 leading-relaxed">
+                  {error}
+                </div>
               </div>
             )}
 
@@ -350,6 +373,14 @@ export default function LandingView({
                 </div>
               )}
 
+              {loading && (
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-center">
+                  <p className="text-[11px] text-amber-300 font-medium animate-pulse">
+                    Connecting to backend... If the Render instance is waking from sleep, this may take ~30–50s.
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-3">
                 <button
                   type="button"
@@ -363,7 +394,9 @@ export default function LandingView({
                   disabled={loading}
                   className="flex-1 py-3 rounded-xl gold-btn text-slate-950 font-black text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  {loading ? 'Processing...' : mode === 'create' ? 'Create & Enter' : 'Enter Lobby'}
+                  {loading
+                    ? (mode === 'create' ? 'Connecting...' : 'Joining...')
+                    : (mode === 'create' ? 'Create & Enter' : 'Enter Lobby')}
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -469,7 +502,7 @@ export default function LandingView({
                 <div>
                   <h4 className="text-white font-bold text-sm">Bid Live & Build Your Championship Squad</h4>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Bid on 290 candidate players across 15 auction sets. Respect squad constraints (min 15 players, min 1 WK, max 8 overseas) to earn the highest team rating!
+                    Bid on 409 candidate players across round-wise profile sets. Respect squad constraints (min 15 players, min 1 WK, max 8 overseas) to build the champion squad!
                   </p>
                 </div>
               </div>

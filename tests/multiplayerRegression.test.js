@@ -25,16 +25,16 @@ try {
   assert.ok((await emit(host, 'start_auction', { roomCode: code })).success);
   const [hLot, aLot] = await Promise.all([hl, al]);
 
-  await t.it('M1: both clients see the same lot, catalogue order and the 20s default timer', () => {
+  await t.it('M1: both clients see the same lot, catalogue order and the 15s default timer', () => {
     assert.strictEqual(hLot.currentLot.player.id, aLot.currentLot.player.id);
     assert.deepStrictEqual(hLot.playersCatalog.map(p => p.id), aLot.playersCatalog.map(p => p.id));
-    assert.strictEqual(aLot.currentLot.countdown, 20);
+    assert.strictEqual(aLot.currentLot.countdown, 15);
     assert.strictEqual(aLot.config.minSquadSize, 15);
     assert.strictEqual(aLot.config.maxSquadSize, 25);
   });
 
   let lot = aLot.currentLot;
-  await t.it('M2: an accepted bid reaches both clients identically and resets the timer to 20s', async () => {
+  await t.it('M2: an accepted bid reaches both clients identically and resets the timer to 15s', async () => {
     const hb = waitFor(host, 'bid_accepted'); const ab = waitFor(alice, 'bid_accepted');
     await sleep(1100); // let the clock tick down first
     const r = await emit(alice, 'place_bid', { roomCode: code, franchiseId: 'MI', bidAmount: lot.nextValidBid, expectedVersion: lot.stateVersion });
@@ -42,7 +42,7 @@ try {
     const [h, a] = await Promise.all([hb, ab]);
     assert.strictEqual(h.currentLot.highestBidderFranchiseId, 'MI');
     assert.strictEqual(a.currentLot.highestBid, h.currentLot.highestBid);
-    assert.strictEqual(a.currentLot.countdown, 20);
+    assert.strictEqual(a.currentLot.countdown, 15);
     lot = a.currentLot;
   });
 

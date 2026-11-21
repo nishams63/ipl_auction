@@ -197,7 +197,7 @@ await t.it('14. Multiplayer broadcast receives correct current lot and player at
 // 15. Existing historical rooms remain unchanged
 await t.it('15. Historical active rooms in persisted_rooms.json retain their original 290 players', () => {
   const persistedRooms = JSON.parse(fs.readFileSync(PERSISTED_ROOMS_FILE, 'utf-8'));
-  const activeRooms = Object.values(persistedRooms).filter(r => r.status === 'active');
+  const activeRooms = Object.values(persistedRooms).filter(r => r.status === 'active' || r.status === 'paused');
   assert.strictEqual(activeRooms.length, 7, 'Must preserve all 7 active/interrupted auctions');
   activeRooms.forEach(r => {
     assert.strictEqual(r.playersCatalog.length, 290, `Historical room ${r.roomCode} must keep 290-player catalog snapshot`);

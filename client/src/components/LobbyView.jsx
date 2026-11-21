@@ -17,7 +17,7 @@ export default function LobbyView({
   // Purse, squad limits and overseas cap are fixed IPL rules (server-enforced); shown read-only.
   // Only the bid timer is adjustable.
   const basePurse = room.config.basePurse ?? 120;
-  const [timerDuration, setTimerDuration] = useState(room.config.timerDuration || 20);
+  const [timerDuration, setTimerDuration] = useState(room.config.timerDuration || 15);
   const minSquadSize = room.config.minSquadSize ?? 15;
   const maxSquadSize = room.config.maxSquadSize ?? 25;
   const maxOverseas = room.config.maxOverseas ?? 8;

@@ -119,9 +119,9 @@ await t.it('P8b: countdown ticks are NOT written to disk (documented: no per-sec
   const { room } = liveRoom(rm);
   rm.flushStorage();
   for (let i = 0; i < 3; i++) rm.tickRoom(room);
-  assert.strictEqual(room.currentLot.countdown, 17, 'in-memory clock ticked');
+  assert.strictEqual(room.currentLot.countdown, 12, 'in-memory clock ticked');
   assert.strictEqual(rm.saveTimer, null, 'a tick scheduled a write');
-  assert.strictEqual(readFile(file)[room.roomCode].currentLot.countdown, 20, 'file still holds the last mutation value');
+  assert.strictEqual(readFile(file)[room.roomCode].currentLot.countdown, 15, 'file still holds the last mutation value');
 });
 
 // ── P9: countdown recovery rule ───────────────────────────────
@@ -149,17 +149,17 @@ await t.it('P9: restart of a host-PAUSED auction keeps the exact paused countdow
   const file = tempStorageFile('p9b');
   const rm1 = make(file);
   const { room, H } = liveRoom(rm1);
-  for (let i = 0; i < 6; i++) rm1.tickRoom(room); // 14 s left
+  for (let i = 0; i < 6; i++) rm1.tickRoom(room); // 9 s left
   rm1.pauseAuction({ roomCode: room.roomCode, hostToken: H });
   rm1.shutdown(); // flushes
 
   const rm2 = make(file);
   const r2 = rm2.getRoom(room.roomCode);
   assert.strictEqual(r2.status, 'paused');
-  assert.strictEqual(r2.currentLot.countdown, 14);
+  assert.strictEqual(r2.currentLot.countdown, 9);
   assert.ok(rm2.resumeAuction({ roomCode: room.roomCode, hostToken: H }).success);
   rm2.tickRoom(r2);
-  assert.strictEqual(r2.currentLot.countdown, 13, 'clock continues from 14');
+  assert.strictEqual(r2.currentLot.countdown, 8, 'clock continues from 9');
 });
 
 await t.it('P3: a sale persists and the sold player is never re-auctioned after restart', () => {
@@ -220,7 +220,7 @@ await t.it('P11: /api/health reports storage as non-durable JSON (cannot be mist
 });
 
 // ── P10: real restart on the SAME port, clients reconnect by themselves ──
-await t.it('P10: server restart → auto-reconnecting clients rejoin, see same lot (paused, 20s), host resumes', async () => {
+await t.it('P10: server restart → auto-reconnecting clients rejoin, see same lot (paused, 15s), host resumes', async () => {
   const file = tempStorageFile('p10');
   const port = await freePort();
   const H = strongToken('rh'); const A = strongToken('ra');
@@ -244,7 +244,7 @@ await t.it('P10: server restart → auto-reconnecting clients rejoin, see same l
   await emit(h, 'start_auction', { roomCode: code });
   const lot = (await lp).currentLot;
   assert.ok((await emit(a, 'place_bid', { roomCode: code, franchiseId: 'MI', bidAmount: lot.nextValidBid, expectedVersion: lot.stateVersion })).success);
-  await waitFor(a, 'timer_tick', d => d.countdown <= 18, 4000); // let the clock run down a bit
+  await waitFor(a, 'timer_tick', d => d.countdown <= 13, 4000); // let the clock run down a bit
 
   await srv.stop();                                   // SIGTERM → flush
   srv = await startServer({ storageFile: file, port }); // same port, same file
@@ -256,12 +256,12 @@ await t.it('P10: server restart → auto-reconnecting clients rejoin, see same l
   assert.strictEqual(aj.room.status, 'paused');
   assert.strictEqual(aj.room.currentLot.player.id, lot.player.id, 'same lot');
   assert.strictEqual(aj.room.currentLot.highestBidderFranchiseId, 'MI', 'bid survived');
-  assert.strictEqual(aj.room.currentLot.countdown, 20, 'countdown reset to full timer');
+  assert.strictEqual(aj.room.currentLot.countdown, 15, 'countdown reset to full timer');
   assert.strictEqual(aj.participant.franchiseId, 'MI');
 
   const tick = waitFor(a, 'timer_tick', () => true, 3000);
   assert.ok((await emit(h, 'resume_auction', { roomCode: code })).success);
-  assert.strictEqual((await tick).countdown, 19, 'clock resumes from the full timer');
+  assert.strictEqual((await tick).countdown, 14, 'clock resumes from the full timer');
 });
 
 const failed = await t.finish();

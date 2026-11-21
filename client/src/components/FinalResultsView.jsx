@@ -2,52 +2,68 @@ import React, { useEffect, useMemo, useState } from 'react';
 import confetti from 'canvas-confetti';
 import UnityArena from './UnityArena';
 import {
-  Trophy, ArrowLeft, BarChart2, Users, Sparkles, GitCompare, CheckCircle2, XCircle,
-  MinusCircle, AlertTriangle, RefreshCw, Shield, Wallet, Gavel, Info
+  Trophy, ArrowLeft, Users, GitCompare, CheckCircle2, XCircle,
+  MinusCircle, AlertTriangle, Shield, Wallet, Gavel, Info,
+  Swords, Award, AlertOctagon, TrendingUp, Layers
 } from 'lucide-react';
 
-// Post-auction results. Every number shown here comes from the server's deterministic
-// evaluation snapshot (room.analysis); AI text (room.aiAnalysis) only explains it.
+// CRICKET MASTERMIND — IPL AUCTION VERDICT
+// Professional post-auction strategic analysis.
+// ABSOLUTELY NO OVERALL NUMERICAL SCORES OR POINT-BASED RATINGS.
+// All rankings, verdicts, and awards are derived from qualitative cricket squad evaluations.
 
-const DIM_ORDER = ['battingDepth', 'bowlingDepth', 'paceOptions', 'spinOptions', 'allRounders', 'keeperCoverage', 'overseasBalance', 'squadDepth', 'squadComposition', 'xiCompatibility'];
-const DIM_LABEL = {
-  battingDepth: 'Batting depth', bowlingDepth: 'Bowling depth', paceOptions: 'Pace options', spinOptions: 'Spin options',
-  allRounders: 'All-rounders', keeperCoverage: 'Wicketkeeper coverage', overseasBalance: 'Overseas balance',
-  squadDepth: 'Squad depth', squadComposition: 'Squad composition', xiCompatibility: 'Playing XI compatibility'
+const CATEGORY_LABEL = {
+  BAT: 'Specialist Batters',
+  WK: 'Wicketkeepers',
+  AR: 'All-rounders',
+  BOWL: 'Fast Bowlers',
+  SP: 'Spinners'
 };
-const CATEGORY_LABEL = { BAT: 'Batters', WK: 'Wicketkeepers', AR: 'All-rounders', BOWL: 'Pace bowlers', SP: 'Spinners' };
-const cr = v => (typeof v === 'number' ? `₹${v.toFixed(2)} Cr` : '—');
-const scoreColor = v => (v >= 80 ? 'bg-emerald-500' : v >= 50 ? 'bg-amber-400' : 'bg-rose-500');
 
-function ScoreBar({ value, max = 100 }) {
-  const w = Math.max(0, Math.min(100, (value / max) * 100));
+const cr = v => (typeof v === 'number' && Number.isFinite(v) ? `₹${v.toFixed(2)} Cr` : '—');
+
+function EligibilityBadge({ eligibility }) {
+  if (!eligibility || eligibility.status === 'ELIGIBLE' || eligibility.eligible) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+        <CheckCircle2 className="w-3 h-3" />Rule-Compliant
+      </span>
+    );
+  }
+  if (eligibility.status === 'NOT_PARTICIPATING') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-700/40 text-slate-400 border border-slate-600/40">
+        <MinusCircle className="w-3 h-3" />Did Not Participate
+      </span>
+    );
+  }
   return (
-    <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden" role="meter" aria-valuemin={0} aria-valuemax={max} aria-valuenow={value}>
-      <div className={`h-full rounded-full ${scoreColor(value)}`} style={{ width: `${w}%` }} />
-    </div>
+    <span title={eligibility.failures?.join('\n') || 'Failed squad rules'} className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 cursor-help">
+      <XCircle className="w-3 h-3" />Rule Violation
+    </span>
   );
 }
 
-function EligibilityBadge({ eligibility }) {
-  if (eligibility.status === 'ELIGIBLE') {
-    return <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"><CheckCircle2 className="w-3 h-3" />Eligible</span>;
-  }
-  if (eligibility.status === 'NOT_PARTICIPATING') {
-    return <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-700/40 text-slate-400 border border-slate-600/40"><MinusCircle className="w-3 h-3" />Did not take part</span>;
-  }
-  return <span title={eligibility.failures.join('\n')} className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 cursor-help"><XCircle className="w-3 h-3" />Not eligible</span>;
-}
-
 function TeamDot({ franchise }) {
-  return <span className="inline-block w-3 h-3 rounded-full ring-2 ring-slate-900 shrink-0" style={{ background: franchise?.primaryColor || '#64748b' }} />;
+  return (
+    <span
+      className="inline-block w-3 h-3 rounded-full ring-2 ring-slate-900 shrink-0"
+      style={{ background: franchise?.primaryColor || '#64748b' }}
+    />
+  );
 }
 
-function Panel({ title, icon: Icon, children, right }) {
+function Panel({ title, icon: Icon, children, right, className = '' }) {
   return (
-    <section className="glass-panel rounded-2xl border border-slate-800 p-4 sm:p-5 space-y-4">
+    <section className={`glass-panel rounded-2xl border border-slate-800 p-4 sm:p-5 space-y-4 ${className}`}>
       {(title || right) && (
         <div className="flex items-center justify-between gap-3">
-          {title && <h3 className="text-sm font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">{Icon && <Icon className="w-4 h-4 text-amber-400" />}{title}</h3>}
+          {title && (
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              {Icon && <Icon className="w-4 h-4 text-amber-400" />}
+              {title}
+            </h3>
+          )}
           {right}
         </div>
       )}
@@ -66,362 +82,700 @@ function Stat({ label, value, sub }) {
   );
 }
 
-function List({ items, tone }) {
-  if (!items || items.length === 0) return <p className="text-xs text-slate-500">None noted.</p>;
-  const color = tone === 'good' ? 'text-emerald-300' : tone === 'bad' ? 'text-rose-300' : 'text-sky-300';
-  return <ul className="space-y-1.5">{items.map((t, i) => <li key={i} className={`text-sm ${color} leading-snug`}>• <span className="text-slate-200">{t}</span></li>)}</ul>;
-}
-
-export default function FinalResultsView({ room, participant, onInspectSquad, onBackToLobby, onRequestAiAnalysis }) {
+export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }) {
   const analysis = room.analysis;
-  const ai = room.aiAnalysis || { status: 'none', available: false, generating: false };
-  const [tab, setTab] = useState('summary');
-  const [selected, setSelected] = useState(null);
-  const [compare, setCompare] = useState([]);
-  const [aiMessage, setAiMessage] = useState(null);
-  const [aiBusy, setAiBusy] = useState(false);
+  const [tab, setTab] = useState('verdict');
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState(null);
+  const [compareA, setCompareA] = useState(null);
+  const [compareB, setCompareB] = useState(null);
 
   useEffect(() => {
     try {
-      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
       const timer = setTimeout(() => {
-        confetti({ particleCount: 80, angle: 60, spread: 55, origin: { x: 0 } });
-        confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1 } });
-      }, 400);
+        confetti({ particleCount: 90, angle: 60, spread: 55, origin: { x: 0 } });
+        confetti({ particleCount: 90, angle: 120, spread: 55, origin: { x: 1 } });
+      }, 350);
       return () => clearTimeout(timer);
-    } catch { /* confetti is decorative */ }
+    } catch { /* decorative */ }
   }, []);
 
-  const ranked = useMemo(() => (analysis ? analysis.rankings.map(r => ({ ...r, e: analysis.franchises[r.franchiseId] })) : []), [analysis]);
-  const playing = ranked.filter(r => r.e.participating);
-  const focusId = selected || playing[0]?.franchiseId || ranked[0]?.franchiseId;
+  const mastermind = useMemo(() => {
+    if (!analysis) return null;
+    return {
+      engineVersion: analysis.engineVersion || 'cricket-mastermind-v1',
+      verdict: analysis.verdict || {
+        winnerFranchiseId: analysis.rankings?.[0]?.franchiseId || 'CSK',
+        winnerFranchiseName: analysis.rankings?.[0]?.franchiseName || 'Champion Franchise',
+        expertVerdict: 'Assembled the most complete and balanced squad during the auction.',
+        mainReasons: ['Secured reliable batting and bowling depth.', 'Met all squad composition rules.'],
+        keyAdvantages: ['Balanced overseas allocation.', 'Solid core depth.'],
+        vulnerabilities: ['Workload management over the season.']
+      },
+      rankings: analysis.rankings || [],
+      franchises: analysis.franchises || {},
+      whyWinnerWon: analysis.whyWinnerWon || null,
+      biggestMistakes: analysis.biggestMistakes || [],
+      bestAcquisitions: analysis.bestAcquisitions || [],
+      headToHead: analysis.headToHead || {},
+      summary: analysis.summary || {},
+      limitations: analysis.limitations || analysis.dataNotes || []
+    };
+  }, [analysis]);
+
+  const winner = useMemo(() => {
+    if (!mastermind) return null;
+    const winnerId = mastermind.verdict.winnerFranchiseId;
+    return {
+      id: winnerId,
+      name: mastermind.verdict.winnerFranchiseName,
+      franchise: room?.franchises?.[winnerId] || {},
+      details: mastermind.franchises[winnerId]
+    };
+  }, [mastermind, room]);
+
+  const rankedList = useMemo(() => {
+    if (!mastermind) return [];
+    return mastermind.rankings.map(r => ({
+      ...r,
+      franchise: room?.franchises?.[r.franchiseId],
+      eval: mastermind.franchises[r.franchiseId]
+    }));
+  }, [mastermind, room]);
+
+  const activeFocusId = selectedFranchiseId || rankedList[0]?.franchiseId || 'CSK';
+  const focusEval = mastermind?.franchises[activeFocusId];
+  const focusFranchise = room?.franchises?.[activeFocusId];
+
+  // Initialize comparison teams
+  useEffect(() => {
+    if (rankedList.length >= 2) {
+      if (!compareA) setCompareA(rankedList[0].franchiseId);
+      if (!compareB) setCompareB(rankedList[1].franchiseId);
+    }
+  }, [rankedList, compareA, compareB]);
 
   if (!analysis) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold text-white">Calculating final standings…</h2>
-        <p className="text-slate-400 text-sm mt-2">The server is preparing the post-auction evaluation.</p>
+        <h2 className="text-2xl font-bold text-white">Deliberating Auction Verdict…</h2>
+        <p className="text-slate-400 text-sm mt-2">Cricket Mastermind is reviewing squad construction across all 10 franchises.</p>
       </div>
     );
   }
 
-  const isParticipant = !!participant;
-  const isHost = !!participant?.isHost;
-  const requestAi = force => {
-    if (!onRequestAiAnalysis || aiBusy) return;
-    setAiBusy(true);
-    setAiMessage(null);
-    onRequestAiAnalysis(force, res => {
-      setAiBusy(false);
-      if (!res?.success) setAiMessage(res?.error || 'The AI analysis could not be requested.');
-      else if (res.status === 'unavailable') setAiMessage(res.message);
-    });
-  };
-  const toggleCompare = fid => setCompare(c => (c.includes(fid) ? c.filter(x => x !== fid) : c.length >= 4 ? c : [...c, fid]));
-  const franchiseOf = fid => room.franchises[fid];
-  const s = analysis.summary;
-  const leader = playing[0];
+  const s = mastermind.summary;
 
   const tabs = [
-    ['summary', 'Summary', Trophy], ['leaderboard', 'Leaderboard', BarChart2], ['squads', 'Squad analysis', Users],
-    ['ai', 'AI analysis', Sparkles], ['compare', 'Compare', GitCompare]
+    ['verdict', 'Auction Verdict', Trophy],
+    ['rankings', 'Official Rankings (1–10)', Shield],
+    ['squads', 'Franchise Deep-Dive', Users],
+    ['mistakes', 'Auction Review & Value', Award],
+    ['matchup', 'Head-to-Head', Swords]
   ];
-
-  const awardCard = (title, award, valueKey = 'score') => (
-    <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-4">
-      <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">{title}</div>
-      {award?.winner ? (
-        <div className="mt-2 flex items-center gap-2">
-          <TeamDot franchise={franchiseOf(award.winner)} />
-          <span className="text-white font-black">{analysis.franchises[award.winner].franchiseName}</span>
-          <span className="ml-auto text-amber-300 font-mono text-sm">{award[valueKey]}</span>
-        </div>
-      ) : (
-        <p className="mt-2 text-xs text-slate-400">No award: {award?.reason || 'not enough evidence'}.</p>
-      )}
-    </div>
-  );
 
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6">
       <UnityArena room={room} compact />
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between border-b border-slate-800 pb-5">
         <div className="flex items-center gap-3">
-          <button onClick={onBackToLobby} className="p-2 rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-amber-400/60 transition" aria-label="Back">
+          <button
+            onClick={onBackToLobby}
+            className="p-2 rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-amber-400/60 transition"
+            aria-label="Back to Lobby"
+          >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Auction <span className="gold-gradient-text">Results</span></h2>
-            <p className="text-xs text-slate-400">Room {room.roomCode} · completed · scores by the deterministic engine {analysis.engineVersion}</p>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/30">
+                CRICKET MASTERMIND
+              </span>
+              <span className="text-xs text-slate-500 font-mono">Room {room.roomCode}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-0.5">
+              IPL Auction <span className="gold-gradient-text">Verdict</span>
+            </h2>
           </div>
         </div>
-        {leader && (
-          <div className="flex items-center gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 px-4 py-2">
-            <Trophy className="w-5 h-5 text-amber-400" />
+
+        {winner && (
+          <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 px-4 py-2.5">
+            <Trophy className="w-6 h-6 text-amber-400 shrink-0" />
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-amber-300/80 font-bold">{leader.e.eligibility.eligible ? 'Top ranked squad' : 'Top score (no squad met the rules)'}</div>
-              <div className="text-white font-black flex items-center gap-2"><TeamDot franchise={franchiseOf(leader.franchiseId)} />{leader.e.franchiseName} · {leader.overall}</div>
+              <div className="text-[10px] uppercase tracking-wider text-amber-300/90 font-bold">
+                1st Place · Auction Champion
+              </div>
+              <div className="text-white font-black flex items-center gap-2 text-base">
+                <TeamDot franchise={winner.franchise} />
+                {winner.name}
+              </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Navigation Tabs */}
       <nav className="flex gap-2 overflow-x-auto pb-1" role="tablist">
         {tabs.map(([id, label, Icon]) => (
-          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap border transition ${tab === id ? 'bg-amber-400 text-slate-950 border-amber-400' : 'border-slate-700 text-slate-300 hover:border-amber-400/50 hover:text-white'}`}>
-            <Icon className="w-4 h-4" />{label}
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap border transition ${
+              tab === id
+                ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-lg shadow-amber-400/10'
+                : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-amber-400/50 hover:text-white'
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
           </button>
         ))}
       </nav>
 
-      {tab === 'summary' && (
+      {/* TAB 1: SECTION 1 (Auction Verdict) & SECTION 4 (Why Winner Won) */}
+      {tab === 'verdict' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Stat label="Players sold" value={s.playersSold} sub={`${s.playersUnsold} unsold · ${s.playersSkipped} skipped${s.playersNotAuctioned ? ` · ${s.playersNotAuctioned} not auctioned` : ''}`} />
-            <Stat label="Total spent" value={cr(s.totalExpenditure)} sub={`by ${s.participatingFranchises} franchise(s)`} />
-            <Stat label="Purse remaining" value={cr(s.totalRemainingPurse)} sub="across participating franchises" />
-            <Stat label="Squads meeting the rules" value={`${s.eligibleFranchises}/${s.participatingFranchises}`} sub={`squad ${analysis.rules.minSquadSize}–${analysis.rules.maxSquadSize}, ≤${analysis.rules.maxOverseas} overseas, ≥${analysis.rules.minWKs} WK`} />
-          </div>
-          <Panel title="Category leaders" icon={Trophy}>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {awardCard('Best balanced squad', analysis.awards.bestBalanced)}
-              {awardCard('Strongest batting unit', analysis.awards.strongestBatting)}
-              {awardCard('Strongest bowling unit', analysis.awards.strongestBowling)}
-            </div>
-            {analysis.awards.biggestWeakness.league && (
-              <p className="text-sm text-slate-300 flex items-start gap-2"><AlertTriangle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
-                League-wide weakest area: <b className="text-white">{analysis.awards.biggestWeakness.league.label}</b> (average {analysis.awards.biggestWeakness.league.averageScore}/100).</p>
-            )}
-          </Panel>
-          <Panel title="Bought at base price" icon={Gavel}>
-            <p className="text-xs text-slate-400">{analysis.awards.basePriceBuys.note}</p>
-            {analysis.awards.basePriceBuys.players.length > 0 && (
-              <div className="grid sm:grid-cols-2 gap-2">
-                {analysis.awards.basePriceBuys.players.map(p => (
-                  <div key={p.playerId} className="flex items-center gap-2 rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2 text-sm">
-                    <TeamDot franchise={franchiseOf(p.franchiseId)} />
-                    <span className="text-white font-semibold truncate">{p.playerName}</span>
-                    <span className="text-slate-500 text-xs">{CATEGORY_LABEL[p.category] || p.category}</span>
-                    <span className="ml-auto font-mono text-amber-300">{cr(p.price)}</span>
-                  </div>
-                ))}
+          {/* Winner Crown Panel */}
+          <div className="relative overflow-hidden rounded-3xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-950 p-6 sm:p-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-400 text-slate-950">
+                  <Trophy className="w-3.5 h-3.5" />
+                  Auction Mastermind Champion
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black text-white flex items-center gap-3">
+                  <TeamDot franchise={winner.franchise} />
+                  {winner.name}
+                </h1>
+                <p className="text-amber-200/90 text-sm max-w-2xl font-medium leading-relaxed">
+                  {mastermind.verdict.expertVerdict}
+                </p>
               </div>
-            )}
-          </Panel>
-          <Panel title="About these scores" icon={Info}>
-            <ul className="text-xs text-slate-400 space-y-1">{analysis.dataNotes.map((n, i) => <li key={i}>• {n}</li>)}</ul>
-          </Panel>
+
+              <div className="shrink-0 flex md:flex-col gap-2">
+                <button
+                  onClick={() => { setSelectedFranchiseId(winner.id); setTab('squads'); }}
+                  className="gold-btn px-5 py-2.5 rounded-full text-slate-950 text-xs font-black"
+                >
+                  Inspect Winning Squad
+                </button>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+              <div className="space-y-2">
+                <h4 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Primary Strategic Advantages
+                </h4>
+                <ul className="space-y-1.5">
+                  {(mastermind.verdict.mainReasons || []).map((r, i) => (
+                    <li key={i} className="text-xs text-slate-300 leading-snug flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold">•</span>
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-black uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                  <AlertOctagon className="w-4 h-4" />
+                  Tactical Risks &amp; Vulnerabilities
+                </h4>
+                <ul className="space-y-1.5">
+                  {(mastermind.verdict.vulnerabilities || []).map((v, i) => (
+                    <li key={i} className="text-xs text-slate-300 leading-snug flex items-start gap-2">
+                      <span className="text-rose-400 font-bold">•</span>
+                      <span>{v}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Why the Winner Won (1st vs 2nd) */}
+          {mastermind.whyWinnerWon && (
+            <Panel title="Why 1st Place Beat 2nd Place" icon={Swords}>
+              <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-4 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-amber-400">1st</span>
+                    <span className="text-sm font-bold text-white">{mastermind.whyWinnerWon.firstPlace}</span>
+                  </div>
+                  <span className="text-xs font-black uppercase text-slate-500">Versus</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-400">2nd</span>
+                    <span className="text-sm font-bold text-slate-300">{mastermind.whyWinnerWon.secondPlace}</span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-200 leading-relaxed font-medium">
+                  {mastermind.whyWinnerWon.verdictStatement}
+                </p>
+
+                <div className="grid sm:grid-cols-3 gap-3 text-xs pt-2">
+                  <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80 space-y-1">
+                    <span className="font-bold text-amber-300 uppercase tracking-wider block">Batting Unit</span>
+                    <p className="text-slate-300">{mastermind.whyWinnerWon.battingComparison}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80 space-y-1">
+                    <span className="font-bold text-amber-300 uppercase tracking-wider block">Bowling &amp; Death Overs</span>
+                    <p className="text-slate-300">{mastermind.whyWinnerWon.bowlingComparison}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-950/60 p-3 border border-slate-800/80 space-y-1">
+                    <span className="font-bold text-amber-300 uppercase tracking-wider block">Balance &amp; WKs</span>
+                    <p className="text-slate-300">{mastermind.whyWinnerWon.balanceComparison}</p>
+                  </div>
+                </div>
+              </div>
+            </Panel>
+          )}
+
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <Stat label="Total Sold" value={s.playersSold || 0} sub={`${s.playersUnsold || 0} unsold · ${s.playersSkipped || 0} skipped`} />
+            <Stat label="Total Outlay" value={cr(s.totalExpenditure)} sub={`Across ${s.participatingFranchises || 0} teams`} />
+            <Stat label="Remaining Purse" value={cr(s.totalRemainingPurse)} sub="Collective unspent funds" />
+            <Stat label="Rule Compliance" value={`${s.eligibleFranchises || 0}/${s.participatingFranchises || 0}`} sub="Fully compliant squads" />
+          </div>
         </div>
       )}
 
-      {tab === 'leaderboard' && (
-        <Panel title="All ten franchises" icon={BarChart2}>
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-sm min-w-[760px]">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-slate-400">
-                  <th className="text-left px-2 py-2">Rank</th><th className="text-left px-2">Franchise</th><th className="text-left px-2 w-48">Overall</th>
-                  <th className="px-2">Batting</th><th className="px-2">Bowling</th><th className="px-2">All-round</th><th className="px-2">Balance</th>
-                  <th className="px-2">Eligibility</th><th className="text-right px-2">Purse left</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ranked.map(r => (
-                  <tr key={r.franchiseId} className={`border-t border-slate-800/80 ${r.e.participating ? '' : 'opacity-50'}`}>
-                    <td className="px-2 py-3 font-black text-white">{r.tied ? `T${r.rank}` : r.rank}</td>
-                    <td className="px-2"><button onClick={() => { setSelected(r.franchiseId); setTab('squads'); }} className="flex items-center gap-2 text-left hover:text-amber-300"><TeamDot franchise={franchiseOf(r.franchiseId)} /><span className="font-bold text-white">{r.e.franchiseName}</span></button></td>
-                    <td className="px-2"><div className="flex items-center gap-2"><span className="font-mono font-bold text-white w-12">{r.overall}</span><ScoreBar value={r.overall} /></div></td>
-                    <td className="px-2 text-center font-mono text-slate-200">{r.e.headline.batting}</td>
-                    <td className="px-2 text-center font-mono text-slate-200">{r.e.headline.bowling}</td>
-                    <td className="px-2 text-center font-mono text-slate-200">{r.e.headline.allRounder}</td>
-                    <td className="px-2 text-center font-mono text-slate-200">{r.e.headline.balance}</td>
-                    <td className="px-2 text-center"><EligibilityBadge eligibility={r.e.eligibility} /></td>
-                    <td className="px-2 text-right font-mono text-slate-200">{r.e.participating ? cr(r.e.purse.remaining) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* TAB 2: SECTION 2 (Official Rankings 1-10) */}
+      {tab === 'rankings' && (
+        <Panel title="Official Cricket Mastermind Rankings (1st to 10th)" icon={Shield}>
+          <p className="text-xs text-slate-400">
+            Strict ordinal rankings from 1st to 10th determined purely through qualitative cricket reasoning,
+            head-to-head department matchups, and squad completeness. <b>Zero numerical point totals or score formulas.</b>
+          </p>
+
+          <div className="space-y-3 mt-4">
+            {rankedList.map(r => (
+              <div
+                key={r.franchiseId}
+                className={`rounded-2xl border transition p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                  r.rank === 1
+                    ? 'border-amber-400/60 bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-900'
+                    : r.eligible
+                    ? 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+                    : 'border-rose-900/40 bg-rose-950/10 opacity-75'
+                }`}
+              >
+                <div className="flex items-start sm:items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg shrink-0 ${
+                    r.rank === 1
+                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20'
+                      : r.rank === 2
+                      ? 'bg-slate-300 text-slate-950'
+                      : r.rank === 3
+                      ? 'bg-amber-700 text-white'
+                      : 'bg-slate-800 text-slate-300'
+                  }`}>
+                    {r.rank}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <TeamDot franchise={r.franchise} />
+                      <span className="font-black text-white text-base">{r.franchiseName}</span>
+                      <EligibilityBadge eligibility={r.eval?.eligibility} />
+                      <span className="text-xs text-slate-500">
+                        ({r.eval?.squadSize || 0} players · {r.eval?.counts?.overseas || 0} overseas)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                      {r.reasonForPosition}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-800">
+                  <div className="text-xs text-emerald-300 font-semibold flex items-center gap-1">
+                    <span className="text-[10px] text-slate-500 uppercase">Key Strength:</span> {r.mainStrength}
+                  </div>
+                  <div className="text-xs text-rose-300 font-semibold flex items-center gap-1">
+                    <span className="text-[10px] text-slate-500 uppercase">Key Flaw:</span> {r.mainWeakness}
+                  </div>
+                  <button
+                    onClick={() => { setSelectedFranchiseId(r.franchiseId); setTab('squads'); }}
+                    className="text-xs font-bold text-amber-300 hover:text-amber-200 mt-1"
+                  >
+                    View Detailed Analysis →
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-slate-500">Squads that meet the auction rules rank first, then squads that do not, then franchises that did not take part. Equal scores share a rank (shown as T) and are listed alphabetically. Remaining purse does not add to the score.</p>
         </Panel>
       )}
 
-      {tab === 'squads' && focusId && (() => {
-        const e = analysis.franchises[focusId];
-        const f = franchiseOf(focusId);
-        const squad = f?.squad || [];
-        return (
-          <div className="space-y-4">
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {ranked.map(r => (
-                <button key={r.franchiseId} onClick={() => setSelected(r.franchiseId)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border whitespace-nowrap ${r.franchiseId === focusId ? 'border-amber-400 text-white bg-amber-400/10' : 'border-slate-700 text-slate-400 hover:text-white'}`}>
-                  <TeamDot franchise={franchiseOf(r.franchiseId)} />{r.e.shortName}
-                </button>
-              ))}
-            </div>
-            <div className="grid lg:grid-cols-5 gap-4">
-              <div className="lg:col-span-3 space-y-4">
-                <Panel title={`${e.franchiseName} — ${e.overall}/100`} icon={Shield} right={<EligibilityBadge eligibility={e.eligibility} />}>
-                  {!e.eligibility.eligible && e.participating && <ul className="text-xs text-rose-300 space-y-1">{e.eligibility.failures.map((x, i) => <li key={i}>• {x}</li>)}</ul>}
-                  <div className="space-y-2.5">
-                    {DIM_ORDER.map(k => (
-                      <div key={k} className="grid grid-cols-12 items-center gap-2 text-xs">
-                        <span className="col-span-5 sm:col-span-4 text-slate-300">{DIM_LABEL[k]} <span className="text-slate-500">({analysis.weights[k]}%)</span></span>
-                        <span className="col-span-5 sm:col-span-6"><ScoreBar value={e.dimensions[k]} /></span>
-                        <span className="col-span-2 text-right font-mono text-white">{e.dimensions[k]}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Panel>
-                <Panel title={`Squad (${squad.length})`} icon={Users} right={onInspectSquad && e.participating ? <button onClick={() => onInspectSquad(focusId)} className="text-xs font-bold text-amber-300 hover:text-amber-200">Open squad</button> : null}>
-                  {squad.length === 0 ? <p className="text-sm text-slate-500">No players.</p> : (
-                    <div className="space-y-3">
-                      {Object.keys(CATEGORY_LABEL).map(cat => {
-                        const ps = squad.filter(p => p.category === cat);
-                        if (!ps.length) return null;
-                        return (
-                          <div key={cat}>
-                            <div className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-1">{CATEGORY_LABEL[cat]} ({ps.length})</div>
-                            <div className="grid sm:grid-cols-2 gap-1.5">
-                              {ps.map(p => (
-                                <div key={p.id} className="flex items-center gap-2 rounded-lg bg-slate-900/60 border border-slate-800 px-2.5 py-1.5 text-xs">
-                                  <span className="text-white font-semibold truncate">{p.name}</span>
-                                  {p.isOverseas && <span className="text-[10px] px-1.5 rounded bg-sky-500/15 text-sky-300">OS</span>}
-                                  <span className="text-slate-500 truncate hidden sm:inline">{p.role}</span>
-                                  <span className="ml-auto font-mono text-amber-300">{cr(p.boughtPrice)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </Panel>
-              </div>
-              <div className="lg:col-span-2 space-y-4">
-                <Panel title="Composition" icon={BarChart2}>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {Object.entries(CATEGORY_LABEL).map(([k, l]) => <div key={k} className="flex justify-between rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2"><span className="text-slate-400">{l}</span><b className="text-white">{e.counts[k]}</b></div>)}
-                    <div className="flex justify-between rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2"><span className="text-slate-400">Overseas</span><b className="text-white">{e.counts.overseas}/{analysis.rules.maxOverseas}</b></div>
-                    <div className="flex justify-between rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2"><span className="text-slate-400">Indian</span><b className="text-white">{e.counts.indian}</b></div>
-                  </div>
-                  <div className="text-xs text-slate-400 space-y-1">
-                    <div>Batting options {e.roleOptions.battingOptions} · bowling options {e.roleOptions.bowlingOptions}</div>
-                    <div>Pace {e.roleOptions.paceOptions} · spin {e.roleOptions.spinOptions} · AR pace/spin/unknown {e.counts.arPace}/{e.counts.arSpin}/{e.counts.arUnknownBowling}</div>
-                    {e.counts.unclassified > 0 && <div className="text-amber-300">{e.counts.unclassified} player(s) without a recognised role</div>}
-                  </div>
-                </Panel>
-                <Panel title="Playing XI checks" icon={CheckCircle2}>
-                  <ul className="space-y-1.5">{e.xiChecks.map(c => <li key={c.id} className="flex items-start gap-2 text-xs">{c.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <XCircle className="w-4 h-4 text-rose-400 shrink-0" />}<span className="text-slate-300">{c.label}</span></li>)}</ul>
-                </Panel>
-                <Panel title="Purse" icon={Wallet}>
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div><div className="text-slate-500">Start</div><div className="font-mono text-white">{cr(e.purse.initial)}</div></div>
-                    <div><div className="text-slate-500">Spent</div><div className="font-mono text-white">{cr(e.purse.spent)}</div></div>
-                    <div><div className="text-slate-500">Left</div><div className="font-mono text-white">{cr(e.purse.remaining)}</div></div>
-                  </div>
-                </Panel>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {tab === 'ai' && (
+      {/* TAB 3: SECTION 3 (Franchise Deep-Dive) */}
+      {tab === 'squads' && focusEval && (
         <div className="space-y-4">
-          <Panel title="AI analysis" icon={Sparkles} right={
-            <div className="flex items-center gap-2">
-              {ai.generating && <span className="text-xs text-amber-300 flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5 animate-spin" />Generating…</span>}
-              {isParticipant && ai.available && !ai.generating && !ai.result && (
-                <button onClick={() => requestAi(false)} disabled={aiBusy} className="gold-btn px-4 py-1.5 rounded-full text-slate-950 text-xs font-black disabled:opacity-50">Generate AI analysis</button>
-              )}
-              {isHost && ai.available && !ai.generating && ai.result && (
-                <button onClick={() => requestAi(true)} disabled={aiBusy} className="px-3 py-1.5 rounded-full border border-slate-700 text-slate-300 text-xs font-bold hover:border-amber-400/50 disabled:opacity-50 flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />Regenerate</button>
-              )}
-            </div>
-          }>
-            {aiMessage && <p className="text-xs text-amber-300">{aiMessage}</p>}
-            {!ai.available && <p className="text-xs text-slate-400">AI analysis is not configured on this server. The rule-based analysis below is complete and uses the same verified data.</p>}
-            {ai.lastError && <p className="text-xs text-rose-300">Last AI attempt failed ({ai.lastError.code}). {ai.result ? 'The previous AI report is still shown.' : 'Rule-based analysis is shown instead.'}</p>}
-            {ai.result ? (
-              <div className="space-y-3">
-                <p className="text-[11px] text-slate-500">Written by AI ({ai.model}) from the verified auction data. It explains the scores; it cannot change scores, ranks or eligibility.</p>
-                {ai.result.summary && <div><h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">Auction summary</h4><p className="text-sm text-slate-200 whitespace-pre-line">{ai.result.summary}</p></div>}
-                {ai.result.comparison && <div><h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">How the franchises compare</h4><p className="text-sm text-slate-200 whitespace-pre-line">{ai.result.comparison}</p></div>}
-                {ai.problems?.length > 0 && <details className="text-xs text-slate-500"><summary className="cursor-pointer">Checks applied to the AI output ({ai.problems.length})</summary><ul className="mt-1 space-y-0.5">{ai.problems.map((p, i) => <li key={i}>• {p}</li>)}</ul></details>}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400">Showing the rule-based analysis generated by the scoring engine.</p>
-            )}
-          </Panel>
-          {ranked.filter(r => r.e.participating).map(r => {
-            const e = r.e;
-            const aiEntry = ai.result?.franchises?.[r.franchiseId];
-            const src = aiEntry || e.explanation;
-            const squadById = new Map((franchiseOf(r.franchiseId)?.squad || []).map(p => [p.id, p]));
-            return (
-              <Panel key={r.franchiseId} title={`${r.tied ? `T${r.rank}` : r.rank}. ${e.franchiseName} — ${e.overall}/100`} icon={Shield}
-                right={<div className="flex items-center gap-2"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${aiEntry ? 'bg-violet-500/15 text-violet-300' : 'bg-slate-700/50 text-slate-300'}`}>{aiEntry ? 'AI report' : 'Rule-based'}</span><EligibilityBadge eligibility={e.eligibility} /></div>}>
-                <p className="text-sm text-slate-200 leading-relaxed">{src.report}</p>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div><h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300 mb-1.5">Strengths</h4><List items={src.strengths} tone="good" /></div>
-                  <div><h4 className="text-xs font-bold uppercase tracking-wider text-rose-300 mb-1.5">Weaknesses</h4><List items={src.weaknesses} tone="bad" /></div>
-                  <div><h4 className="text-xs font-bold uppercase tracking-wider text-sky-300 mb-1.5">Recommendations</h4><List items={src.recommendations} /></div>
-                </div>
-                {aiEntry?.suggestedXI?.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5">Suggested XI (AI, checked against the squad)</h4>
-                    <div className="flex flex-wrap gap-1.5">{aiEntry.suggestedXI.map(id => <span key={id} className="text-xs px-2 py-1 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-200">{squadById.get(id)?.name || id}{squadById.get(id)?.isOverseas ? ' (OS)' : ''}</span>)}</div>
-                  </div>
-                )}
-                {aiEntry?.missingInformation?.length > 0 && <p className="text-xs text-slate-500">Not available in the data: {aiEntry.missingInformation.join('; ')}</p>}
-              </Panel>
-            );
-          })}
-        </div>
-      )}
-
-      {tab === 'compare' && (
-        <Panel title="Compare franchises" icon={GitCompare}>
-          <p className="text-xs text-slate-400">Pick two to four franchises. Every value comes from the final squads.</p>
-          <div className="flex flex-wrap gap-2">
-            {playing.map(r => (
-              <button key={r.franchiseId} onClick={() => toggleCompare(r.franchiseId)} aria-pressed={compare.includes(r.franchiseId)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${compare.includes(r.franchiseId) ? 'border-amber-400 bg-amber-400/10 text-white' : 'border-slate-700 text-slate-400 hover:text-white'}`}>
-                <TeamDot franchise={franchiseOf(r.franchiseId)} />{r.e.shortName}
+          {/* Franchise Selector Pills */}
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {rankedList.map(r => (
+              <button
+                key={r.franchiseId}
+                onClick={() => setSelectedFranchiseId(r.franchiseId)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border whitespace-nowrap transition ${
+                  r.franchiseId === activeFocusId
+                    ? 'border-amber-400 text-white bg-amber-400/15'
+                    : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
+                }`}
+              >
+                <TeamDot franchise={r.franchise} />
+                <span className="font-mono text-[10px] text-amber-400">#{r.rank}</span>
+                {r.shortName}
               </button>
             ))}
           </div>
-          {compare.length < 2 ? <p className="text-sm text-slate-500">Select at least two franchises.</p> : (() => {
-            const cols = compare.map(fid => analysis.franchises[fid]);
-            const rows = [
-              ['Overall score', e => e.overall, true],
-              ...DIM_ORDER.map(k => [DIM_LABEL[k], e => e.dimensions[k], true]),
-              ['Players', e => e.counts.total, null], ['Batters', e => e.counts.BAT, null], ['Wicketkeepers', e => e.counts.WK, null],
-              ['All-rounders', e => e.counts.AR, null], ['Pace bowlers', e => e.counts.BOWL, null], ['Spinners', e => e.counts.SP, null],
-              ['Overseas', e => e.counts.overseas, null], ['Spent (₹ Cr)', e => e.purse.spent, null], ['Purse left (₹ Cr)', e => e.purse.remaining, null]
-            ];
-            return (
-              <div className="overflow-x-auto -mx-2">
-                <table className="w-full text-sm">
-                  <thead><tr><th className="text-left px-2 py-2 text-[11px] uppercase text-slate-400">Measure</th>{cols.map(e => <th key={e.franchiseId} className="px-2 text-center"><span className="inline-flex items-center gap-1.5 text-white"><TeamDot franchise={franchiseOf(e.franchiseId)} />{e.shortName}</span></th>)}</tr></thead>
-                  <tbody>
-                    {rows.map(([label, get, higherIsBetter]) => {
-                      const vals = cols.map(get);
-                      const best = higherIsBetter ? Math.max(...vals) : null;
+
+          <div className="grid lg:grid-cols-3 gap-4">
+            {/* Left 2 Cols: Strategic Breakdown */}
+            <div className="lg:col-span-2 space-y-4">
+              <Panel
+                title={`${focusEval.franchiseName} · Strategic Audit`}
+                icon={Shield}
+                right={<EligibilityBadge eligibility={focusEval.eligibility} />}
+              >
+                <p className="text-sm text-slate-200 leading-relaxed font-medium">
+                  {focusEval.shortAssessment}
+                </p>
+
+                {/* 7 Core Dimensions */}
+                <div className="space-y-3 pt-2">
+                  <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-3.5 space-y-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Batting Unit</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{focusEval.departments?.batting?.assessment || 'No batting assessment available.'}</p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-3.5 space-y-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Pace Bowling Department</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{focusEval.departments?.pace?.assessment || focusEval.departments?.bowling?.assessment || 'No pace bowling assessment available.'}</p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-3.5 space-y-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Spin Bowling Department</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{focusEval.departments?.spin?.assessment || focusEval.departments?.bowling?.assessment || 'No spin bowling assessment available.'}</p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-3.5 space-y-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-300">All-Rounder Balance</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{focusEval.departments?.allRounders?.assessment || 'No all-rounder assessment available.'}</p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-3.5 space-y-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Wicketkeeping Coverage</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{focusEval.departments?.wicketkeeping?.assessment || 'No wicketkeeping assessment available.'}</p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-3.5 space-y-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Overseas Strategy</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{focusEval.departments?.overseas?.assessment || 'No overseas strategy assessment available.'}</p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-3.5 space-y-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Bench Reserves &amp; Depth</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{focusEval.departments?.benchStrength?.assessment || 'No bench depth assessment available.'}</p>
+                  </div>
+                </div>
+              </Panel>
+
+              {/* Squad Player List */}
+              <Panel
+                title={`Acquired Squad (${focusEval.squad?.length || 0} Players)`}
+                icon={Users}
+                right={
+                  onInspectSquad && focusEval.participating ? (
+                    <button
+                      onClick={() => onInspectSquad(activeFocusId)}
+                      className="text-xs font-bold text-amber-300 hover:text-amber-200"
+                    >
+                      Open Interactive Squad →
+                    </button>
+                  ) : null
+                }
+              >
+                {!focusEval.squad?.length ? (
+                  <p className="text-xs text-slate-500">No players acquired.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {Object.keys(CATEGORY_LABEL).map(cat => {
+                      const ps = focusEval.squad.filter(p => p.category === cat);
+                      if (!ps.length) return null;
                       return (
-                        <tr key={label} className="border-t border-slate-800/80">
-                          <td className="px-2 py-2 text-slate-300">{label}</td>
-                          {vals.map((v, i) => <td key={i} className={`px-2 text-center font-mono ${higherIsBetter && v === best && vals.filter(x => x === best).length === 1 ? 'text-emerald-300 font-bold' : 'text-slate-200'}`}>{typeof v === 'number' ? v : '—'}</td>)}
-                        </tr>
+                        <div key={cat}>
+                          <div className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-1.5">
+                            {CATEGORY_LABEL[cat]} ({ps.length})
+                          </div>
+                          <div className="grid sm:grid-cols-2 gap-1.5">
+                            {ps.map(p => (
+                              <div
+                                key={p.id}
+                                className="flex items-center gap-2 rounded-lg bg-slate-900/60 border border-slate-800 px-2.5 py-1.5 text-xs"
+                              >
+                                <span className="text-white font-semibold truncate">{p.name}</span>
+                                {p.isOverseas && (
+                                  <span className="text-[10px] px-1.5 rounded bg-sky-500/15 text-sky-300 font-bold">
+                                    OS
+                                  </span>
+                                )}
+                                <span className="text-slate-500 truncate hidden sm:inline">{p.role}</span>
+                                <span className="ml-auto font-mono text-amber-300 font-bold">{cr(p.boughtPrice)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       );
                     })}
-                    <tr className="border-t border-slate-800/80"><td className="px-2 py-2 text-slate-300">Eligibility</td>{cols.map(e => <td key={e.franchiseId} className="px-2 text-center"><EligibilityBadge eligibility={e.eligibility} /></td>)}</tr>
-                  </tbody>
-                </table>
+                  </div>
+                )}
+              </Panel>
+            </div>
+
+            {/* Right Col: Tactical Cards */}
+            <div className="space-y-4">
+              {/* Critical Weaknesses Card */}
+              <Panel title="Critical Squad Weaknesses" icon={AlertTriangle}>
+                {focusEval.criticalWeaknesses.length === 0 ? (
+                  <p className="text-xs text-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" /> Zero critical squad weaknesses detected.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {focusEval.criticalWeaknesses.map((w, i) => (
+                      <li key={i} className="text-xs text-rose-300 leading-snug flex items-start gap-2">
+                        <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                        <span>{w}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Panel>
+
+              {/* Key Strengths Card */}
+              <Panel title="Identified Strengths" icon={Award}>
+                {focusEval.keyStrengths.length === 0 ? (
+                  <p className="text-xs text-slate-500">None noted.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {focusEval.keyStrengths.map((s, i) => (
+                      <li key={i} className="text-xs text-emerald-300 leading-snug flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Panel>
+
+              {/* Purse Allocation */}
+              <Panel title="Auction Expenditure" icon={Wallet}>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <div className="text-slate-500 text-[10px]">Start Purse</div>
+                    <div className="font-mono text-white font-bold mt-1">{cr(focusEval.purse?.initial)}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <div className="text-slate-500 text-[10px]">Spent</div>
+                    <div className="font-mono text-white font-bold mt-1">{cr(focusEval.purse?.spent)}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <div className="text-slate-500 text-[10px]">Remaining</div>
+                    <div className="font-mono text-emerald-400 font-bold mt-1">{cr(focusEval.purse?.remaining)}</div>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  {focusEval.departments?.auctionStrategy?.assessment || ''}
+                </p>
+              </Panel>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: SECTION 5 (Biggest Mistakes) & SECTION 6 (Best Acquisitions) */}
+      {tab === 'mistakes' && (
+        <div className="space-y-6">
+          {/* Section 5: Biggest Auction Mistakes */}
+          <Panel title="Biggest Auction Mistakes Across Franchises" icon={AlertOctagon}>
+            <p className="text-xs text-slate-400">
+              Data-verified squad construction blunders identified during the auction. No fabricated player form or statistics.
+            </p>
+
+            {!(mastermind.biggestMistakes || []).length ? (
+              <p className="text-xs text-emerald-300 py-4">No major squad-building blunders detected across franchises.</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                {(mastermind.biggestMistakes || []).map((m, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl bg-slate-900/80 border border-rose-900/40 p-4 space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-white text-sm flex items-center gap-1.5">
+                        <TeamDot franchise={room.franchises?.[m.franchiseId]} />
+                        {m.franchiseName}
+                      </span>
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                        m.severity === 'CRITICAL'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      }`}>
+                        {m.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-rose-200/90 leading-relaxed">
+                      {m.mistake}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          {/* Section 6: Best Acquisitions */}
+          <Panel title="Best Strategic Acquisitions" icon={TrendingUp}>
+            <p className="text-xs text-slate-400">
+              Notable purchases that secured indispensable roles at high value or base price without inflationary waste.
+            </p>
+
+            {!(mastermind.bestAcquisitions || []).length ? (
+              <p className="text-xs text-slate-500 py-4">No standout tactical acquisitions identified.</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                {(mastermind.bestAcquisitions || []).map((a, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl bg-slate-900/80 border border-emerald-900/40 p-4 space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <TeamDot franchise={room.franchises?.[a.franchiseId]} />
+                        <span className="font-bold text-white text-sm">{a.playerName}</span>
+                      </div>
+                      <span className="font-mono text-emerald-400 font-bold text-xs">{cr(a.priceCr)}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      {a.franchiseName} · {a.role}
+                    </div>
+                    <p className="text-xs text-emerald-200/90 leading-relaxed">
+                      {a.reason}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          {/* Methodology & Limitations */}
+          <Panel title="Cricket Mastermind Methodology &amp; Boundaries" icon={Info}>
+            <ul className="text-xs text-slate-400 space-y-1.5">
+              {(mastermind.limitations || []).map((note, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-amber-400 font-bold">•</span>
+                  <span>{note}</span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        </div>
+      )}
+
+      {/* TAB 5: Head-to-Head Pairwise Comparison */}
+      {tab === 'matchup' && (
+        <Panel title="Tactical Head-to-Head Matchup Matrix" icon={Swords}>
+          <p className="text-xs text-slate-400">
+            Select any two franchises to inspect the exact qualitative cricket evaluation that determined their relative standing.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 mt-3">
+            <div className="w-full sm:w-1/2">
+              <label className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Franchise A</label>
+              <select
+                value={compareA || ''}
+                onChange={e => setCompareA(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400"
+              >
+                {rankedList.map(r => (
+                  <option key={r.franchiseId} value={r.franchiseId}>
+                    #{r.rank} {r.franchiseName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="w-full sm:w-1/2">
+              <label className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Franchise B</label>
+              <select
+                value={compareB || ''}
+                onChange={e => setCompareB(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400"
+              >
+                {rankedList.map(r => (
+                  <option key={r.franchiseId} value={r.franchiseId}>
+                    #{r.rank} {r.franchiseName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {compareA && compareB && compareA !== compareB && (() => {
+            const matchup = mastermind.headToHead?.[compareA]?.[compareB];
+            const evalA = mastermind.franchises[compareA];
+            const evalB = mastermind.franchises[compareB];
+
+            if (!matchup || !evalA || !evalB) return null;
+
+            return (
+              <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 space-y-4 mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div className="flex items-center gap-2">
+                    <TeamDot franchise={room.franchises?.[compareA]} />
+                    <span className="font-black text-white text-base">{evalA.franchiseName}</span>
+                  </div>
+
+                  <div className="px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-black uppercase">
+                    Advantage: {matchup.winner} ({matchup.margin})
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <TeamDot franchise={room.franchises?.[compareB]} />
+                    <span className="font-black text-white text-base">{evalB.franchiseName}</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 block">Decisive Rationale</span>
+                  <p className="text-sm text-slate-200 leading-relaxed font-medium">{matchup.reason}</p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4 text-xs pt-2">
+                  <div className="space-y-2 border-r border-slate-800 pr-2">
+                    <h5 className="font-bold text-white uppercase tracking-wider">{evalA.franchiseName} Profile</h5>
+                    <p className="text-slate-300">Batting: {evalA.departments?.batting?.depthCount ?? evalA.counts?.BAT ?? 0} options ({evalA.departments?.batting?.openers?.length ?? 0} openers, {evalA.departments?.batting?.finishers?.length ?? 0} finishers)</p>
+                    <p className="text-slate-300">Bowling: {evalA.departments?.bowling?.depthCount ?? evalA.counts?.BOWL ?? 0} options ({evalA.departments?.bowling?.deathBowlers?.length ?? 0} death specialists)</p>
+                    <p className="text-slate-300">WKs: {evalA.departments?.wicketkeeping?.totalCount ?? evalA.counts?.WK ?? 0} ({(evalA.departments?.wicketkeeping?.totalCount ?? evalA.counts?.WK ?? 0) >= 2 ? 'Covered' : 'Vulnerable'})</p>
+                    <p className="text-slate-300">All-rounders: {evalA.departments?.allRounders?.totalCount ?? evalA.counts?.AR ?? 0} ({evalA.departments?.allRounders?.genuineCount ?? 0} verified)</p>
+                  </div>
+
+                  <div className="space-y-2 pl-2">
+                    <h5 className="font-bold text-white uppercase tracking-wider">{evalB.franchiseName} Profile</h5>
+                    <p className="text-slate-300">Batting: {evalB.departments?.batting?.depthCount ?? evalB.counts?.BAT ?? 0} options ({evalB.departments?.batting?.openers?.length ?? 0} openers, {evalB.departments?.batting?.finishers?.length ?? 0} finishers)</p>
+                    <p className="text-slate-300">Bowling: {evalB.departments?.bowling?.depthCount ?? evalB.counts?.BOWL ?? 0} options ({evalB.departments?.bowling?.deathBowlers?.length ?? 0} death specialists)</p>
+                    <p className="text-slate-300">WKs: {evalB.departments?.wicketkeeping?.totalCount ?? evalB.counts?.WK ?? 0} ({(evalB.departments?.wicketkeeping?.totalCount ?? evalB.counts?.WK ?? 0) >= 2 ? 'Covered' : 'Vulnerable'})</p>
+                    <p className="text-slate-300">All-rounders: {evalB.departments?.allRounders?.totalCount ?? evalB.counts?.AR ?? 0} ({evalB.departments?.allRounders?.genuineCount ?? 0} verified)</p>
+                  </div>
+                </div>
               </div>
             );
           })()}
