@@ -164,12 +164,13 @@ export function validateBid({
 /**
  * Checks and updates financial elimination status of a franchise
  */
-export function checkFinancialElimination(franchise, config, floorLakh = toLakh(config.minPlayerPrice)) {
-  if (franchise.squad.length >= config.minSquadSize) {
+export function checkFinancialElimination(franchise, config, floorLakh = toLakh(config?.minPlayerPrice ?? DEFAULT_CONFIG.minPlayerPrice)) {
+  const { minSquadSize } = getRoomSquadLimits({ config });
+  if (franchise.squad.length >= minSquadSize) {
     return { isEliminated: false };
   }
 
-  const remainingNeeded = config.minSquadSize - franchise.squad.length;
+  const remainingNeeded = minSquadSize - franchise.squad.length;
   const minReserveNeededLakh = remainingNeeded * floorLakh;
 
   if (toLakh(franchise.remainingPurse) < minReserveNeededLakh) {

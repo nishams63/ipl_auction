@@ -21,13 +21,13 @@ const INVALID = [
   ['purse NaN', { basePurse: NaN }],
   ['min squad below 5', { minSquadSize: 1 }],
   ['min squad fractional', { minSquadSize: 15.5 }],
+  ['max squad above 25', { maxSquadSize: 26 }],
   ['max squad above 30', { maxSquadSize: 40 }],
   ['min > max squad', { minSquadSize: 25, maxSquadSize: 20 }],
-  ['overseas below 4', { maxOverseas: 2 }],
+  ['overseas below 0', { maxOverseas: -1 }],
   ['overseas above 8', { maxOverseas: 9 }],
   ['overseas above 10', { maxOverseas: 11 }],
   ['max squad below 15', { maxSquadSize: 14 }],
-  ['max squad above 30', { maxSquadSize: 40 }],
   ['participants 0', { minParticipants: 0 }],
   ['participants 11', { minParticipants: 11 }],
   ['timer 5s', { timerDuration: 5 }],
@@ -75,7 +75,9 @@ await t.it('validator accepts the fixed IPL rule values and dynamic squad/overse
   const { FIXED_RULES } = await import('../server/config.js');
   assert.deepStrictEqual({ ...FIXED_RULES }, { basePurse: 120, minSquadSize: 15, minWKs: 1, timerDuration: 15 });
   assert.ok(validateConfig({ ...FIXED_RULES }).ok, 'the fixed values themselves must be accepted (older clients send them)');
+  assert.ok(validateConfig({ maxSquadSize: 15, maxOverseas: 0 }).ok);
   assert.ok(validateConfig({ maxSquadSize: 15, maxOverseas: 5 }).ok);
+  assert.ok(validateConfig({ maxSquadSize: 25, maxOverseas: 8 }).ok);
   assert.ok(validateConfig({ max_squad_size: 20, max_overseas_players: 6 }).ok);
   assert.strictEqual(validateConfig({ timerDuration: 10 }).ok, false);
   assert.strictEqual(validateConfig({ timerDuration: 90 }).ok, false);
@@ -187,6 +189,11 @@ await t.it('update_config over socket rejects invalid values with reasons; confi
   const changed = await emit(s, 'update_config', { roomCode: body.roomCode, config: { basePurse: 100 } });
   assert.strictEqual(changed.success, false);
   assert.match(changed.error, /fixed at 120/);
+
+  const { checkFinancialElimination } = await import('../server/auctionEngine.js');
+  const legacyElim = checkFinancialElimination({ squad: [], remainingPurse: 1.0 }, { basePurse: 120, minPlayerPrice: 0.2 }, 30);
+  assert.strictEqual(legacyElim.isEliminated, true);
+  assert.match(legacyElim.reason, /15 more mandatory squad slots/);
 });
 
 const failed = await t.finish();

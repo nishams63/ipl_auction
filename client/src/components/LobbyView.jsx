@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { Copy, Check, Play, Settings, Users, Shield, Sparkles, Trophy } from 'lucide-react';
-import { getRoomSquadLimits } from '../../../server/config';
+import { getRoomSquadLimits, SQUAD_SIZE_OPTIONS, OVERSEAS_LIMIT_OPTIONS } from '../../../server/config';
 
 export default function LobbyView({
   room,
   participant,
   onSelectFranchise,
   onStartAuction,
+  onUpdateConfig,
   onOpenSquad
 }) {
   const [copied, setCopied] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
 
-  // Configuration state
   // Room configuration rules (resolved cleanly including legacy room defaults)
   const basePurse = room.config.basePurse ?? 120;
   const timerDuration = room.config.timerDuration ?? 15;
   const { minSquadSize, maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
+  const [draftMaxSquad, setDraftMaxSquad] = useState(maxSquadSize);
+  const [draftMaxOverseas, setDraftMaxOverseas] = useState(maxOverseas);
+  const [configError, setConfigError] = useState(null);
 
   const copyRoomCode = async () => {
     try {
@@ -28,6 +31,22 @@ export default function LobbyView({
 
   const handleSaveConfig = (e) => {
     e.preventDefault();
+    const sq = Number(draftMaxSquad);
+    const os = Number(draftMaxOverseas);
+    if (!Number.isInteger(sq) || sq < 15 || sq > 25) {
+      setConfigError('Maximum Squad Players must be between 15 and 25');
+      return;
+    }
+    if (!Number.isInteger(os) || os < 0 || os > 8) {
+      setConfigError('Maximum Overseas Players must be between 0 and 8');
+      return;
+    }
+    if (os > sq) {
+      setConfigError('Maximum Overseas Players cannot exceed Maximum Squad Players');
+      return;
+    }
+    setConfigError(null);
+    onUpdateConfig?.({ maxSquadSize: sq, maxOverseas: os });
     setShowConfig(false);
   };
 
@@ -117,7 +136,12 @@ export default function LobbyView({
 
             {participant?.isHost && (
               <button
-                onClick={() => setShowConfig(!showConfig)}
+                onClick={() => {
+                  setDraftMaxSquad(maxSquadSize);
+                  setDraftMaxOverseas(maxOverseas);
+                  setConfigError(null);
+                  setShowConfig(!showConfig);
+                }}
                 className="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-white/10 transition cursor-pointer"
               >
                 <Settings className="w-4 h-4 text-amber-400" />
@@ -133,10 +157,16 @@ export default function LobbyView({
         <form onSubmit={handleSaveConfig} className="glass-panel p-6 rounded-3xl border border-amber-500/30 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-lg text-white flex items-center gap-2">
-              <Settings className="w-5 h-5 text-amber-400" /> Configure Auction Rules
+              <Settings className="w-5 h-5 text-amber-400" /> Configure Squad Rules
             </h3>
-            <span className="text-xs text-amber-400/80 font-medium">₹{basePurse} Cr purse · Max {maxSquadSize} players · Max {maxOverseas} overseas · 15s fixed lot timer</span>
+            <span className="text-xs text-amber-400/80 font-medium">Host can adjust squad limits before starting · locks on start</span>
           </div>
+
+          {configError && (
+            <div className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+              {configError}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
             <div>
@@ -172,26 +202,34 @@ export default function LobbyView({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-400 block mb-1">Max Squad Size</label>
-              <input
-                type="number"
-                value={maxSquadSize}
-                readOnly
-                disabled
-                title="Fixed by the IPL auction rules"
-                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 font-mono text-sm cursor-not-allowed"
-              />
+              <label htmlFor="lobby-max-squad" className="text-xs font-semibold text-slate-200 block mb-1">Max Squad Players</label>
+              <select
+                id="lobby-max-squad"
+                value={draftMaxSquad}
+                onChange={(e) => {
+                  const nextSq = Number(e.target.value);
+                  setDraftMaxSquad(nextSq);
+                  if (draftMaxOverseas > nextSq) setDraftMaxOverseas(nextSq);
+                }}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 outline-none"
+              >
+                {SQUAD_SIZE_OPTIONS.map(n => (
+                  <option key={n} value={n}>{n} Players</option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-400 block mb-1">Max Overseas</label>
-              <input
-                type="number"
-                value={maxOverseas}
-                readOnly
-                disabled
-                title="Fixed by the IPL auction rules"
-                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 font-mono text-sm cursor-not-allowed"
-              />
+              <label htmlFor="lobby-max-overseas" className="text-xs font-semibold text-slate-200 block mb-1">Max Overseas Players</label>
+              <select
+                id="lobby-max-overseas"
+                value={draftMaxOverseas}
+                onChange={(e) => setDraftMaxOverseas(Number(e.target.value))}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 outline-none"
+              >
+                {OVERSEAS_LIMIT_OPTIONS.filter(n => n <= draftMaxSquad).map(n => (
+                  <option key={n} value={n}>{n === 0 ? '0 (Indian Only)' : `${n} Overseas`}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -199,9 +237,15 @@ export default function LobbyView({
             <button
               type="button"
               onClick={() => setShowConfig(false)}
-              className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-lg shadow-amber-500/20"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
             >
-              Close
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-lg shadow-amber-500/20 cursor-pointer"
+            >
+              Save Rules
             </button>
           </div>
         </form>

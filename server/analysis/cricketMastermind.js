@@ -12,6 +12,7 @@
 
 import crypto from 'node:crypto';
 import { toLakh, fromLakh } from '../money.js';
+import { getRoomSquadLimits } from '../config.js';
 
 export const MASTERMIND_ENGINE_VERSION = 'cricket-mastermind-v1';
 
@@ -170,21 +171,23 @@ function checkEligibility(squad, config, participating) {
     };
   }
 
+  const limits = getRoomSquadLimits({ config });
+  const minWKs = config?.minWKs ?? 1;
   const keepers = squad.filter(p => p.category === 'WK').length;
   const overseas = squad.filter(p => p.isOverseas === true).length;
   const failures = [];
 
-  if (squad.length < config.minSquadSize) {
-    failures.push(`Squad has ${squad.length} players; the minimum required is ${config.minSquadSize}`);
+  if (squad.length < limits.minSquadSize) {
+    failures.push(`Squad has ${squad.length} players; the minimum required is ${limits.minSquadSize}`);
   }
-  if (squad.length > config.maxSquadSize) {
-    failures.push(`Squad has ${squad.length} players; the maximum allowed is ${config.maxSquadSize}`);
+  if (squad.length > limits.maxSquadSize) {
+    failures.push(`Squad has ${squad.length} players; the maximum allowed is ${limits.maxSquadSize}`);
   }
-  if (overseas > config.maxOverseas) {
-    failures.push(`Squad has ${overseas} overseas players; the maximum permitted is ${config.maxOverseas}`);
+  if (overseas > limits.maxOverseas) {
+    failures.push(`Squad has ${overseas} overseas players; the maximum permitted is ${limits.maxOverseas}`);
   }
-  if (keepers < (config.minWKs ?? 1)) {
-    failures.push(`Squad has ${keepers} wicketkeeper(s); at least ${config.minWKs ?? 1} mandatory wicketkeeper is required`);
+  if (keepers < minWKs) {
+    failures.push(`Squad has ${keepers} wicketkeeper(s); at least ${minWKs} mandatory wicketkeeper is required`);
   }
 
   return {
@@ -196,24 +199,24 @@ function checkEligibility(squad, config, participating) {
 
 /**
  * Evaluate the legal feasibility of fielding a valid Playing XI.
- * Must have: 11 players, ≤4 overseas, ≥1 WK, ≥5 bowling options, ≥6 batting options.
+ * Must have: 11 players, <=min(4, maxOverseas) overseas, >=1 WK, >=5 bowling options, >=6 batting options.
  */
-function checkPlayingXiFeasibility(classifiedSquad) {
+function checkPlayingXiFeasibility(classifiedSquad, effectiveXiOverseasCap = SQUAD_TARGETS.xiOverseasCap) {
   const indian = classifiedSquad.filter(p => !p.isOverseas);
   const overseas = classifiedSquad.filter(p => p.isOverseas);
-  const usableTotal = indian.length + Math.min(overseas.length, SQUAD_TARGETS.xiOverseasCap);
+  const usableTotal = indian.length + Math.min(overseas.length, effectiveXiOverseasCap);
 
   const keepers = classifiedSquad.filter(p => p.keeper);
   const indianBowlers = indian.filter(p => p.bowls);
   const overseasBowlers = overseas.filter(p => p.bowls);
-  const maxXiBowlers = indianBowlers.length + Math.min(overseasBowlers.length, SQUAD_TARGETS.xiOverseasCap);
+  const maxXiBowlers = indianBowlers.length + Math.min(overseasBowlers.length, effectiveXiOverseasCap);
 
   const indianBatters = indian.filter(p => p.bats);
   const overseasBatters = overseas.filter(p => p.bats);
-  const maxXiBatters = indianBatters.length + Math.min(overseasBatters.length, SQUAD_TARGETS.xiOverseasCap);
+  const maxXiBatters = indianBatters.length + Math.min(overseasBatters.length, effectiveXiOverseasCap);
 
   const checks = [
-    { label: 'Field 11 players with at most 4 overseas', ok: usableTotal >= 11 },
+    { label: `Field 11 players with at most ${effectiveXiOverseasCap} overseas`, ok: usableTotal >= 11 },
     { label: 'Field a designated wicketkeeper', ok: keepers.length >= 1 },
     { label: 'Field 5 genuine bowling options', ok: maxXiBowlers >= 5 },
     { label: 'Field 6 reliable batting options', ok: maxXiBatters >= 6 }
@@ -227,11 +230,22 @@ function checkPlayingXiFeasibility(classifiedSquad) {
  * Analyze a franchise across all 7 cricket strategy dimensions.
  */
 export function analyzeFranchiseSquad(franchise, config, { participating }) {
+  const limits = getRoomSquadLimits({ config });
+  const effectiveConfig = {
+    ...(config || {}),
+    minSquadSize: limits.minSquadSize,
+    maxSquadSize: limits.maxSquadSize,
+    maxOverseas: limits.maxOverseas,
+    minWKs: config?.minWKs ?? 1,
+    basePurse: config?.basePurse ?? 120
+  };
+  const effectiveXiOverseasCap = Math.min(SQUAD_TARGETS.xiOverseasCap, limits.maxOverseas);
+
   const rawSquad = [...(franchise.squad || [])].filter(p => p && typeof p.id === 'string');
   const squad = rawSquad.map(classifyPlayerMastermind);
 
-  const eligibility = checkEligibility(squad, config, participating);
-  const xiFeasibility = checkPlayingXiFeasibility(squad);
+  const eligibility = checkEligibility(squad, effectiveConfig, participating);
+  const xiFeasibility = checkPlayingXiFeasibility(squad, effectiveXiOverseasCap);
 
   // Groupings
   const batters = squad.filter(p => p.bats);
@@ -319,13 +333,15 @@ export function analyzeFranchiseSquad(franchise, config, { participating }) {
       keyStrengths.push(`Proven multi-discipline balance: ${genuineAllRounders.map(a => a.name).join(', ')} provide dual-threat flexibility`);
     }
 
-    // Overseas utilization
-    if (overseas.length < 4) {
-      criticalWeaknesses.push(`Only ${overseas.length} overseas player(s): cannot utilize the full 4-overseas Playing XI allowance`);
-    } else if (overseas.length > config.maxOverseas) {
-      criticalWeaknesses.push(`Exceeded overseas limit: ${overseas.length}/${config.maxOverseas} overseas players`);
+    // Overseas utilization (respect room's configured overseas limit)
+    if (overseas.length > effectiveConfig.maxOverseas) {
+      criticalWeaknesses.push(`Exceeded overseas limit: ${overseas.length}/${effectiveConfig.maxOverseas} overseas players`);
+    } else if (effectiveXiOverseasCap === 0) {
+      keyStrengths.push('Compliant Indian-only squad built cleanly within room rules (0 overseas allowed)');
+    } else if (overseas.length < effectiveXiOverseasCap) {
+      criticalWeaknesses.push(`Only ${overseas.length} overseas player(s): cannot utilize the full ${effectiveXiOverseasCap}-overseas Playing XI allowance`);
     } else {
-      keyStrengths.push(`Optimal overseas quota: ${overseas.length} overseas players allowing a full 4-player international core plus rotation reserves`);
+      keyStrengths.push(`Optimal overseas quota: ${overseas.length} overseas player(s) allowing a full ${effectiveXiOverseasCap}-player international core${effectiveConfig.maxOverseas > effectiveXiOverseasCap ? ' plus rotation reserves' : ''}`);
     }
   }
 
@@ -390,11 +406,13 @@ export function analyzeFranchiseSquad(franchise, config, { participating }) {
     : 'No wicketkeeper acquired.';
 
   const overseasAssessment = participating
-    ? (overseas.length >= 4 && overseas.length <= config.maxOverseas
-        ? `${overseas.length} overseas players acquired (within the ${config.maxOverseas} limit), enabling a full 4-player overseas presence in the XI.`
-        : overseas.length < 4
-        ? `Only ${overseas.length} overseas players: franchise cannot field the maximum permitted 4 overseas players in the Playing XI.`
-        : `Overseas violation: ${overseas.length} overseas players exceeds the maximum squad limit of ${config.maxOverseas}.`)
+    ? (overseas.length > effectiveConfig.maxOverseas
+        ? `Overseas violation: ${overseas.length} overseas players exceeds the maximum squad limit of ${effectiveConfig.maxOverseas}.`
+        : effectiveXiOverseasCap === 0
+        ? 'Indian-only squad rules (0 overseas allowed); all selections are compliant.'
+        : overseas.length >= effectiveXiOverseasCap
+        ? `${overseas.length} overseas player(s) acquired (within the ${effectiveConfig.maxOverseas} limit), maximizing the ${effectiveXiOverseasCap}-player overseas allowance in the XI.`
+        : `Only ${overseas.length} overseas player(s): franchise cannot utilize the maximum permitted ${effectiveXiOverseasCap} overseas slot(s) in the Playing XI.`)
     : 'No overseas players acquired.';
 
   const benchAssessment = participating
@@ -1012,13 +1030,14 @@ function identifyBestAcquisitions(evaluations) {
  * Canonical input checksum for the evaluation.
  */
 export function mastermindInputChecksum(room) {
+  const limits = getRoomSquadLimits(room);
   const input = {
     engine: MASTERMIND_ENGINE_VERSION,
     rules: {
-      minSquadSize: room.config?.minSquadSize,
-      maxSquadSize: room.config?.maxSquadSize,
-      maxOverseas: room.config?.maxOverseas,
-      minWKs: room.config?.minWKs ?? 1
+      minSquadSize: limits.minSquadSize,
+      maxSquadSize: limits.maxSquadSize,
+      maxOverseas: limits.maxOverseas,
+      minWKs: room?.config?.minWKs ?? 1
     },
     franchises: Object.keys(room.franchises || {}).sort().map(id => {
       const f = room.franchises[id];
@@ -1040,7 +1059,20 @@ export function mastermindInputChecksum(room) {
  * Pure function of the room squads and rules.
  */
 export function runCricketMastermind(room, { now = () => new Date().toISOString() } = {}) {
-  const config = room.config || { minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8, minWKs: 1, basePurse: 120 };
+  const limits = getRoomSquadLimits(room);
+  const config = {
+    ...(room?.config || {}),
+    minSquadSize: limits.minSquadSize,
+    maxSquadSize: limits.maxSquadSize,
+    maxOverseas: limits.maxOverseas,
+    minWKs: room?.config?.minWKs ?? 1,
+    basePurse: room?.config?.basePurse ?? 120
+  };
+  const targets = {
+    ...SQUAD_TARGETS,
+    xiOverseasCap: Math.min(SQUAD_TARGETS.xiOverseasCap, config.maxOverseas),
+    squadOverseasCap: config.maxOverseas
+  };
   const franchiseIds = Object.keys(room.franchises || {}).sort();
 
   // 1. Analyze each franchise independently across all 7 dimensions
@@ -1088,10 +1120,10 @@ export function runCricketMastermind(room, { now = () => new Date().toISOString(
       minWKs: config.minWKs ?? 1,
       basePurse: config.basePurse
     },
-    targets: { ...SQUAD_TARGETS },
+    targets: { ...targets },
     weights: {},
     scoringWeights: {},
-    normalisationTargets: { ...SQUAD_TARGETS },
+    normalisationTargets: { ...targets },
     summary: {
       playersSold: sold,
       playersUnsold: unsold,

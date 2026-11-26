@@ -143,7 +143,7 @@ export class RoomSessionController {
   async _enterOrReset(g, code, name) {
     try {
       return await this._enter(g, code, name);
-    } catch {
+    } catch (err) {
       if (this.isCurrent(g)) {
         this._teardown();
         this._set({ ...IDLE_STATE });

@@ -323,13 +323,20 @@ export default function FranchiseDashboardModal({
         {/* TAB 1: 10 FRANCHISES OVERVIEW TABLE */}
         {activeTab === 'overview' && (
           <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider">
                 ALL 10 IPL FRANCHISES STATUS & PURSE
               </h3>
-              <span className="text-xs text-slate-400">
-                Initial Purse: <strong className="text-emerald-400">₹120.00 Cr each</strong> (Total ₹1,200 Cr)
-              </span>
+              {(() => {
+                const { minSquadSize, maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
+                const pursePerTeam = Number(room.config?.basePurse ?? 120);
+                const totalPursePool = pursePerTeam * Object.keys(room.franchises || {}).length;
+                return (
+                  <span className="text-xs text-slate-400">
+                    Fixed Purse: <strong className="text-emerald-400">₹{pursePerTeam.toFixed(2)} Cr each</strong> (Total ₹{totalPursePool.toLocaleString('en-IN')} Cr) · Squad {minSquadSize}–{maxSquadSize} · Max {maxOverseas} Overseas
+                  </span>
+                );
+              })()}
             </div>
 
             <div className="overflow-x-auto rounded-2xl border border-white/10">

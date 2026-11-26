@@ -383,4 +383,23 @@ await t.it('A17: the prompt is built only from verified data — no participant 
   assert.match(system, /never call it eligible/i);
 });
 
+await t.it('A18: eval-2 respects custom maxOverseas (0 and 2) without penalizing absent overseas slots', () => {
+  const indianSquad = [
+    P('BAT', 'Top-order Batter'), P('BAT', 'Opening Batter'), P('BAT', 'Middle-order Batter'), P('BAT', 'Finisher'),
+    P('WK', 'Wicketkeeper Batter'), P('WK', 'Wicketkeeper Opener'),
+    P('AR', 'Pace All-Rounder'), P('AR', 'Left-arm Spin All-Rounder'), P('AR', 'Left-arm Spin All-Rounder'),
+    P('BOWL', 'Right-arm Fast Bowler'), P('BOWL', 'Left-arm Fast Bowler'), P('BOWL', 'Right-arm Fast Medium'),
+    P('SP', 'Right-arm Leg Spinner'), P('SP', 'Slow Left-arm Orthodox'), P('BAT', 'Middle-order Batter')
+  ];
+  const eZero = evaluateFranchise({ id: 'CSK', name: 'CSK', squad: indianSquad, initialPurse: 120, remainingPurse: 105 }, { minSquadSize: 15, maxSquadSize: 15, maxOverseas: 0, minWKs: 1, basePurse: 120 }, { participating: true });
+  assert.strictEqual(eZero.eligibility.eligible, true);
+  assert.strictEqual(eZero.dimensions.overseasBalance, 100);
+  assert.strictEqual(eZero.dimensions.xiCompatibility, 100);
+
+  const twoOsSquad = indianSquad.map((p, idx) => (idx < 2 ? { ...p, isOverseas: true } : p));
+  const eTwo = evaluateFranchise({ id: 'MI', name: 'MI', squad: twoOsSquad, initialPurse: 120, remainingPurse: 105 }, { minSquadSize: 15, maxSquadSize: 18, maxOverseas: 2, minWKs: 1, basePurse: 120 }, { participating: true });
+  assert.strictEqual(eTwo.eligibility.eligible, true);
+  assert.strictEqual(eTwo.dimensions.overseasBalance, 100);
+});
+
 process.exit(await t.finish());

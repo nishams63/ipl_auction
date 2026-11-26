@@ -29,14 +29,16 @@ Browser (React 19 + Vite + Tailwind 4)          Cloudflare
   interrupted auctions in `server/data/persisted_rooms.json` and for the legacy test suites.
   The frontend uses it only when `VITE_USE_SOCKETIO=true`.
 
-## Fixed auction rules (server-enforced)
+## Fixed & host-customizable auction rules (server-enforced)
 
 | Rule | Value |
 |------|-------|
 | Franchises | CSK, MI, RCB, KKR, SRH, RR, DC, PBKS, GT, LSG (humans only, no AI teams) |
-| Purse | ₹120 Cr each |
-| Squad | 15 minimum, 25 maximum, max 8 overseas, at least 1 wicketkeeper |
-| Timer | 15 s by default; a valid bid resets it, a rejected bid does not |
+| Purse (fixed) | ₹120 Cr each |
+| Minimum squad / WK (fixed) | 15 minimum players, at least 1 wicketkeeper |
+| Max squad size (host-configured) | 15–25 players (default 25); configurable by host before start |
+| Max overseas (host-configured) | 0–8 overseas players (default 8, always `<= maxSquadSize`); configurable by host before start |
+| Timer (fixed) | 15 s; a valid bid resets it to 15 s, a rejected bid does not |
 | Increments | below ₹10 Cr +₹0.25 Cr · ₹10 Cr up to below ₹15 Cr +₹0.50 Cr · ₹15 Cr and above +₹1 Cr |
 | Money | integer lakhs internally; no negative purse; no duplicate sales |
 | Catalogue | 409 players in the existing round/category/set order (shuffled only within a set) |

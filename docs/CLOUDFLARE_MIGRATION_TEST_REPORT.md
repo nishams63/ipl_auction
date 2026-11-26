@@ -1,4 +1,4 @@
-> **Historical document (superseded 2026-11-26).** Unity was removed from the project; any Unity/WebGL references below describe the former architecture. Current architecture: `README.md`, `docs/CLOUDFLARE_ARCHITECTURE.md`, `docs/SESSION_LIFECYCLE.md`.
+> **Historical document (superseded 2026-11-26).** Unity was removed from the project; later React-only + local `workerd`/Chrome E2E + customizable squad-limit suites (`38` migration scenarios, `10` workerd checks, `25` DO security rules, real Chrome E2E) supersede this initial baseline report. Current docs: `README.md`, `docs/CLOUDFLARE_ARCHITECTURE.md`, `docs/CLOUDFLARE_DEPLOYMENT_GUIDE.md`, `docs/SESSION_LIFECYCLE.md`.
 
 # Cloudflare Migration Test Report
 

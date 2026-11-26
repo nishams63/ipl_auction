@@ -1,4 +1,4 @@
-> **Historical document (superseded 2026-11-26).** Unity was removed from the project; any Unity/WebGL references below describe the former architecture. Current architecture: `README.md`, `docs/CLOUDFLARE_ARCHITECTURE.md`, `docs/SESSION_LIFECYCLE.md`.
+> **Historical document (superseded 2026-11-26).** Unity was removed from the project and host-customizable squad/overseas limits were added (`maxSquadSize` 15–25, `maxOverseas` 0–8). Current authoritative docs: `README.md`, `docs/CLOUDFLARE_ARCHITECTURE.md`, `docs/CLOUDFLARE_DEPLOYMENT_GUIDE.md`, `docs/SOCKETIO_TO_WEBSOCKET_MAPPING.md`, `docs/SESSION_LIFECYCLE.md`.
 
 # Cloudflare Migration Audit: IPL Multiplayer Auction Simulator
 

@@ -157,6 +157,9 @@ export class AuctionRoomDO {
       ?? 8;
     this.room.config.maxSquadSize = maxSquadSize;
     this.room.config.maxOverseas = maxOverseas;
+    this.room.config.minSquadSize = Number.isInteger(Number(this.room.config.minSquadSize)) && Number(this.room.config.minSquadSize) > 0
+      ? Math.min(Number(this.room.config.minSquadSize), maxSquadSize)
+      : Math.min(15, maxSquadSize);
     this.room.max_squad_size = maxSquadSize;
     this.room.max_overseas_players = maxOverseas;
   }
@@ -1278,6 +1281,9 @@ export class AuctionRoomDO {
 
       case 'FINISH_AUCTION': {
         if (!isHost) return sendAck(false, 'Only the host can finish the auction');
+        if (this.room.status !== 'active' && this.room.status !== 'paused') {
+          return sendAck(false, 'Auction is not running');
+        }
         const finRes = await this.finishAuction();
         if (finRes && finRes.ok === false) return sendAck(false, finRes);
         return sendAck(true, finRes || {});
@@ -1704,6 +1710,9 @@ export class AuctionRoomDO {
   }
 
   async finishAuction({ broadcast = true, rollbackSnapshot = null } = {}) {
+    if (!this.room || (this.room.status !== 'active' && this.room.status !== 'paused')) {
+      return { ok: false, error: 'Auction is not running' };
+    }
     if (this.room.currentLot && isLotOpen(this.room.currentLot)) {
       const closeRes = await this.closeCurrentLot();
       if (closeRes && closeRes.ok === false) return closeRes;

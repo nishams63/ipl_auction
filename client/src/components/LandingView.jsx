@@ -71,8 +71,16 @@ export default function LandingView({
     }
     const chosenSquad = Number(maxSquadSize);
     const chosenOverseas = Number(maxOverseas);
+    if (!Number.isInteger(chosenSquad) || chosenSquad < 15 || chosenSquad > 25) {
+      setError("Maximum Squad Players must be a whole number between 15 and 25");
+      return;
+    }
+    if (!Number.isInteger(chosenOverseas) || chosenOverseas < 0 || chosenOverseas > 8) {
+      setError("Maximum Overseas Players must be a whole number between 0 and 8");
+      return;
+    }
     if (chosenOverseas > chosenSquad) {
-      setError("Overseas player limit cannot exceed total squad size");
+      setError("Maximum Overseas Players cannot exceed Maximum Squad Players");
       return;
     }
     setError(null);
@@ -279,7 +287,7 @@ export default function LandingView({
                 Squad Rules
               </h3>
               <p className="text-slate-300 text-xs leading-relaxed font-normal">
-                Build balanced squads with real IPL constraints (minimum 15 players, minimum 1 WK, maximum 8 overseas).
+                Customize squad size (15–25 players) and overseas limit (0–8) per room alongside core IPL rules (min 15 players, min 1 WK).
               </p>
             </div>
           </div>
@@ -420,43 +428,60 @@ export default function LandingView({
 
               {mode === 'create' && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="max-squad-size" className="text-xs font-bold text-slate-300 block mb-1.5">
-                        Total Squad Size
-                      </label>
-                      <select
-                        id="max-squad-size"
-                        data-testid="create-max-squad-size"
-                        value={maxSquadSize}
-                        onChange={(e) => {
-                          const nextSq = Number(e.target.value);
-                          setMaxSquadSize(nextSq);
-                          if (maxOverseas > nextSq) setMaxOverseas(nextSq);
-                        }}
-                        className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm font-mono focus:border-amber-400 outline-none transition"
-                      >
-                        {SQUAD_SIZE_OPTIONS.map(n => (
-                          <option key={n} value={n}>{n} Players</option>
-                        ))}
-                      </select>
+                  <div className="rounded-2xl bg-slate-950/60 border border-white/10 p-3.5 space-y-3" data-testid="create-squad-rules-section">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-amber-400">
+                        Squad Rules
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400">
+                        15–25 players · 0–8 overseas
+                      </span>
                     </div>
 
-                    <div>
-                      <label htmlFor="max-overseas" className="text-xs font-bold text-slate-300 block mb-1.5">
-                        Overseas Player Limit
-                      </label>
-                      <select
-                        id="max-overseas"
-                        data-testid="create-max-overseas"
-                        value={maxOverseas}
-                        onChange={(e) => setMaxOverseas(Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm font-mono focus:border-amber-400 outline-none transition"
-                      >
-                        {OVERSEAS_LIMIT_OPTIONS.filter(n => n <= maxSquadSize).map(n => (
-                          <option key={n} value={n}>Max {n} Overseas</option>
-                        ))}
-                      </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="max-squad-size" className="text-xs font-bold text-slate-200 block mb-1.5">
+                          Maximum Squad Players
+                        </label>
+                        <select
+                          id="max-squad-size"
+                          data-testid="create-max-squad-size"
+                          value={maxSquadSize}
+                          onChange={(e) => {
+                            const nextSq = Number(e.target.value);
+                            setMaxSquadSize(nextSq);
+                            if (maxOverseas > nextSq) setMaxOverseas(nextSq);
+                          }}
+                          className="w-full bg-slate-900 border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-mono focus:border-amber-400 outline-none transition"
+                        >
+                          {SQUAD_SIZE_OPTIONS.map(n => (
+                            <option key={n} value={n}>{n} Players</option>
+                          ))}
+                        </select>
+                        <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
+                          Max total players each franchise can purchase (15–25; default 25).
+                        </p>
+                      </div>
+
+                      <div>
+                        <label htmlFor="max-overseas" className="text-xs font-bold text-slate-200 block mb-1.5">
+                          Maximum Overseas Players
+                        </label>
+                        <select
+                          id="max-overseas"
+                          data-testid="create-max-overseas"
+                          value={maxOverseas}
+                          onChange={(e) => setMaxOverseas(Number(e.target.value))}
+                          className="w-full bg-slate-900 border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-mono focus:border-amber-400 outline-none transition"
+                        >
+                          {OVERSEAS_LIMIT_OPTIONS.filter(n => n <= maxSquadSize).map(n => (
+                            <option key={n} value={n}>{n === 0 ? '0 (Indian Only)' : `Max ${n} Overseas`}</option>
+                          ))}
+                        </select>
+                        <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
+                          Max foreign players allowed per squad (0–8; cannot exceed squad limit).
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -470,7 +495,7 @@ export default function LandingView({
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-400">
-                      Each franchise can sign up to <strong className="text-amber-300">{maxSquadSize}</strong> players (min 15, max <strong className="text-amber-300">{maxOverseas}</strong> overseas, min 1 WK).
+                      Each franchise can sign up to <strong className="text-amber-300">{maxSquadSize}</strong> players (min 15, max <strong className="text-amber-300">{maxOverseas}</strong> overseas, min 1 WK, fixed 15s timer).
                     </p>
                   </div>
                 </div>
@@ -542,7 +567,7 @@ export default function LandingView({
                   </div>
                   <div className="flex-1">
                     <h4 className="text-white font-extrabold text-sm">{franchise.name}</h4>
-                    <p className="text-slate-400 text-xs">{franchise.city} • Capacity: 25 Players</p>
+                    <p className="text-slate-400 text-xs">{franchise.city} • Squad Size: Host-Configured (15–25)</p>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
@@ -605,7 +630,7 @@ export default function LandingView({
                 <div>
                   <h4 className="text-white font-bold text-sm">Bid Live & Build Your Championship Squad</h4>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Bid on 409 candidate players across round-wise profile sets. Respect squad constraints (min 15 players, min 1 WK, max 8 overseas) to build the champion squad!
+                    Bid on 409 candidate players across round-wise profile sets. Follow core IPL rules (₹120 Cr fixed purse, min 15 players, min 1 WK, 15s timer) and the room's host-configured squad (15–25) &amp; overseas (0–8) caps!
                   </p>
                 </div>
               </div>

@@ -106,23 +106,15 @@ Each active auction room is an independent, isolated Durable Object singleton id
   ```sql
   CREATE TABLE IF NOT EXISTS room_meta (
     room_code TEXT PRIMARY KEY,
-    status TEXT NOT NULL,
-    host_token_hash TEXT NOT NULL,
-    config_json TEXT NOT NULL,
-    current_player_index INTEGER NOT NULL,
+    state_json TEXT NOT NULL,
     deadline_epoch_ms INTEGER,
-    created_at TEXT NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS participants (
-    token_hash TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    public_id TEXT NOT NULL,
-    franchise_id TEXT,
-    is_host INTEGER NOT NULL,
-    joined_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    max_squad_size INTEGER NOT NULL DEFAULT 15,
+    max_overseas_players INTEGER NOT NULL DEFAULT 8
   );
   CREATE TABLE IF NOT EXISTS bids (
     bid_id TEXT PRIMARY KEY,
+    room_code TEXT NOT NULL,
     lot_number INTEGER NOT NULL,
     player_id TEXT NOT NULL,
     franchise_id TEXT NOT NULL,
@@ -131,36 +123,46 @@ Each active auction room is an independent, isolated Durable Object singleton id
     created_at TEXT NOT NULL
   );
   CREATE TABLE IF NOT EXISTS lot_results (
-    player_id TEXT PRIMARY KEY,
+    room_code TEXT NOT NULL,
     lot_number INTEGER NOT NULL,
-    result TEXT NOT NULL,
-    franchise_id TEXT,
-    price_cr REAL,
-    created_at TEXT NOT NULL
+    player_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    final_bid_cr REAL NOT NULL,
+    winning_franchise_id TEXT,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (room_code, lot_number)
   );
   CREATE TABLE IF NOT EXISTS outbox (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room_code TEXT NOT NULL,
     event_type TEXT NOT NULL,
     payload_json TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS processed_messages (
+    room_code TEXT NOT NULL,
+    participant_token_hash TEXT NOT NULL,
+    message_id TEXT NOT NULL,
+    ack_json TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (room_code, participant_token_hash, message_id)
+  );
   ```
 
 ---
 
-### 2.3 Central SaaS Store (Neon PostgreSQL) & Dual-Write Prevention
+### 2.3 Optional Central Store (Neon PostgreSQL) & Dual-Write Prevention
 
-To prevent inconsistent dual writes between the local DO SQLite store and central Neon PostgreSQL:
+In production (`DATABASE_URL` unset), **Durable Object SQLite is the sole authoritative store**. If `DATABASE_URL` is optionally configured, `syncOutboxToNeon()` prevents inconsistent dual writes via a local outbox:
 
-1. **Local DO SQLite is the Authoritative Source of Truth for Live Auctions**:
-   - Bids, lots, timers, and squad updates are committed to local DO SQLite in < 2ms.
+1. **Local DO SQLite is the Authoritative Source of Truth for Live & Completed Rooms**:
+   - Bids, lots, timers, custom room limits, and squad updates are committed atomically to local DO SQLite in `< 2ms` (inside `transactionSync` with rollback + `storageFailure` pause hold on error).
    - Clients never experience network latency waiting for a round-trip to an external database.
-2. **Transactional Outbox Pattern for Central Sync**:
-   - When an auction completes, or when a lot is SOLD, the DO writes an event into its local SQLite `outbox` table in the *same local transaction*.
-   - A non-blocking background queue reads the `outbox` table and syncs records to Neon PostgreSQL using `@neondatabase/serverless`.
-   - **Resilience to Neon Outages**: If Neon is asleep, rate-limited, or experiencing downtime, the live auction continues flawlessly. The DO outbox accumulates pending events and drains them once Neon recovers.
-   - Central reports and historical records remain fully preserved.
+2. **Optional Transactional Outbox Sync (`DATABASE_URL`)**:
+   - When a lot closes (`LOT_SOLD` / `LOT_UNSOLD`) or an auction finishes (`AUCTION_COMPLETED`), the DO queues an outbox row in the same SQLite transaction.
+   - If `DATABASE_URL` is set, `syncOutboxToNeon()` posts parameterized queries directly via `fetch()` to the Neon HTTPS `/sql` endpoint (`ON CONFLICT DO UPDATE`), preserving order (`ORDER BY id ASC`) without requiring a Node TCP pool or extra driver dependency.
+   - Note: `syncOutboxToNeon` mirrors completed lot results and `UPDATE rooms SET status = 'completed'` as an optional event sink; full `room_meta` config/limits remain authoritative in DO SQLite.
 
 ---
 
@@ -241,27 +243,27 @@ The system does not rely on arbitrary timing tolerances (such as magic milliseco
    When `alarm()` executes while `lot.hammerStatus === 'OPEN'`:
    - If $\text{now} < \text{activeDeadline}$, a valid bid arrived before this alarm fired and extended the deadline. The DO re-arms the alarm for `activeDeadline` and returns without mutating lot state.
    - If $\text{now} \ge \text{activeDeadline}$, the lot is atomically transitioned from `'OPEN'` to `'SOLD'` or `'UNSOLD'`. Once transitioned, no subsequent bid can be accepted.
-3. **Atomic 3-Second Post-Lot Hammer Advancement**:
-   Upon lot closure, a 3-second display pause is scheduled via `ctx.storage.setAlarm`. When the alarm wakes:
+3. **Atomic 4-Second Post-Lot Hammer Advancement**:
+   Upon lot closure, a 4-second display pause (`DEFAULT_CONFIG.autoAdvanceDelay = 4`) is scheduled via `ctx.storage.setAlarm`. When the alarm wakes:
    - If `lot.hammerStatus` is `'SOLD'` or `'UNSOLD'`, it automatically calls `presentNextLot()`, resetting the countdown to 15s and advancing the catalogue round-robin.
    - If the alarm is retried, the lot has already advanced; the new lot's deadline is in the future, guaranteeing that the next player is presented **exactly once**.
 
 ### 5.3 Outbox Durability & Database Authority Matrix
 Every accepted bid and lot disposition is committed to local SQLite before network transmission:
-1. **Accepted Bids**: Written synchronously to `bids` table with unique constraint.
-2. **Lot Outcomes**: Written synchronously to `lot_results` and queued in `outbox` as `'pending'`.
-3. **Idempotent Background Synchronization**:
-   `flushOutbox(targetSyncFn)` delivers pending records to Neon PostgreSQL. If Neon experiences an outage or partial failure, delivered records are marked `'delivered'` while failed records remain `'pending'`, resuming cleanly upon reconnection.
+1. **Accepted Bids**: Written synchronously to `bids` table inside `transactionSync`.
+2. **Lot Outcomes**: Written synchronously to `lot_results`, `room_meta`, and `outbox` inside one SQLite `transactionSync` **before** broadcasting `LOT_COMPLETED` (rolling back cleanly to a `storageFailure` pause hold on error).
+3. **Optional Idempotent Neon Sync**:
+   `syncOutboxToNeon()` / `flushOutbox()` delivers pending `outbox` events when `DATABASE_URL` is configured. If Neon is unconfigured (`DATABASE_URL` unset, the production default), outbox rows remain locally inspectable via `/export` and Durable Object SQLite stays the complete source of truth.
 
 #### Database Authority Matrix
 
-| Data Domain | Authoritative Store | Secondary / Synchronized Store | Consistency Model |
+| Data Domain | Authoritative Store | Optional Secondary Store (`DATABASE_URL`) | Consistency Model |
 |---|---|---|---|
-| **Live Room State** | **Durable Object SQLite** (`room_meta`) | Memory cache inside DO actor | Strongly consistent (Single-writer actor) |
-| **Accepted Bids** | **Durable Object SQLite** (`bids`) | Neon PostgreSQL (`bids` table via Outbox) | Realtime local SQLite; Eventual sync to Neon |
-| **Lot Outcomes** | **Durable Object SQLite** (`lot_results`) | Neon PostgreSQL (`lot_results` via Outbox) | Realtime local SQLite; Eventual sync to Neon |
+| **Live Room State & Config** | **Durable Object SQLite** (`room_meta`) | Not replicated by outbox | Strongly consistent (Single-writer actor) |
+| **Accepted Bids** | **Durable Object SQLite** (`bids`) | Retained locally; `/export` | Realtime local SQLite |
+| **Lot Outcomes** | **Durable Object SQLite** (`lot_results`) | Neon PostgreSQL (`lot_results` via Outbox) | Realtime local SQLite; Eventual sync when `DATABASE_URL` set |
 | **Pending Sync Queue** | **Durable Object SQLite** (`outbox`) | Neon PostgreSQL | At-least-once with idempotent delivery |
-| **Global SaaS Records & Archives** | **Neon PostgreSQL** | DO SQLite (local only) | Global authority for multi-room analytics |
+| **Legacy Historical Rooms** | **Legacy Node Server / PostgreSQL** | `persisted_rooms.json` / Postgres | Kept separate on Node/Socket.IO path (`VITE_USE_SOCKETIO=true`) |
 | **Participant Sessions** | **Durable Object SQLite** (`processed_messages`) | Transient WebSocket attachment | Strongly consistent per room |
 
 ### 5.4 Official Cloudflare Resource Limits & Non-Guaranteed Uptime

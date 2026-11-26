@@ -395,4 +395,81 @@ await t.it('20. Completed room exposes a verdict for all 10 franchises to the Re
   assert.strictEqual(new Set(ranks).size, ranks.length, 'ranks must be unique');
 });
 
+// 21. Custom overseas limits (0, 1, 3, 4, 8) respect Math.min(4, maxOverseas) & targets.squadOverseasCap
+await t.it('21. Custom overseas limits (0, 1, 3, 4, 8) enforce accurate critical weaknesses and targets.squadOverseasCap', () => {
+  const mkCompliantIndianSquad = (prefix, osCount) => {
+    const players = [
+      buildTestPlayer(`${prefix}W1`, 'Keeper One', 'WK', 'Wicketkeeper Opener', false, 5),
+      buildTestPlayer(`${prefix}W2`, 'Keeper Two', 'WK', 'Wicketkeeper Finisher', false, 2),
+      buildTestPlayer(`${prefix}B1`, 'Jasprit Pace', 'BOWL', 'Purple Cap Death Specialist Swing', false, 10),
+      buildTestPlayer(`${prefix}B2`, 'Yuzi Spin', 'SP', 'Wrist Spinner Leg-spin', false, 5),
+      buildTestPlayer(`${prefix}B3`, 'Jaddu AR', 'AR', 'Left-arm Spin All-Rounder', false, 6),
+      buildTestPlayer(`${prefix}B4`, 'Hardik AR', 'AR', 'Pace All-Rounder Finisher', false, 6)
+    ];
+    for (let i = 0; i < 9; i++) {
+      const isOs = i < osCount;
+      players.push(buildTestPlayer(`${prefix}P${i}`, `Player ${prefix}${i}`, 'BAT', i < 2 ? 'Opening Batter' : 'Finisher', isOs, 1));
+    }
+    return players;
+  };
+
+  for (const [maxOs, optOs, underOs] of [
+    [0, 0, null],
+    [1, 1, 0],
+    [3, 3, 1],
+    [4, 4, 3],
+    [8, 4, 3]
+  ]) {
+    const rm = make();
+    const room = rm.createRoom({ hostName: 'Host', hostToken: strongToken('h'), configOverrides: { maxSquadSize: 15, maxOverseas: maxOs } });
+    room.status = 'completed';
+    room.franchises.CSK.isClaimed = true;
+    room.franchises.CSK.squad = mkCompliantIndianSquad('C', optOs);
+    if (underOs !== null) {
+      room.franchises.MI.isClaimed = true;
+      room.franchises.MI.squad = mkCompliantIndianSquad('M', underOs);
+    }
+
+    const res = runCricketMastermind(room);
+    assert.strictEqual(res.targets.squadOverseasCap, maxOs, `targets.squadOverseasCap must be ${maxOs}`);
+    assert.strictEqual(res.targets.xiOverseasCap, Math.min(4, maxOs));
+    const cskEval = res.franchises.CSK;
+    assert.strictEqual(cskEval.eligibility.eligible, true, `CSK with ${optOs}/${maxOs} overseas must be eligible`);
+    assert.ok(!cskEval.criticalWeaknesses.some(w => /cannot utilize the full \d+-overseas/i.test(w)), `maxOverseas=${maxOs} with ${optOs} overseas must NOT report false overseas-depth weakness`);
+
+    if (underOs !== null) {
+      const miEval = res.franchises.MI;
+      const expectedCap = Math.min(4, maxOs);
+      assert.ok(miEval.criticalWeaknesses.some(w => w.includes(`full ${expectedCap}-overseas`)), `maxOverseas=${maxOs} with ${underOs} overseas should cite full ${expectedCap}-overseas`);
+      const h2h = compareFranchises(cskEval, miEval);
+      assert.strictEqual(h2h.winner, 'CSK', `Pairwise comparison must favor CSK at optimal cap over MI at maxOverseas=${maxOs}`);
+    }
+  }
+});
+
+// 22. Snake_case legacy config & missing config normalization in Cricket Mastermind
+await t.it('22. Snake_case and missing room.config normalize cleanly without undefined cap failures', () => {
+  const rm = make();
+  const room = rm.createRoom({ hostName: 'Host', hostToken: strongToken('h'), configOverrides: { max_squad_size: 18, max_overseas_players: 2 } });
+  room.status = 'completed';
+  room.franchises.CSK.isClaimed = true;
+  room.franchises.CSK.squad = [
+    buildTestPlayer('K1', 'Keeper One', 'WK', 'Wicketkeeper Opener', false, 2),
+    ...Array.from({ length: 14 }, (_, i) => buildTestPlayer(`S${i}`, `Player ${i}`, 'BAT', 'Batter', i < 2, 1))
+  ];
+  const resSnake = runCricketMastermind(room);
+  assert.strictEqual(resSnake.rules.maxSquadSize, 18);
+  assert.strictEqual(resSnake.rules.maxOverseas, 2);
+  assert.strictEqual(resSnake.targets.squadOverseasCap, 2);
+  assert.strictEqual(resSnake.franchises.CSK.eligibility.eligible, true);
+
+  // Missing config falls back cleanly to legacy defaults (15 / 8)
+  const noCfgRoom = { ...room, config: undefined, max_squad_size: undefined, max_overseas_players: undefined };
+  const resFallback = runCricketMastermind(noCfgRoom);
+  assert.strictEqual(resFallback.rules.maxSquadSize, 15);
+  assert.strictEqual(resFallback.rules.maxOverseas, 8);
+  assert.strictEqual(resFallback.targets.squadOverseasCap, 8);
+  assert.strictEqual(resFallback.rankings.length, 10);
+});
+
 await t.finish();

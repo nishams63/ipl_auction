@@ -83,15 +83,14 @@ npx wrangler login
 This opens your browser. Click **Allow** to authorize Wrangler on your Cloudflare account.
 
 ### Step 4: Configure Secrets
-From the `cloudflare/` directory, set your private secrets:
+From the `cloudflare/` directory, set your private authentication secret:
 ```bash
 cd cloudflare
 npx wrangler secret put TOKEN_HASH_SECRET
 # Enter your random 32+ character pepper
-
-npx wrangler secret put DATABASE_URL
-# Enter your Neon PostgreSQL connection string (with ?sslmode=require)
 ```
+
+> **Optional Neon outbox sync (`DATABASE_URL`)**: Leave `DATABASE_URL` **unset** for the standard ₹0 Durable Object SQLite architecture (`AuctionRoomDO` SQLite is authoritative). Only set `DATABASE_URL` via `npx wrangler secret put DATABASE_URL` if you want completed lot/auction events mirrored to an external PostgreSQL database (`rooms` metadata / custom limits stay in DO SQLite).
 
 ### Step 5: Deploy the Worker & Durable Objects
 ```bash
@@ -151,5 +150,5 @@ If you need to revert to the Node.js / Render backend at any time:
    - `TOKEN_HASH_SECRET`: Set via `npx wrangler secret put TOKEN_HASH_SECRET`.
    - `DATABASE_URL`: Set via `npx wrangler secret put DATABASE_URL` (optional Neon connection).
 3. **No Database Migration Needed at Startup**:
-   SQLite tables (`room_meta`, `bids`, `lot_results`, `outbox`) are auto-created inside the Durable Object on first boot (`CREATE TABLE IF NOT EXISTS`), eliminating cold-start migration locks.
+   All five SQLite tables (`room_meta`, `bids`, `lot_results`, `outbox`, `processed_messages`) plus the `max_squad_size` and `max_overseas_players` migration columns are auto-created inside the Durable Object on boot (`CREATE TABLE IF NOT EXISTS` / guarded `ALTER TABLE`), eliminating cold-start migration locks.
 

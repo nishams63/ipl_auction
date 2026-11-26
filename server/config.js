@@ -9,8 +9,8 @@
 // keep their defaults unless set at creation, and are still range-checked.
 
 // Approved defaults (16 Nov 2026): ₹120 Cr flat purse, squad 15–25, 8 overseas, 15 s timer.
-export const SQUAD_SIZE_OPTIONS = Object.freeze([15, 18, 20, 22, 25]);
-export const OVERSEAS_LIMIT_OPTIONS = Object.freeze([4, 5, 6, 7, 8]);
+export const SQUAD_SIZE_OPTIONS = Object.freeze([15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
+export const OVERSEAS_LIMIT_OPTIONS = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);
 
 export const DEFAULT_CONFIG = Object.freeze({
   basePurse: 120.0,
@@ -30,8 +30,8 @@ export const CONFIG_RULES = Object.freeze({
   basePurse:        { kind: 'money',  min: 20,  max: 250, label: 'Base purse (₹ Cr)' },
   minParticipants:  { kind: 'int',    min: 1,   max: 10,  label: 'Minimum participants' },
   minSquadSize:     { kind: 'int',    min: 5,   max: 25,  label: 'Minimum squad size' },
-  maxSquadSize:     { kind: 'int',    min: 15,  max: 30,  label: 'Maximum squad size' },
-  maxOverseas:      { kind: 'int',    min: 4,   max: 8,   label: 'Maximum overseas players' },
+  maxSquadSize:     { kind: 'int',    min: 15,  max: 25,  label: 'Maximum squad players' },
+  maxOverseas:      { kind: 'int',    min: 0,   max: 8,   label: 'Maximum overseas players' },
   minWKs:           { kind: 'int',    min: 0,   max: 3,   label: 'Minimum wicketkeepers' },
   minPlayerPrice:   { kind: 'money',  min: 0.1, max: 2,   label: 'Minimum player price (₹ Cr)' },
   timerDuration:    { kind: 'int',    min: 10,  max: 90,  label: 'Bid timer (seconds)' },

@@ -339,4 +339,60 @@ await t.it('lean LOT_PRESENTED / LOT_COMPLETED / BID_ACCEPTED deltas keep catalo
   assert.equal(applyLotPresented(r, { partial: true, roomCode: 'OTHER', currentLot: { lotNumber: 3 } }), r, 'cross-room delta ignored');
 });
 
+await t.it('failed join/create propagates original server errors (non-existent, active, full, timeout, HTTP fail) without ReferenceError and allows clean retry', async () => {
+  // 1. WebSocket join failures propagate exact server messages and reset to idle
+  for (const serverMsg of [
+    'Auction room not found',
+    'Auction has already started. New participants cannot join an active room.',
+    'This room is full.',
+    'The server did not respond in time. Check your connection and try again.'
+  ]) {
+    const { c, conns } = setup();
+    const joinP = c.joinRoom({ participantName: 'Alice', roomCode: 'BAD111' });
+    await tick();
+    conns[0].acks[0].cb({ success: false, error: serverMsg });
+    let caught = null;
+    try { await joinP; } catch (e) { caught = e; }
+    assert.ok(caught, 'join failure must reject');
+    assert.equal(caught instanceof ReferenceError, false, 'must never mask error with ReferenceError');
+    assert.equal(caught.message, serverMsg);
+    assert.equal(c.getState().phase, 'idle');
+    assert.equal(conns[0].disposed, true);
+
+    // Retry immediately with a valid room
+    const retryP = c.joinRoom({ participantName: 'Alice', roomCode: 'GOOD11' });
+    await tick();
+    conns[1].ackJoin('GOOD11');
+    await retryP;
+    assert.equal(c.getState().phase, 'in_room');
+    assert.equal(c.getState().room.roomCode, 'GOOD11');
+  }
+
+  // 2. Room creation HTTP failure + post-HTTP WebSocket join failure both propagate original error
+  {
+    const { c } = setup({
+      fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ error: 'Invalid config', errors: ['Max overseas exceeds squad size'] }) })
+    });
+    let errHttp = null;
+    try { await c.createRoom({ hostName: 'Host', maxSquadSize: 15, maxOverseas: 20 }); } catch (e) { errHttp = e; }
+    assert.ok(errHttp);
+    assert.equal(errHttp instanceof ReferenceError, false);
+    assert.match(errHttp.message, /Max overseas exceeds squad size/);
+    assert.equal(c.getState().phase, 'idle');
+  }
+  {
+    const { c, conns } = setup();
+    const createP = c.createRoom({ hostName: 'Host', maxSquadSize: 20, maxOverseas: 5 });
+    await tick();
+    conns[0].acks[0].cb({ success: false, code: 'TIMEOUT', error: 'Could not connect to the room. The server may be waking up; please retry.' });
+    let errWs = null;
+    try { await createP; } catch (e) { errWs = e; }
+    assert.ok(errWs);
+    assert.equal(errWs instanceof ReferenceError, false);
+    assert.match(errWs.message, /Could not connect to the room/);
+    assert.equal(c.getState().phase, 'idle');
+    assert.equal(conns[0].disposed, true);
+  }
+});
+
 process.exit(await t.finish() ? 1 : 0);

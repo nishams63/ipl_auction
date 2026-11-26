@@ -1687,4 +1687,213 @@ test('Cloudflare Migration Suite - All 16 Scenarios + Hardening Verifications', 
     assert.equal(legDO.room.max_squad_size, 15);
     assert.equal(legDO.room.max_overseas_players, 8);
   });
+
+  await t.test('Scenario 37: All 12 host-customizable squad limit edge cases (0 overseas, timer intact, races, SOLD guard, non-host lock)', async () => {
+    const H_TOK = 'usr_host_dyn37_1234567890abcdef';
+    const A_TOK = 'usr_alice_dyn37_1234567890abcd';
+
+    // 12. Invalid configurations rejected without silent clamping
+    for (const badCfg of [
+      { maxSquadSize: 14 },
+      { maxSquadSize: 26 },
+      { maxOverseas: -1 },
+      { maxOverseas: 9 },
+      { maxSquadSize: 18, maxOverseas: 19 },
+      { maxSquadSize: 18.5 }
+    ]) {
+      const { doInstance } = createDO();
+      const res = await doInstance.fetch(new Request('https://internal/init', {
+        method: 'POST',
+        body: JSON.stringify({ roomCode: 'BADCFG', hostName: 'Host', hostToken: H_TOK, config: badCfg })
+      }));
+      assert.equal(res.status, 400, `Should reject invalid config ${JSON.stringify(badCfg)}`);
+    }
+
+    // 1 & 4 & 5. Host creates room with maxSquadSize=16, maxOverseas=0 (Indian-only auction)
+    const { doInstance, ctx } = createDO();
+    const initRes = await doInstance.fetch(new Request('https://internal/init', {
+      method: 'POST',
+      body: JSON.stringify({
+        roomCode: 'IND037',
+        hostName: 'Host',
+        hostToken: H_TOK,
+        config: { minParticipants: 2, maxSquadSize: 16, maxOverseas: 0, autoAdvanceDelay: 1 }
+      })
+    }));
+    assert.equal(initRes.status, 200);
+    const created = await initRes.json();
+    assert.equal(created.room.config.maxSquadSize, 16);
+    assert.equal(created.room.config.maxOverseas, 0);
+
+    const wsh = new MockWebSocket('H');
+    const wsa = new MockWebSocket('A');
+    ctx.acceptWebSocket(wsh);
+    ctx.acceptWebSocket(wsa);
+    await doInstance.webSocketMessage(wsh, JSON.stringify({ id: 'jh', type: 'JOIN_ROOM', payload: { roomCode: 'IND037', participantName: 'Host', participantToken: H_TOK } }));
+    await doInstance.webSocketMessage(wsa, JSON.stringify({ id: 'ja', type: 'JOIN_ROOM', payload: { roomCode: 'IND037', participantName: 'Alice', participantToken: A_TOK } }));
+    await doInstance.webSocketMessage(wsh, JSON.stringify({ id: 'fh', type: 'SELECT_FRANCHISE', payload: { franchiseId: 'CSK' } }));
+    await doInstance.webSocketMessage(wsa, JSON.stringify({ id: 'fa', type: 'SELECT_FRANCHISE', payload: { franchiseId: 'MI' } }));
+
+    // 2. Non-host participant cannot modify limits
+    await doInstance.webSocketMessage(wsa, JSON.stringify({
+      id: 'nh_cfg', type: 'UPDATE_CONFIG', payload: { config: { maxSquadSize: 20, maxOverseas: 4 } }
+    }));
+    assert.equal(wsa.messages.find(m => m.id === 'nh_cfg').success, false);
+    assert.equal(doInstance.room.config.maxSquadSize, 16);
+    assert.equal(doInstance.room.config.maxOverseas, 0);
+
+    await doInstance.webSocketMessage(wsh, JSON.stringify({ id: 'st', type: 'START_AUCTION', payload: {} }));
+
+    // Settings are locked once auction starts (even for host)
+    await doInstance.webSocketMessage(wsh, JSON.stringify({
+      id: 'locked_cfg', type: 'UPDATE_CONFIG', payload: { config: { maxSquadSize: 22 } }
+    }));
+    assert.equal(wsh.messages.find(m => m.id === 'locked_cfg').success, false);
+
+    // 7. Find an overseas player and verify rejection at 0 overseas does NOT reset timer or change highestBid
+    let seq = 1;
+    while (doInstance.room.status === 'active' && !doInstance.room.currentLot?.player?.isOverseas) {
+      if (wsh.attachment) wsh.attachment.msgCount = 0;
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `s1_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `s2_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+    }
+    const osLot = doInstance.room.currentLot;
+    assert.equal(osLot.player.isOverseas, true);
+    const frozenDeadline = Date.now() + 6000;
+    doInstance.room.deadlineEpochMs = frozenDeadline;
+    osLot.deadlineEpochMs = frozenDeadline;
+    const osRejId = `os0_${seq++}`;
+    await doInstance.webSocketMessage(wsh, JSON.stringify({
+      id: osRejId, type: 'PLACE_BID', payload: { franchiseId: 'CSK', bidAmount: osLot.basePrice, expectedVersion: osLot.stateVersion }
+    }));
+    const osRejAck = wsh.messages.find(m => m.id === osRejId);
+    assert.equal(osRejAck.success, false);
+    assert.match(osRejAck.error, /Overseas player limit reached!/);
+    assert.equal(doInstance.room.deadlineEpochMs, frozenDeadline, 'Rejected bid must NOT reset timer');
+    assert.equal(osLot.highestBid, 0);
+
+    // 5. Find an Indian player -> eligible even with maxOverseas = 0
+    while (doInstance.room.status === 'active' && doInstance.room.currentLot?.player?.isOverseas) {
+      if (wsh.attachment) wsh.attachment.msgCount = 0;
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `i1_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `i2_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+    }
+    const indLot = doInstance.room.currentLot;
+    assert.equal(indLot.player.isOverseas, false);
+    const indBidId = `ind_ok_${seq++}`;
+    await doInstance.webSocketMessage(wsh, JSON.stringify({
+      id: indBidId, type: 'PLACE_BID', payload: { franchiseId: 'CSK', bidAmount: indLot.basePrice, expectedVersion: indLot.stateVersion }
+    }));
+    assert.equal(wsh.messages.find(m => m.id === indBidId).success, true);
+
+    // 8. Simultaneous bids near squad cap / overseas cap never allow two winners or exceed limit
+    await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `n1_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+    await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `n2_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+    while (doInstance.room.status === 'active' && doInstance.room.currentLot?.player?.isOverseas) {
+      if (wsh.attachment) wsh.attachment.msgCount = 0;
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `r1_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: `r2_${seq++}`, type: 'ADVANCE_LOT', payload: {} }));
+    }
+    const simLot = doInstance.room.currentLot;
+    const fillerPlayer = (i) => ({ id: `FIL_${i}`, name: `Filler ${i}`, category: i === 0 ? 'WK' : 'BAT', isOverseas: false, basePrice: 0.3, boughtPrice: 0.3 });
+    // Put CSK at 15/16 (1 slot left) and MI at 15/16 (1 slot left) and race bids -> strictly one bid accepted
+    doInstance.room.franchises.CSK.squad = Array.from({ length: 15 }, (_, i) => fillerPlayer(i));
+    doInstance.room.franchises.MI.squad = Array.from({ length: 15 }, (_, i) => fillerPlayer(i + 100));
+    await Promise.all([
+      doInstance.webSocketMessage(wsh, JSON.stringify({ id: 'sim_h', type: 'PLACE_BID', payload: { franchiseId: 'CSK', bidAmount: simLot.basePrice, expectedVersion: simLot.stateVersion } })),
+      doInstance.webSocketMessage(wsa, JSON.stringify({ id: 'sim_a', type: 'PLACE_BID', payload: { franchiseId: 'MI', bidAmount: simLot.basePrice, expectedVersion: simLot.stateVersion } }))
+    ]);
+    const simH = wsh.messages.find(m => m.id === 'sim_h');
+    const simA = wsa.messages.find(m => m.id === 'sim_a');
+    assert.equal([simH.success, simA.success].filter(Boolean).length, 1);
+
+    // 9. Authoritative closeCurrentLot SOLD guard prevents bypassing limits even if squad fills before close
+    const winningFid = simLot.highestBidderFranchiseId;
+    doInstance.room.franchises[winningFid].squad.push(fillerPlayer(999)); // now at 16/16 BEFORE close!
+    await doInstance.closeCurrentLot(simLot.lotNumber);
+    assert.equal(simLot.hammerStatus, 'UNSOLD', 'SOLD processing must block sale that would exceed 16 players');
+    assert.equal(doInstance.room.franchises[winningFid].squad.length, 16);
+
+    // 6 & 7. Rejected bid when franchise is at 16/16 does not reset timer
+    await doInstance.webSocketMessage(wsh, JSON.stringify({ id: 'adv_after_guard', type: 'ADVANCE_LOT', payload: {} }));
+    const blockedLot = doInstance.room.currentLot;
+    const tBefore = Date.now() + 5000;
+    doInstance.room.deadlineEpochMs = tBefore;
+    blockedLot.deadlineEpochMs = tBefore;
+    const rejSocket = winningFid === 'CSK' ? wsh : wsa;
+    if (rejSocket.attachment) rejSocket.attachment.msgCount = 0;
+    await doInstance.webSocketMessage(rejSocket, JSON.stringify({
+      id: 'bid_at_max', type: 'PLACE_BID', payload: { franchiseId: winningFid, bidAmount: blockedLot.basePrice, expectedVersion: blockedLot.stateVersion }
+    }));
+    const ackMax = rejSocket.messages.find(m => m.id === 'bid_at_max');
+    assert.equal(ackMax.success, false);
+    assert.match(ackMax.error, /Squad limit reached!/);
+    assert.equal(doInstance.room.deadlineEpochMs, tBefore);
+  });
+
+  await t.test('Scenario 38: FINISH_AUCTION Cloudflare DO parity (lobby/completed rejected cleanly, active & paused succeed without audit/outbox corruption)', async () => {
+    const setupRoom = async (code) => {
+      const ctx = new MockDOContext();
+      const doInstance = new AuctionRoomDO(ctx, { TOKEN_HASH_SECRET: 'audit_finish_secret_key_min_32_chars_01' });
+      await doInstance.handleInit({ roomCode: code, hostName: 'Host', hostToken: 'host_fin_token_12345678901234', config: { minParticipants: 2 } });
+      const wsh = new MockWebSocket();
+      const wsa = new MockWebSocket();
+      ctx.acceptWebSocket(wsh);
+      ctx.acceptWebSocket(wsa);
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: 'jh', type: 'JOIN_ROOM', payload: { participantName: 'Host', participantToken: 'host_fin_token_12345678901234' } }));
+      await doInstance.webSocketMessage(wsa, JSON.stringify({ id: 'ja', type: 'JOIN_ROOM', payload: { participantName: 'Alice', participantToken: 'alice_fin_token_1234567890123' } }));
+      await doInstance.webSocketMessage(wsh, JSON.stringify({ id: 'sh', type: 'SELECT_FRANCHISE', payload: { franchiseId: 'CSK' } }));
+      await doInstance.webSocketMessage(wsa, JSON.stringify({ id: 'sa', type: 'SELECT_FRANCHISE', payload: { franchiseId: 'MI' } }));
+      return { ctx, doInstance, wsh, wsa };
+    };
+
+    const countOutbox = (ctx) => ctx.storage.sql.outbox.filter(r => r.event_type === 'AUCTION_COMPLETED').length;
+
+    // 1. Lobby cannot finish
+    const lobby = await setupRoom('FINLBY');
+    const lobbyAuditBefore = lobby.doInstance.room.auditLog.length;
+    await lobby.doInstance.webSocketMessage(lobby.wsh, JSON.stringify({ id: 'fin_lobby', type: 'FINISH_AUCTION', payload: {} }));
+    const ackLobby = lobby.wsh.messages.find(m => m.id === 'fin_lobby');
+    assert.equal(ackLobby.success, false);
+    assert.equal(ackLobby.error, 'Auction is not running');
+    assert.equal(lobby.doInstance.room.status, 'lobby');
+    assert.equal(lobby.doInstance.room.completedAt, undefined);
+    assert.equal(lobby.doInstance.room.auditLog.length, lobbyAuditBefore);
+    assert.equal(countOutbox(lobby.ctx), 0);
+
+    // 2. Active room can finish, then duplicate finish when completed is rejected cleanly
+    await lobby.doInstance.webSocketMessage(lobby.wsh, JSON.stringify({ id: 'st1', type: 'START_AUCTION', payload: {} }));
+    assert.equal(lobby.doInstance.room.status, 'active');
+    await lobby.doInstance.webSocketMessage(lobby.wsh, JSON.stringify({ id: 'fin_act', type: 'FINISH_AUCTION', payload: {} }));
+    assert.equal(lobby.wsh.messages.find(m => m.id === 'fin_act').success, true);
+    assert.equal(lobby.doInstance.room.status, 'completed');
+    const completedAt1 = lobby.doInstance.room.completedAt;
+    const auditAfter1 = lobby.doInstance.room.auditLog.length;
+    assert.ok(completedAt1);
+    assert.equal(countOutbox(lobby.ctx), 1);
+
+    await new Promise(r => setTimeout(r, 15));
+    await lobby.doInstance.webSocketMessage(lobby.wsh, JSON.stringify({ id: 'fin_dup1', type: 'FINISH_AUCTION', payload: {} }));
+    const ackDup1 = lobby.wsh.messages.find(m => m.id === 'fin_dup1');
+    assert.equal(ackDup1.success, false);
+    assert.equal(ackDup1.error, 'Auction is not running');
+    assert.equal(lobby.doInstance.room.completedAt, completedAt1, 'completedAt must not be rewritten');
+    assert.equal(lobby.doInstance.room.auditLog.length, auditAfter1, 'auditLog must not append duplicate entry');
+    assert.equal(countOutbox(lobby.ctx), 1, 'outbox must not record duplicate completion');
+
+    // 3. Paused room can finish, and duplicate attempt after finish is rejected
+    const paused = await setupRoom('FINPSD');
+    await paused.doInstance.webSocketMessage(paused.wsh, JSON.stringify({ id: 'st2', type: 'START_AUCTION', payload: {} }));
+    await paused.doInstance.webSocketMessage(paused.wsh, JSON.stringify({ id: 'ps2', type: 'PAUSE_AUCTION', payload: {} }));
+    assert.equal(paused.doInstance.room.status, 'paused');
+    await paused.doInstance.webSocketMessage(paused.wsh, JSON.stringify({ id: 'fin_ps', type: 'FINISH_AUCTION', payload: {} }));
+    assert.equal(paused.wsh.messages.find(m => m.id === 'fin_ps').success, true);
+    assert.equal(paused.doInstance.room.status, 'completed');
+    assert.equal(countOutbox(paused.ctx), 1);
+    const completedAtPs = paused.doInstance.room.completedAt;
+    await paused.doInstance.webSocketMessage(paused.wsh, JSON.stringify({ id: 'fin_dup2', type: 'FINISH_AUCTION', payload: {} }));
+    assert.equal(paused.wsh.messages.find(m => m.id === 'fin_dup2').success, false);
+    assert.equal(paused.doInstance.room.completedAt, completedAtPs);
+    assert.equal(countOutbox(paused.ctx), 1);
+  });
 });

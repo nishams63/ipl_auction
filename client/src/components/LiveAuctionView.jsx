@@ -1293,10 +1293,16 @@ export default function LiveAuctionView({
                       const { minSquadSize, maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
                       const slots = getFranchiseSlotStats(f, room);
                       return (
-                        <div className="grid grid-cols-3 gap-1 mt-1.5 text-[10px] font-mono">
-                          <span className="text-emerald-400 font-bold" title="Remaining purse">₹{Number(f.remainingPurse || 0).toFixed(2)} Cr</span>
-                          <span className={`text-center ${slots.isSquadFull ? 'text-rose-300 font-bold' : 'text-slate-300'}`} title={`Squad size (min ${minSquadSize}, max ${maxSquadSize})`}>{slots.squadCount}/{maxSquadSize} sq</span>
-                          <span className={`text-right ${slots.isOverseasFull ? 'text-rose-300 font-bold' : 'text-slate-300'}`} title={`Overseas players (max ${maxOverseas})`}>{slots.overseasCount}/{maxOverseas} OS</span>
+                        <div className="space-y-0.5 mt-1.5">
+                          <div className="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                            <span className="text-emerald-400 font-bold" title="Remaining purse">₹{Number(f.remainingPurse || 0).toFixed(2)} Cr</span>
+                            <span className={`text-center ${slots.isSquadFull ? 'text-rose-300 font-bold' : 'text-slate-300'}`} title={`Squad size (min ${minSquadSize}, max ${maxSquadSize})`}>{slots.squadCount}/{maxSquadSize} sq</span>
+                            <span className={`text-right ${slots.isOverseasFull ? 'text-rose-300 font-bold' : 'text-slate-300'}`} title={`Overseas players (max ${maxOverseas})`}>{slots.overseasCount}/{maxOverseas} OS</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[9px] font-mono text-slate-400">
+                            <span>Slots left: <strong className={slots.totalRemainingSlots === 0 ? 'text-rose-300' : 'text-slate-200'}>{slots.totalRemainingSlots}</strong></span>
+                            <span>OS left: <strong className={slots.remainingOverseasSlots === 0 ? 'text-rose-300' : 'text-sky-300'}>{slots.remainingOverseasSlots}</strong></span>
+                          </div>
                         </div>
                       );
                     })()}
