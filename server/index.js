@@ -105,7 +105,20 @@ app.get('/api/franchises', (req, res) => {
 
 // Create Room
 app.post('/api/rooms', async (req, res) => {
-  const { hostName, hostToken, config } = req.body || {};
+  const { hostName, hostToken, config, max_squad_size, maxSquadSize, max_overseas_players, maxOverseas } = req.body || {};
+  const mergedConfig = config && typeof config === 'object' && !Array.isArray(config) ? { ...config } : {};
+  if (max_squad_size !== undefined && mergedConfig.max_squad_size === undefined && mergedConfig.maxSquadSize === undefined) {
+    mergedConfig.max_squad_size = max_squad_size;
+  }
+  if (maxSquadSize !== undefined && mergedConfig.maxSquadSize === undefined && mergedConfig.max_squad_size === undefined) {
+    mergedConfig.maxSquadSize = maxSquadSize;
+  }
+  if (max_overseas_players !== undefined && mergedConfig.max_overseas_players === undefined && mergedConfig.maxOverseas === undefined) {
+    mergedConfig.max_overseas_players = max_overseas_players;
+  }
+  if (maxOverseas !== undefined && mergedConfig.maxOverseas === undefined && mergedConfig.max_overseas_players === undefined) {
+    mergedConfig.maxOverseas = maxOverseas;
+  }
   const name = cleanName(hostName);
   if (!name || !isValidToken(hostToken)) {
     return res.status(400).json({ error: 'A valid hostName and hostToken are required' });
@@ -114,7 +127,7 @@ app.post('/api/rooms', async (req, res) => {
   if (!roomManager.ready) return res.status(503).json({ error: STARTING_MSG });
   let room;
   try {
-    room = roomManager.createRoom({ hostName: name, hostToken, configOverrides: config });
+    room = roomManager.createRoom({ hostName: name, hostToken, configOverrides: mergedConfig });
   } catch (err) {
     if (err instanceof ConfigValidationError) {
       return res.status(400).json({ error: 'Invalid auction configuration', errors: err.errors });

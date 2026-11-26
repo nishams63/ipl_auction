@@ -24,10 +24,15 @@ const INVALID = [
   ['max squad above 30', { maxSquadSize: 40 }],
   ['min > max squad', { minSquadSize: 25, maxSquadSize: 20 }],
   ['overseas below 4', { maxOverseas: 2 }],
+  ['overseas above 8', { maxOverseas: 9 }],
   ['overseas above 10', { maxOverseas: 11 }],
+  ['max squad below 15', { maxSquadSize: 14 }],
+  ['max squad above 30', { maxSquadSize: 40 }],
   ['participants 0', { minParticipants: 0 }],
   ['participants 11', { minParticipants: 11 }],
   ['timer 5s', { timerDuration: 5 }],
+  ['timer 10s (fixed 15)', { timerDuration: 10 }],
+  ['timer 90s (fixed 15)', { timerDuration: 90 }],
   ['timer 200s', { timerDuration: 200 }],
   ['timer fractional', { timerDuration: 12.5 }],
   ['min player price 0', { minPlayerPrice: 0 }],
@@ -42,9 +47,8 @@ const INVALID = [
   ['purse 150 (fixed 120)', { basePurse: 150 }],
   ['purse 100 (fixed 120)', { basePurse: 100 }],
   ['min squad 18 (fixed 15)', { minSquadSize: 18 }],
-  ['max squad 22 (fixed 25)', { maxSquadSize: 22 }],
-  ['overseas 6 (fixed 8)', { maxOverseas: 6 }],
-  ['min keepers 0 (fixed 1)', { minWKs: 0 }]
+  ['min keepers 0 (fixed 1)', { minWKs: 0 }],
+  ['conflicting maxSquadSize aliases', { maxSquadSize: 18, max_squad_size: 20 }]
 ];
 
 await t.it('defaults are the approved values and pass validation', () => {
@@ -67,13 +71,15 @@ await t.it('validator rejects every invalid value and combination (nothing silen
   assert.strictEqual(validateConfig([1]).ok, false);
 });
 
-await t.it('validator accepts the fixed IPL rule values and every adjustable value; fixed rules reject anything else', async () => {
+await t.it('validator accepts the fixed IPL rule values and dynamic squad/overseas limits; fixed rules reject anything else', async () => {
   const { FIXED_RULES } = await import('../server/config.js');
-  assert.deepStrictEqual({ ...FIXED_RULES }, { basePurse: 120, minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8, minWKs: 1 });
+  assert.deepStrictEqual({ ...FIXED_RULES }, { basePurse: 120, minSquadSize: 15, minWKs: 1, timerDuration: 15 });
   assert.ok(validateConfig({ ...FIXED_RULES }).ok, 'the fixed values themselves must be accepted (older clients send them)');
-  assert.ok(validateConfig({ timerDuration: 10 }).ok);
-  assert.ok(validateConfig({ timerDuration: 90 }).ok);
-  assert.ok(validateConfig({ basePurse: '120', timerDuration: '30' }).ok, 'numeric strings from inputs');
+  assert.ok(validateConfig({ maxSquadSize: 15, maxOverseas: 5 }).ok);
+  assert.ok(validateConfig({ max_squad_size: 20, max_overseas_players: 6 }).ok);
+  assert.strictEqual(validateConfig({ timerDuration: 10 }).ok, false);
+  assert.strictEqual(validateConfig({ timerDuration: 90 }).ok, false);
+  assert.ok(validateConfig({ basePurse: '120', timerDuration: '15' }).ok, 'numeric strings from inputs');
   for (const [key, value] of Object.entries(FIXED_RULES)) {
     for (const other of [value - 1, value + 1]) {
       const r = validateConfig({ [key]: other });
@@ -99,7 +105,7 @@ await t.it('exact boundaries for every rule: min and max accepted, one step outs
     probes += 4;
   }
   assert.strictEqual(probes, adjustable.length * 4);
-  assert.ok(probes >= 16, 'timer, delay, participants and floor price are still boundary-tested');
+  assert.ok(probes >= 12, 'delay, participants and floor price are still boundary-tested');
 });
 
 await t.it('approved defaults apply when a room is created without config, over REST and directly', async () => {
@@ -133,9 +139,10 @@ await t.it('RoomManager.updateConfig rejects invalid changes and leaves config u
   // Partial update that is only invalid in combination with the CURRENT config
   assert.strictEqual(rm.updateConfig({ roomCode: room.roomCode, hostToken: H, newConfig: { minSquadSize: 25, maxSquadSize: 20 } }).success, false);
   assert.strictEqual(rm.updateConfig({ roomCode: room.roomCode, hostToken: H, newConfig: { maxSquadSize: 15, minSquadSize: 20 } }).success, false);
-  // Valid change still works; the purse stays the fixed ₹120 Cr
-  assert.ok(rm.updateConfig({ roomCode: room.roomCode, hostToken: H, newConfig: { basePurse: 120, timerDuration: 30 } }).success);
-  assert.strictEqual(room.config.timerDuration, 30);
+  // Valid change still works; purse stays ₹120 Cr and timer stays 15 s
+  assert.ok(rm.updateConfig({ roomCode: room.roomCode, hostToken: H, newConfig: { basePurse: 120, timerDuration: 15, autoAdvanceDelay: 5 } }).success);
+  assert.strictEqual(room.config.timerDuration, 15);
+  assert.strictEqual(room.config.autoAdvanceDelay, 5);
   assert.strictEqual(room.config.basePurse, 120);
   assert.strictEqual(room.franchises.CSK.initialPurse, 120);
 });
@@ -148,10 +155,11 @@ await t.it('POST /api/rooms with invalid config → 400 with reasons, valid conf
     assert.strictEqual(r.status, 400, `accepted at creation over REST: ${label}`);
     assert.ok(Array.isArray(r.body.errors) && r.body.errors.length, `no reasons: ${label}`);
   }
-  const ok = await createRoom(srv.url, { hostToken: strongToken('h'), config: { basePurse: 120, timerDuration: 25 } });
+  const ok = await createRoom(srv.url, { hostToken: strongToken('h'), config: { basePurse: 120, timerDuration: 15, autoAdvanceDelay: 5 } });
   assert.strictEqual(ok.status, 200);
   assert.strictEqual(ok.body.room.config.basePurse, 120);
-  assert.strictEqual(ok.body.room.config.timerDuration, 25);
+  assert.strictEqual(ok.body.room.config.timerDuration, 15);
+  assert.strictEqual(ok.body.room.config.autoAdvanceDelay, 5);
 });
 
 await t.it('update_config over socket rejects invalid values with reasons; config unchanged', async () => {
@@ -168,11 +176,14 @@ await t.it('update_config over socket rejects invalid values with reasons; confi
   assert.deepStrictEqual(
     { p: pub.config.basePurse, min: pub.config.minSquadSize, max: pub.config.maxSquadSize, o: pub.config.maxOverseas, t: pub.config.timerDuration },
     { p: 120, min: 15, max: 25, o: 8, t: 15 });
-  // The payload an older LobbyView sends (all five fields, fixed values) and the current one (timer only)
-  const old = await emit(s, 'update_config', { roomCode: body.roomCode, config: { basePurse: 120, timerDuration: 30, minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8 } });
+  // Older LobbyView payload with fixed values succeeds; changing timer or purse is rejected
+  const old = await emit(s, 'update_config', { roomCode: body.roomCode, config: { basePurse: 120, timerDuration: 15, minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8 } });
   assert.ok(old.success, old.error);
-  const cur = await emit(s, 'update_config', { roomCode: body.roomCode, config: { timerDuration: 35 } });
-  assert.ok(cur.success, cur.error);
+  const custom = await emit(s, 'update_config', { roomCode: body.roomCode, config: { maxSquadSize: 18, maxOverseas: 5 } });
+  assert.ok(custom.success, custom.error);
+  const timerAttempt = await emit(s, 'update_config', { roomCode: body.roomCode, config: { timerDuration: 35 } });
+  assert.strictEqual(timerAttempt.success, false);
+  assert.match(timerAttempt.error, /fixed at 15/);
   const changed = await emit(s, 'update_config', { roomCode: body.roomCode, config: { basePurse: 100 } });
   assert.strictEqual(changed.success, false);
   assert.match(changed.error, /fixed at 120/);

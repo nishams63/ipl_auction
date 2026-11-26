@@ -1,24 +1,31 @@
 import React, { useState } from 'react';
 import {
   Trophy, Shield, Users, Gavel, BarChart3, Plus, ArrowRight,
-  Zap, CheckCircle2, X, Sparkles, Radio, HelpCircle
+  Zap, X
 } from 'lucide-react';
 import auctionBg from '../assets/ipl_auction_arena_bg.jpg';
 import trophyHeroImg from '../assets/ipl_trophy_hero.jpg';
 import { IPL_FRANCHISES } from '../../../server/data/franchises';
+import { SQUAD_SIZE_OPTIONS, OVERSEAS_LIMIT_OPTIONS } from '../../../server/config';
 import { SERVER_URL } from '../utils/socket';
 
 export default function LandingView({
   onCreateRoom,
   onJoinRoom,
   activeSection = null,
-  onCloseSection
+  onCloseSection,
+  onCancelPending,
+  defaultName = '',
+  resumeRoomCode = '',
+  notice = null
 }) {
   const [mode, setMode] = useState(null); // null | 'create' | 'join'
-  const [name, setName] = useState('');
+  const [name, setName] = useState(defaultName);
   const [roomCode, setRoomCode] = useState('');
   // Fixed IPL rule (server-enforced): every franchise starts with ₹120 Cr
   const basePurse = 120;
+  const [maxSquadSize, setMaxSquadSize] = useState(25);
+  const [maxOverseas, setMaxOverseas] = useState(8);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -43,18 +50,43 @@ export default function LandingView({
     }
   }, [activeSection]);
 
+  const closeModal = () => {
+    if (loading && onCancelPending) onCancelPending();
+    setLoading(false);
+    setError(null);
+    setMode(null);
+  };
+
+  const openJoin = (code = '') => {
+    setRoomCode(code);
+    setError(null);
+    setMode('join');
+  };
+
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
       setError("Please enter your display name");
       return;
     }
+    const chosenSquad = Number(maxSquadSize);
+    const chosenOverseas = Number(maxOverseas);
+    if (chosenOverseas > chosenSquad) {
+      setError("Overseas player limit cannot exceed total squad size");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      await onCreateRoom({ hostName: name.trim(), basePurse: Number(basePurse) });
+      await onCreateRoom({
+        hostName: name.trim(),
+        basePurse: Number(basePurse),
+        maxSquadSize: chosenSquad,
+        maxOverseas: chosenOverseas
+      });
     } catch (err) {
-      setError(err?.message || "Could not connect to the backend server. The server on Render may be waking up from sleep (~50s). Please wait a moment and try again.");
+      if (err?.cancelled) return;
+      setError(err?.message || "Could not connect to the backend server. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -78,6 +110,7 @@ export default function LandingView({
         roomCode: roomCode.trim().toUpperCase()
       });
     } catch (err) {
+      if (err?.cancelled) return;
       setError(err?.message || "Could not join room. Please check the code and ensure the backend server is online.");
     } finally {
       setLoading(false);
@@ -151,6 +184,27 @@ export default function LandingView({
               Create a private auction room, pick your IPL franchise, bid for top players and build your dream squad in a realistic, multiplayer auction experience.
             </p>
 
+            {notice && (
+              <div role="status" className="max-w-xl px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 text-sm text-slate-200" data-testid="landing-notice">
+                {notice}
+              </div>
+            )}
+
+            {resumeRoomCode && (
+              <div className="max-w-xl flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30" data-testid="resume-card">
+                <div className="text-sm text-slate-200">
+                  Your last room: <span className="font-mono font-black text-amber-300 tracking-wider">{resumeRoomCode}</span>
+                  <div className="text-[11px] text-slate-400">Nothing opens automatically. Rejoin only if you want to.</div>
+                </div>
+                <button
+                  onClick={() => openJoin(resumeRoomCode)}
+                  className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs"
+                >
+                  Rejoin {resumeRoomCode}
+                </button>
+              </div>
+            )}
+
             {/* Two Action Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
               {/* Create Private Room */}
@@ -166,7 +220,7 @@ export default function LandingView({
 
               {/* Join with Room Code */}
               <button
-                onClick={() => { setMode('join'); setError(null); }}
+                onClick={() => openJoin('')}
                 className="glass-pill px-7 py-4 rounded-full text-white hover:text-amber-300 font-bold text-sm tracking-wide border border-white/20 hover:border-amber-400/50 transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-lg hover:bg-slate-900/80 hover:scale-[1.02]"
               >
                 <Users className="w-4 h-4 text-blue-400" />
@@ -296,7 +350,8 @@ export default function LandingView({
           <div className="glass-panel p-6 sm:p-8 rounded-3xl max-w-md w-full border-glow-gold shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
             {/* Close Button */}
             <button
-              onClick={() => setMode(null)}
+              onClick={closeModal}
+              aria-label="Close"
               className="absolute top-5 right-5 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -328,10 +383,13 @@ export default function LandingView({
 
             <form onSubmit={mode === 'create' ? handleCreateSubmit : handleJoinSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1.5">
+                <label htmlFor="display-name" className="text-xs font-bold text-slate-300 block mb-1.5">
                   Your Display Name
                 </label>
                 <input
+                  id="display-name"
+                  maxLength={24}
+                  autoComplete="nickname"
                   type="text"
                   placeholder="e.g. Captain Cool, Rohit, ViratFan"
                   value={name}
@@ -343,40 +401,85 @@ export default function LandingView({
 
               {mode === 'join' && (
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1.5">
+                  <label htmlFor="room-code" className="text-xs font-bold text-slate-300 block mb-1.5">
                     Room Code
                   </label>
                   <input
+                    id="room-code"
+                    autoComplete="off"
+                    inputMode="text"
                     type="text"
                     placeholder="e.g. 7XKP9Q"
-                    maxLength={6}
+                    maxLength={12}
                     value={roomCode}
-                    onChange={e => setRoomCode(e.target.value.toUpperCase())}
+                    onChange={e => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                     className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-4 py-3 text-amber-400 text-lg font-mono tracking-widest uppercase focus:border-amber-400 outline-none transition"
                   />
                 </div>
               )}
 
               {mode === 'create' && (
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-slate-300">
-                      Base Purse Per Franchise
-                    </label>
-                    <span className="text-xs font-mono text-amber-400 font-bold">
-                      ₹{basePurse} Cr
-                    </span>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="max-squad-size" className="text-xs font-bold text-slate-300 block mb-1.5">
+                        Total Squad Size
+                      </label>
+                      <select
+                        id="max-squad-size"
+                        data-testid="create-max-squad-size"
+                        value={maxSquadSize}
+                        onChange={(e) => {
+                          const nextSq = Number(e.target.value);
+                          setMaxSquadSize(nextSq);
+                          if (maxOverseas > nextSq) setMaxOverseas(nextSq);
+                        }}
+                        className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm font-mono focus:border-amber-400 outline-none transition"
+                      >
+                        {SQUAD_SIZE_OPTIONS.map(n => (
+                          <option key={n} value={n}>{n} Players</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="max-overseas" className="text-xs font-bold text-slate-300 block mb-1.5">
+                        Overseas Player Limit
+                      </label>
+                      <select
+                        id="max-overseas"
+                        data-testid="create-max-overseas"
+                        value={maxOverseas}
+                        onChange={(e) => setMaxOverseas(Number(e.target.value))}
+                        className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm font-mono focus:border-amber-400 outline-none transition"
+                      >
+                        {OVERSEAS_LIMIT_OPTIONS.filter(n => n <= maxSquadSize).map(n => (
+                          <option key={n} value={n}>Max {n} Overseas</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Fixed by the IPL auction rules for all 10 franchises (squad 15–25, max 8 overseas, at least 1 wicketkeeper).
-                  </p>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-slate-300">
+                        Base Purse Per Franchise
+                      </label>
+                      <span className="text-xs font-mono text-amber-400 font-bold">
+                        ₹{basePurse} Cr
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Each franchise can sign up to <strong className="text-amber-300">{maxSquadSize}</strong> players (min 15, max <strong className="text-amber-300">{maxOverseas}</strong> overseas, min 1 WK).
+                    </p>
+                  </div>
                 </div>
               )}
 
               {loading && (
                 <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-center">
                   <p className="text-[11px] text-amber-300 font-medium animate-pulse">
-                    Connecting to backend... If the Render instance is waking from sleep, this may take ~30–50s.
+                    Connecting to backend... Setting up your auction room.
                   </p>
                 </div>
               )}
@@ -384,7 +487,7 @@ export default function LandingView({
               <div className="flex gap-3 pt-3">
                 <button
                   type="button"
-                  onClick={() => setMode(null)}
+                  onClick={closeModal}
                   className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-white/10 transition cursor-pointer"
                 >
                   Cancel

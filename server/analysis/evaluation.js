@@ -14,6 +14,7 @@
 // the rules they started with).
 import crypto from 'node:crypto';
 import { toLakh, fromLakh } from '../money.js';
+import { getRoomSquadLimits } from '../config.js';
 import { runCricketMastermind, MASTERMIND_ENGINE_VERSION } from './cricketMastermind.js';
 
 export { runCricketMastermind, MASTERMIND_ENGINE_VERSION };
@@ -91,10 +92,11 @@ function eligibilityOf(f, config, participating) {
   const squad = f.squad || [];
   const keepers = squad.filter(p => p?.category === 'WK').length;
   const overseas = squad.filter(p => p?.isOverseas === true).length;
+  const { minSquadSize, maxSquadSize, maxOverseas } = getRoomSquadLimits({ config });
   const failures = [];
-  if (squad.length < config.minSquadSize) failures.push(`Squad has ${squad.length} players; the minimum is ${config.minSquadSize}`);
-  if (squad.length > config.maxSquadSize) failures.push(`Squad has ${squad.length} players; the maximum is ${config.maxSquadSize}`);
-  if (overseas > config.maxOverseas) failures.push(`Squad has ${overseas} overseas players; the maximum is ${config.maxOverseas}`);
+  if (squad.length < minSquadSize) failures.push(`Squad has ${squad.length} players; the minimum is ${minSquadSize}`);
+  if (squad.length > maxSquadSize) failures.push(`Squad has ${squad.length} players; the maximum is ${maxSquadSize}`);
+  if (overseas > maxOverseas) failures.push(`Squad has ${overseas} overseas players; the maximum is ${maxOverseas}`);
   if (keepers < (config.minWKs ?? 1)) failures.push(`Squad has ${keepers} wicketkeeper(s); at least ${config.minWKs ?? 1} required`);
   return { eligible: failures.length === 0, status: failures.length === 0 ? 'ELIGIBLE' : 'INELIGIBLE', failures };
 }

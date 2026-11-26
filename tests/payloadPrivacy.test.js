@@ -39,7 +39,7 @@ try {
   await ack('host', host, 'select_franchise', { roomCode: code, franchiseId: 'CSK' });
   await ack('alice', alice, 'select_franchise', { roomCode: code, franchiseId: 'RR' });
   await ack('alice', alice, 'select_franchise', { roomCode: code, franchiseId: 'MI' }); // releases RR
-  await ack('host', host, 'update_config', { roomCode: code, config: { timerDuration: 20 } });
+  await ack('host', host, 'update_config', { roomCode: code, config: { autoAdvanceDelay: 5 } });
   await ack('host', host, 'update_config', { roomCode: code, config: { basePurse: 1 } }); // error ack
   await ack('outsider', outsider, 'start_auction', { roomCode: code, hostToken: H }); // error ack
   await rest('GET /api/rooms/:code (lobby)', `/api/rooms/${code}`);

@@ -62,8 +62,8 @@ await t.it('P8: each important mutation is persisted (checked in the raw file af
   assert.strictEqual(s.franchises.MI.isClaimed, true);
   rm.selectFranchise({ roomCode: code, participantToken: H, franchiseId: 'CSK' });
 
-  assert.ok(rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 25 } }).success); pending();
-  assert.strictEqual(saved().config.timerDuration, 25, 'config change');
+  assert.ok(rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { autoAdvanceDelay: 7 } }).success); pending();
+  assert.strictEqual(saved().config.autoAdvanceDelay, 7, 'config change');
 
   assert.ok(rm.startAuction({ roomCode: code, hostToken: H }).success); pending();
   s = saved();
@@ -128,9 +128,9 @@ await t.it('P8b: countdown ticks are NOT written to disk (documented: no per-sec
 await t.it('P9: restart of an ACTIVE auction → paused, countdown reset to full timer, bid kept', () => {
   const file = tempStorageFile('p9');
   const rm1 = make(file);
-  const { room, A } = liveRoom(rm1, { timerDuration: 30 });
+  const { room, A } = liveRoom(rm1);
   bid(rm1, room, A, 'MI');
-  for (let i = 0; i < 27; i++) rm1.tickRoom(room); // 3 s left → GOING_TWICE
+  for (let i = 0; i < 12; i++) rm1.tickRoom(room); // 3 s left → GOING_TWICE
   assert.strictEqual(room.currentLot.hammerStatus, 'GOING_TWICE');
   rm1.flushStorage();
   rm1.saveToStorage(); // capture the in-memory value too, to prove recovery resets it
@@ -139,10 +139,10 @@ await t.it('P9: restart of an ACTIVE auction → paused, countdown reset to full
   const rm2 = make(file);
   const r2 = rm2.getRoom(room.roomCode);
   assert.strictEqual(r2.status, 'paused');
-  assert.strictEqual(r2.currentLot.countdown, 30, 'countdown reset to full timer');
+  assert.strictEqual(r2.currentLot.countdown, 15, 'countdown reset to full timer');
   assert.strictEqual(r2.currentLot.hammerStatus, 'OPEN');
   assert.strictEqual(r2.currentLot.highestBidderFranchiseId, 'MI', 'highest bid kept');
-  assert.match(r2.auditLog[0].message, /countdown reset to 30s/);
+  assert.match(r2.auditLog[0].message, /countdown reset to 15s/);
 });
 
 await t.it('P9: restart of a host-PAUSED auction keeps the exact paused countdown', () => {

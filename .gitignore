@@ -40,14 +40,15 @@ server/data/persisted_rooms.json
 *.bak
 backups/
 Claude outputs/
+.wrangler/
+.wrangler_config/
+dist_worker/
 
-# Unity generated and build files
-unity/**/[Ll]ibrary/
-unity/**/[Tt]emp/
-unity/**/[Oo]bj/
-unity/**/[Bb]uild/
-unity/**/[Bb]uilds/
-unity/**/[Ll]ogs/
-unity/**/[Uu]ser[Ss]ettings/
-unity/**/[Mm]emoryCaptures/
 
+
+.vercel
+.env*
+
+# Local test reports
+test-results/
+playback_screenshots/

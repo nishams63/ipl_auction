@@ -154,7 +154,7 @@ await t.it('M8: token hashing — deterministic, scheme-dependent, and hash keys
 await t.it('M9: audit entries carry a unique, increasing seq; memory keeps 200, rows keep what memory has', () => {
   const rm = make();
   const { room, code, H } = lobbyRoom(rm);
-  for (let i = 0; i < 230; i++) rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 20 + (i % 5) } });
+  for (let i = 0; i < 230; i++) rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { autoAdvanceDelay: 2 + (i % 5) } });
   assert.strictEqual(room.auditLog.length, 200);
   const seqs = room.auditLog.map(a => a.seq);
   assert.strictEqual(new Set(seqs).size, 200);

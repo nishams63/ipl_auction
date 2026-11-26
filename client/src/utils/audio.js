@@ -21,14 +21,14 @@ export function setSoundEnabled(enabled) {
   soundEnabled = enabled;
   try {
     localStorage.setItem('ipl_sound_enabled', enabled ? 'true' : 'false');
-  } catch (e) {}
+  } catch {}
 }
 
 export function isSoundEnabled() {
   try {
     const stored = localStorage.getItem('ipl_sound_enabled');
     if (stored !== null) soundEnabled = stored === 'true';
-  } catch (e) {}
+  } catch {}
   return soundEnabled;
 }
 

@@ -1,7 +1,7 @@
 // Server-authoritative IPL Auction Engine & Mathematical Rules
 
 // Defaults and validation rules live in ./config.js (single source of truth)
-import { DEFAULT_CONFIG } from './config.js';
+import { DEFAULT_CONFIG, getRoomSquadLimits } from './config.js';
 import { toLakh, fromLakh, nextBidLakh, isWholeLakh } from './money.js';
 export { DEFAULT_CONFIG };
 
@@ -113,28 +113,30 @@ export function validateBid({
   }
 
   const validNextAmountToAccept = validNextAmount;
+  const { maxSquadSize, maxOverseas, minSquadSize } = getRoomSquadLimits(room);
 
   // Max squad size check
-  if (franchise.squad.length >= room.config.maxSquadSize) {
-    return { valid: false, error: `Squad capacity reached (Max ${room.config.maxSquadSize} players)` };
+  if (franchise.squad.length >= maxSquadSize) {
+    return { valid: false, error: `Squad limit reached! (Max ${maxSquadSize} players allowed)` };
   }
 
   // Overseas player limit check
-  if (currentLot.player.isOverseas && franchise.overseasCount >= room.config.maxOverseas) {
+  if (currentLot.player.isOverseas && (franchise.overseasCount || 0) >= maxOverseas) {
     return {
       valid: false,
-      error: `Overseas player limit reached (Max ${room.config.maxOverseas} overseas players allowed)`
+      error: `Overseas player limit reached! (Max ${maxOverseas} overseas players allowed)`
     };
   }
 
   // Wicketkeeper requirement: never let a franchise fill the slots it still needs for keepers
+  const minWKs = room.config?.minWKs ?? 1;
   const projectedSquadCount = franchise.squad.length + 1;
-  const keepersStillNeeded = Math.max(0, (room.config.minWKs ?? 1) - wkCountOf(franchise) - (currentLot.player.category === 'WK' ? 1 : 0));
-  const slotsLeftAfter = room.config.maxSquadSize - projectedSquadCount;
+  const keepersStillNeeded = Math.max(0, minWKs - wkCountOf(franchise) - (currentLot.player.category === 'WK' ? 1 : 0));
+  const slotsLeftAfter = maxSquadSize - projectedSquadCount;
   if (keepersStillNeeded > slotsLeftAfter) {
     return {
       valid: false,
-      error: `Squad rule: keep ${keepersStillNeeded === 1 ? 'a slot' : `${keepersStillNeeded} slots`} for a wicketkeeper (min ${room.config.minWKs} WK; max squad ${room.config.maxSquadSize})`
+      error: `Squad rule: keep ${keepersStillNeeded === 1 ? 'a slot' : `${keepersStillNeeded} slots`} for a wicketkeeper (min ${minWKs} WK; max squad ${maxSquadSize})`
     };
   }
 
@@ -146,13 +148,13 @@ export function validateBid({
     return { valid: false, error: "Insufficient purse balance" };
   }
 
-  const remainingSlotsToMin = Math.max(0, room.config.minSquadSize - projectedSquadCount);
+  const remainingSlotsToMin = Math.max(0, minSquadSize - projectedSquadCount);
   const minRequiredReserveLakh = remainingSlotsToMin * reserveFloorLakh(room);
 
   if (projectedPurseLakh < minRequiredReserveLakh) {
     return {
       valid: false,
-      error: `Financial Feasibility: Must reserve at least ₹${fromLakh(minRequiredReserveLakh).toFixed(2)} Cr for ${remainingSlotsToMin} remaining mandatory slots to meet minimum squad (${room.config.minSquadSize}).`
+      error: `Financial Feasibility: Must reserve at least ₹${fromLakh(minRequiredReserveLakh).toFixed(2)} Cr for ${remainingSlotsToMin} remaining mandatory slots to meet minimum squad (${minSquadSize}).`
     };
   }
 

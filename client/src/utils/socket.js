@@ -1,23 +1,26 @@
-import { io } from 'socket.io-client';
+import { CloudflareNativeWsAdapter } from './wsAdapter.js';
+import { SocketIoRoomConnection } from './socketIoConnection.js';
 import { createSessionStore } from './session.js';
 
-export const SERVER_URL = import.meta.env.VITE_SERVER_URL || (
+// Backend origin, no trailing slash. Empty = same origin (local proxy / reverse proxy).
+export const SERVER_URL = String(import.meta.env.VITE_SERVER_URL || (
   typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '5173'
     ? 'http://localhost:4000'
     : ''
-);
+)).replace(/\/+$/, '');
 
-export const socket = io(SERVER_URL || (typeof window !== 'undefined' ? window.location.origin : ''), {
-  autoConnect: true,
-  transports: ['polling', 'websocket'],
-  reconnection: true,
-  reconnectionAttempts: 15,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  timeout: 20000
-});
+// Native WebSocket (Cloudflare Durable Objects) is the default. Socket.IO is only for the legacy
+// Node server that hosts historical auctions (explicit opt-in, or a Render backend URL).
+export const USE_SOCKETIO = import.meta.env.VITE_USE_SOCKETIO === 'true' || SERVER_URL.includes('onrender.com');
 
-// Session identity lives in ./session.js (pure, unit-tested in tests/compatibility.test.js)
-const store = createSessionStore(localStorage);
-export const getUserSession = () => store.getUserSession();
-export const saveUserSession = (args) => store.saveUserSession(args);
+// A NEW connection object per room session: nothing (listeners, queues, timers, acks) is ever
+// shared between two rooms.
+export function createRoomConnection() {
+  return USE_SOCKETIO ? new SocketIoRoomConnection(SERVER_URL) : new CloudflareNativeWsAdapter(SERVER_URL);
+}
+
+const safeStorage = (name) => {
+  try { return typeof window !== 'undefined' ? window[name] : null; } catch { return null; }
+};
+
+export const sessionStore = createSessionStore(safeStorage('localStorage'), safeStorage('sessionStorage'));

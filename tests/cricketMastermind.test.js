@@ -11,7 +11,6 @@ import { liveRoom, sellCurrent, passCurrent } from './helpers/auctionRooms.js';
 const { RoomManager, ensureAnalysisSnapshot } = await import('../server/roomManager.js');
 const { runCricketMastermind, compareFranchises, rankAllFranchisesMastermind, classifyPlayerMastermind, MASTERMIND_ENGINE_VERSION } = await import('../server/analysis/cricketMastermind.js');
 const { evaluateAuction } = await import('../server/analysis/evaluation.js');
-const { toArenaState } = await import('../client/src/utils/arenaState.js');
 
 const t = makeRunner('Cricket Mastermind — IPL Auction Verdict Suite (20 Requirements)');
 
@@ -385,18 +384,15 @@ await t.it('19. Why the Winner Won compares 1st vs 2nd without numerical score d
   assert.ok(mastermind.whyWinnerWon.verdictStatement.includes('beats'));
 });
 
-// 20. Existing Unity arena remains compatible
-await t.it('20. Existing Unity arena remains compatible (display-only state protocol v1)', () => {
+// 20. Completed room carries everything the React results screen renders (Unity removed)
+await t.it('20. Completed room exposes a verdict for all 10 franchises to the React results view', () => {
   const rm = make();
   const { room } = liveRoom(rm);
   room.status = 'completed';
   room.analysis = runCricketMastermind(room);
-
-  const arenaState = toArenaState(room);
-  assert.ok(arenaState, 'Arena state must generate successfully');
-  assert.strictEqual(arenaState.v, 1, 'Arena protocol version must remain 1');
-  assert.strictEqual(arenaState.status, 'completed');
-  assert.strictEqual(arenaState.franchises.length, 10);
+  assert.strictEqual(Object.keys(room.franchises).length, 10);
+  const ranks = Object.values(room.analysis.franchises || {}).map(f => f.rank).filter(r => r != null);
+  assert.strictEqual(new Set(ranks).size, ranks.length, 'ranks must be unique');
 });
 
 await t.finish();

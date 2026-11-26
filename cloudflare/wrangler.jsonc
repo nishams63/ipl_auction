@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ipl-auction-cf-backend",
+  "main": "src/index.js",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "FRONTEND_URL": "https://ipl-auction-omega-nine.vercel.app"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AUCTION_ROOMS",
+        "class_name": "AuctionRoomDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["AuctionRoomDO"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

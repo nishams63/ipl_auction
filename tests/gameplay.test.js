@@ -112,7 +112,7 @@ const filler = (n, cat = 'BAT') => Array.from({ length: n }, (_, i) => ({ id: `F
 
 await t.it('G3: squad limits — max 25, max 8 overseas, and the last slot is kept for a wicketkeeper', () => {
   let r = validateBid({ room: probeRoom({ squad: filler(25) }), franchiseId: 'MI' });
-  assert.ok(!r.valid && /Squad capacity/.test(r.error), r.error);
+  assert.ok(!r.valid && /Squad limit reached!/.test(r.error), r.error);
   r = validateBid({ room: probeRoom({ squad: filler(10), overseas: 8, player: { id: 'O', basePrice: 1, category: 'BAT', isOverseas: true } }), franchiseId: 'MI' });
   assert.ok(!r.valid && /Overseas/.test(r.error), r.error);
   // 24 players, none a keeper: a non-keeper would fill the squad without a WK
@@ -185,20 +185,20 @@ await t.it('G5: auction order — shuffled within each set once at start, set or
 
 await t.it('G6: timer — a valid bid resets it, an invalid one does not; expiry resolves the lot exactly once', async () => {
   const rm = make();
-  const { room, code, H, A } = liveRoom(rm, { timerDuration: 10 });
+  const { room, code, H, A } = liveRoom(rm);
   rm.clearRoomTimer(code);
   for (let i = 0; i < 4; i++) rm.tickRoom(room);
-  assert.strictEqual(room.currentLot.countdown, 6);
+  assert.strictEqual(room.currentLot.countdown, 11);
   const stale = rm.placeBid({ roomCode: code, participantToken: A, franchiseId: 'MI', expectedVersion: 99 });
   assert.strictEqual(stale.success, false);
   const imposter = rm.placeBid({ roomCode: code, participantToken: A, franchiseId: 'CSK', expectedVersion: room.currentLot.stateVersion });
   assert.strictEqual(imposter.success, false);
-  assert.strictEqual(room.currentLot.countdown, 6, 'an invalid bid reset the timer');
+  assert.strictEqual(room.currentLot.countdown, 11, 'an invalid bid reset the timer');
   bid(rm, room, A, 'MI');
-  assert.strictEqual(room.currentLot.countdown, 10, 'a valid bid did not reset the timer');
+  assert.strictEqual(room.currentLot.countdown, 15, 'a valid bid did not reset the timer');
   rm.clearRoomTimer(code);
   const pid = room.currentLot.player.id;
-  for (let i = 0; i < 15; i++) rm.tickRoom(room); // past zero: must close once
+  for (let i = 0; i < 20; i++) rm.tickRoom(room); // past zero: must close once
   assert.strictEqual(room.currentLot.hammerStatus, 'SOLD');
   assert.strictEqual(room.history.filter(h => h.player.id === pid).length, 1);
   assert.strictEqual(room.franchises.MI.squad.filter(p => p.id === pid).length, 1);
@@ -207,15 +207,15 @@ await t.it('G6: timer — a valid bid resets it, an invalid one does not; expiry
 
 await t.it('G7: a stale timer callback (its lot was replaced) stops itself and never ticks or sells the new lot', async () => {
   const rm = make();
-  const { room, code } = liveRoom(rm, { timerDuration: 10 });
+  const { room, code } = liveRoom(rm);
   const oldLot = room.currentLot;
   // Simulate a leftover interval: replace the lot WITHOUT going through nextPlayer
-  room.currentLot = { ...oldLot, player: room.playersCatalog[5], stateVersion: 1, countdown: 10, hammerStatus: 'OPEN', bidHistory: [] };
+  room.currentLot = { ...oldLot, player: room.playersCatalog[5], stateVersion: 1, countdown: 15, hammerStatus: 'OPEN', bidHistory: [] };
   const newLot = room.currentLot;
   await sleep(1300);
-  assert.strictEqual(newLot.countdown, 10, 'the stale interval ticked the new lot');
+  assert.strictEqual(newLot.countdown, 15, 'the stale interval ticked the new lot');
   assert.ok(!rm.timerIntervals.has(code), 'the stale interval kept running');
-  assert.strictEqual(oldLot.countdown, 10);
+  assert.strictEqual(oldLot.countdown, 15);
 });
 
 await t.it('G8: SOLD/UNSOLD resolve once — repeated hammer/advance/finish calls never duplicate a sale or deduct twice; UNSOLD changes no purse', () => {
@@ -322,7 +322,7 @@ await t.it('G12: franchises are exactly the 10 IPL teams, each at ₹120 Cr; fix
   assert.ok(Object.values(room.franchises).every(f => f.initialPurse === 120 && f.remainingPurse === 120));
   assert.strictEqual(rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { basePurse: 200 } }).success, false);
   assert.strictEqual(rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { maxOverseas: 10 } }).success, false);
-  assert.ok(rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 30 } }).success, 'timer must stay adjustable');
+  assert.strictEqual(rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 30 } }).success, false, 'timer must stay fixed at 15s');
 });
 
 // ── multiplayer over real sockets ──
@@ -412,7 +412,7 @@ await t.it('G15: rooms saved with old rules (squad 11–15) — lobby rooms are 
   const rm2 = make(file);
   const l2 = rm2.getRoom(lobby.code);
   assert.strictEqual(l2.config.minSquadSize, 15);
-  assert.strictEqual(l2.config.maxSquadSize, 25);
+  assert.strictEqual(l2.config.maxSquadSize, 15, 'lobby room keeps its chosen maxSquadSize while minSquadSize normalizes to fixed 15');
   assert.ok(l2.auditLog.some(e => e.type === 'RULES_NORMALIZED' && /minSquadSize 11→15/.test(e.message)));
   const a2 = rm2.getRoom(live.code);
   assert.strictEqual(a2.config.minSquadSize, 11, 'a started auction had its rules changed mid-auction');
@@ -421,11 +421,13 @@ await t.it('G15: rooms saved with old rules (squad 11–15) — lobby rooms are 
   rm2.flushStorage(); rm2.shutdown();
   const rm3 = make(file);
   assert.strictEqual(rm3.getRoom(lobby.code).auditLog.filter(e => e.type === 'RULES_NORMALIZED').length, 1);
-  // a lobby room whose config was changed in memory is normalized at start as well
+  // a lobby room keeps its customizable maxOverseas & maxSquadSize on start, while fixed rules normalize
   const r3 = rm3.getRoom(lobby.code);
   r3.config.maxOverseas = 6;
+  r3.config.timerDuration = 20;
   assert.ok(rm3.startAuction({ roomCode: lobby.code, hostToken: lobby.H }).success);
-  assert.strictEqual(r3.config.maxOverseas, 8);
+  assert.strictEqual(r3.config.maxOverseas, 6);
+  assert.strictEqual(r3.config.timerDuration, 15);
 });
 
 await srv.stop();

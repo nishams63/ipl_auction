@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Gavel, Sparkles, XCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Gavel, XCircle } from 'lucide-react';
 
 // Franchise logo/emblem badge
-function FranchiseEmblem({ code, size = "lg" }) {
+function FranchiseEmblem({ code }) {
   const colors = {
     CSK: { bg: "#FACC15", text: "#1E3A8A", border: "#EAB308" },
     MI: { bg: "#004BA0", text: "#FFFFFF", border: "#D1AB3E" },
@@ -30,6 +30,8 @@ function FranchiseEmblem({ code, size = "lg" }) {
 
 export default function CinematicAuctionOverlay({ eventData, onDismiss }) {
   const [visible, setVisible] = useState(false);
+  const dismissRef = useRef(onDismiss);
+  useEffect(() => { dismissRef.current = onDismiss; }, [onDismiss]);
 
   useEffect(() => {
     if (!eventData) return;
@@ -38,7 +40,7 @@ export default function CinematicAuctionOverlay({ eventData, onDismiss }) {
     // Auto dismiss after 2.8 seconds
     const timer = setTimeout(() => {
       setVisible(false);
-      if (onDismiss) onDismiss();
+      if (dismissRef.current) dismissRef.current();
     }, 2800);
 
     return () => clearTimeout(timer);
@@ -54,7 +56,12 @@ export default function CinematicAuctionOverlay({ eventData, onDismiss }) {
   const finalBid = historyEntry?.finalBid || lot?.highestBid || player?.basePrice || 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fade-in pointer-events-auto">
+    <div
+      role="status"
+      aria-live="assertive"
+      data-testid="hammer-overlay"
+      onClick={() => { setVisible(false); onDismiss?.(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fade-in pointer-events-auto cursor-pointer">
       {/* Background Cinematic Light Beams */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className={`absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full blur-[140px] opacity-40 ${

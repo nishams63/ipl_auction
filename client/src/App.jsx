@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { socket, getUserSession, saveUserSession, SERVER_URL } from './utils/socket';
-import { playGavel, playBidPing, playSoldFanfare, playUnsold } from './utils/audio';
+import React, { useCallback, useState } from 'react';
+import { useRoomSession } from './utils/useRoomSession';
 import Navbar from './components/Navbar';
 import LandingView from './components/LandingView';
 import LobbyView from './components/LobbyView';
@@ -9,391 +8,140 @@ import FinalResultsView from './components/FinalResultsView';
 import FranchiseDashboardModal from './components/FranchiseDashboardModal';
 import AuctionHistoryModal from './components/AuctionHistoryModal';
 import CinematicAuctionOverlay from './components/CinematicAuctionOverlay';
-
+import ConfirmDialog from './components/ConfirmDialog';
+import { Loader2, WifiOff } from 'lucide-react';
 
 export default function App() {
-  const [session, setSession] = useState(getUserSession());
-  const [room, setRoom] = useState(null);
-  const [participant, setParticipant] = useState(null);
+  const { state, controller, identity } = useRoomSession();
+  const { room, participant, phase } = state;
+
   const [isSquadModalOpen, setIsSquadModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [inspectFranchiseId, setInspectFranchiseId] = useState(null);
-  const [completedLotEvent, setCompletedLotEvent] = useState(null);
-  const [sessionReplaced, setSessionReplaced] = useState(false);
-
-  // Latest values for socket handlers registered once
-  const sessionRef = useRef(session);
-  const participantRef = useRef(participant);
-  useEffect(() => { sessionRef.current = session; }, [session]);
-  useEffect(() => { participantRef.current = participant; }, [participant]);
-
-  // (Re)join the stored room on every socket connect: first load, and after any
-  // network drop / server restart, since a new socket is not in the room channel.
-  useEffect(() => {
-    const rejoin = () => {
-      const s = sessionRef.current;
-      if (!s.lastRoom || !s.name) return;
-      socket.emit('join_room', {
-        roomCode: s.lastRoom,
-        participantName: s.name,
-        participantToken: s.token
-      }, (res) => {
-        if (res?.success) {
-          setSessionReplaced(false);
-          setRoom(res.room);
-          setParticipant(res.participant);
-        }
-      });
-    };
-    socket.on('connect', rejoin);
-    if (socket.connected) rejoin();
-    const onReplaced = () => setSessionReplaced(true);
-    socket.on('session_replaced', onReplaced);
-    return () => {
-      socket.off('connect', rejoin);
-      socket.off('session_replaced', onReplaced);
-    };
-  }, []);
-
-  // Listen to server socket events
-  useEffect(() => {
-    socket.on('state_updated', (updatedRoom) => {
-      setRoom(updatedRoom);
-      // Synchronize my franchise via my public id (tokens are never broadcast)
-      const me = participantRef.current;
-      if (updatedRoom && me?.publicId) {
-        const found = Object.values(updatedRoom.franchises).find(f => f.ownerId === me.publicId);
-        setParticipant(prev => prev ? { ...prev, franchiseId: found ? found.id : null } : prev);
-      }
-    });
-
-    socket.on('lot_presented', (updatedRoom) => {
-      setRoom(updatedRoom);
-      setCompletedLotEvent(null);
-      playGavel();
-    });
-
-    socket.on('bid_accepted', ({ bid, currentLot, nextValidBid, franchises }) => {
-      playBidPing();
-      setRoom(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          currentLot,
-          franchises,
-          recentBids: [...(prev.recentBids || []), bid].slice(-15)
-        };
-      });
-    });
-
-    socket.on('lot_completed', (data) => {
-      const { result, lot, historyEntry, franchises, playersCatalog } = data;
-      setCompletedLotEvent(data);
-      if (result === 'SOLD') {
-        playSoldFanfare();
-      } else {
-        playUnsold();
-      }
-      setRoom(prev => {
-        if (!prev) return prev;
-        const updatedCatalog = playersCatalog || (prev.playersCatalog || []).map(p => {
-          if (p.id === lot?.player?.id) {
-            return {
-              ...p,
-              status: result === 'SOLD' ? 'sold' : 'unsold',
-              soldTo: result === 'SOLD' ? (lot.highestBidderFranchiseId || historyEntry?.winningFranchiseCode) : null,
-              soldPrice: result === 'SOLD' ? lot.highestBid : 0
-            };
-          }
-          return p;
-        });
-        return {
-          ...prev,
-          currentLot: lot,
-          franchises,
-          playersCatalog: updatedCatalog,
-          history: [historyEntry, ...(prev.history || [])]
-        };
-      });
-    });
-
-    socket.on('timer_tick', ({ countdown, hammerStatus, stateVersion }) => {
-      setRoom(prev => {
-        if (!prev || !prev.currentLot) return prev;
-        return {
-          ...prev,
-          currentLot: {
-            ...prev.currentLot,
-            countdown,
-            hammerStatus,
-            stateVersion
-          }
-        };
-      });
-    });
-
-    socket.on('auction_completed', (updatedRoom) => {
-      setRoom(updatedRoom);
-    });
-
-    // Post-auction: the AI analysis started, finished or failed (scores never change)
-    socket.on('analysis_updated', (updatedRoom) => {
-      setRoom(updatedRoom);
-    });
-
-    socket.on('set_skipped', (data) => {
-      setRoom(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          playersCatalog: data.playersCatalog || prev.playersCatalog,
-          history: data.history || prev.history
-        };
-      });
-    });
-
-    return () => {
-      socket.off('state_updated');
-      socket.off('lot_presented');
-      socket.off('bid_accepted');
-      socket.off('lot_completed');
-      socket.off('timer_tick');
-      socket.off('auction_completed');
-      socket.off('analysis_updated');
-      socket.off('set_skipped');
-    };
-  }, [session.token]);
-
-  // Actions
-  const handleCreateRoom = async ({ hostName, basePurse }) => {
-    const createReq = () => fetch(`${SERVER_URL}/api/rooms`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hostName,
-        hostToken: session.token,
-        config: { basePurse }
-      })
-    });
-
-    let res;
-    try {
-      res = await createReq();
-    } catch (firstErr) {
-      // Free-tier Render instances sleep after inactivity and take ~50s to wake up.
-      // If the edge dropped the first preflight while booting, wait 3 seconds and retry once.
-      console.warn("First create room request failed, retrying in 3s...", firstErr);
-      await new Promise(r => setTimeout(r, 3000));
-      try {
-        res = await createReq();
-      } catch (secondErr) {
-        console.error("Second create room request failed:", secondErr);
-        throw new Error(
-          "Unable to reach the backend server. The free-tier server on Render may be waking up from sleep (~50s). Please wait a few seconds and try again."
-        );
-      }
-    }
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      const msg = data.errors?.join('\n') || data.error || `Server error (${res.status})`;
-      throw new Error(msg);
-    }
-    const data = await res.json();
-    if (data.roomCode) {
-      saveUserSession({ name: hostName, roomCode: data.roomCode });
-      setSession(prev => ({ ...prev, name: hostName, lastRoom: data.roomCode }));
-
-      if (!socket.connected) socket.connect();
-      socket.emit('join_room', {
-        roomCode: data.roomCode,
-        participantName: hostName,
-        participantToken: session.token
-      }, (joinRes) => {
-        if (joinRes?.success) {
-          setRoom(joinRes.room);
-          setParticipant(joinRes.participant);
-        }
-      });
-    }
-  };
-
-  const handleJoinRoom = ({ participantName, roomCode }) => {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(new Error("Join request timed out. The backend server may be waking up. Please retry in a moment."));
-      }, 15000);
-
-      if (!socket.connected) socket.connect();
-      socket.emit('join_room', {
-        roomCode,
-        participantName,
-        participantToken: session.token
-      }, (res) => {
-        clearTimeout(timer);
-        if (res?.success) {
-          saveUserSession({ name: participantName, roomCode });
-          setSession(prev => ({ ...prev, name: participantName, lastRoom: roomCode }));
-          setRoom(res.room);
-          setParticipant(res.participant);
-          resolve();
-        } else {
-          reject(new Error(res?.error || "Could not join room"));
-        }
-      });
-    });
-  };
-
-  const handleSelectFranchise = (franchiseId) => {
-    if (!room) return;
-    socket.emit('select_franchise', {
-      roomCode: room.roomCode,
-      participantToken: session.token,
-      franchiseId
-    }, (res) => {
-      if (!res?.success) {
-        alert(res?.error || "Could not select franchise");
-      }
-    });
-  };
-
-  const handleStartAuction = () => {
-    if (!room) return;
-    socket.emit('start_auction', {
-      roomCode: room.roomCode,
-      hostToken: session.token
-    }, (res) => {
-      if (!res?.success) {
-        alert(res?.error || "Could not start auction");
-      }
-    });
-  };
-
-  const handleUpdateConfig = (config) => {
-    if (!room) return;
-    socket.emit('update_config', {
-      roomCode: room.roomCode,
-      hostToken: session.token,
-      config
-    }, (res) => {
-      if (!res?.success) {
-        alert(res?.errors?.join('\n') || res?.error || 'Settings were not saved');
-      }
-    });
-  };
-
-  const handlePlaceBid = ({ franchiseId, bidAmount, expectedVersion }, callback) => {
-    if (!room) return;
-    socket.emit('place_bid', {
-      roomCode: room.roomCode,
-      participantToken: session.token,
-      franchiseId,
-      bidAmount,
-      expectedVersion
-    }, callback);
-  };
-
-  const handleAdvanceLot = () => {
-    if (!room) return;
-    socket.emit('advance_lot', {
-      roomCode: room.roomCode,
-      hostToken: session.token
-    });
-  };
-
-  // Ask the server for AI reports (server-side; the browser never sees an API key)
-  const handleRequestAiAnalysis = (force, callback) => {
-    if (!room) return;
-    socket.emit('request_ai_analysis', { roomCode: room.roomCode, force: !!force }, (res) => {
-      if (callback) callback(res);
-    });
-  };
-
-  const handleSkipSet = () => {
-    if (!room) return;
-    socket.emit('skip_set', {
-      roomCode: room.roomCode,
-      hostToken: session.token
-    });
-  };
-
-  const handlePauseResume = () => {
-    if (!room) return;
-    if (room.status === 'paused') {
-      socket.emit('resume_auction', {
-        roomCode: room.roomCode,
-        hostToken: session.token
-      });
-    } else {
-      socket.emit('pause_auction', {
-        roomCode: room.roomCode,
-        hostToken: session.token
-      });
-    }
-  };
-
-  const handleFinishAuction = () => {
-    if (!room) return;
-    if (window.confirm("Are you sure you want to conclude the auction and calculate final standings?")) {
-      socket.emit('finish_auction', {
-        roomCode: room.roomCode,
-        hostToken: session.token
-      });
-    }
-  };
-
+  const [dismissedLot, setDismissedLot] = useState(null);
+  const [confirm, setConfirm] = useState(null); // { title, body, confirmLabel, tone, onConfirm }
+  const [toast, setToast] = useState(null);
   const [activeNavTab, setActiveNavTab] = useState('home');
 
-  const myFranchise = room && participant?.franchiseId
-    ? room.franchises[participant.franchiseId]
-    : (room && participant?.publicId && Object.values(room.franchises).find(f => f.ownerId === participant.publicId));
+  const showToast = useCallback((text, tone = 'error') => {
+    setToast({ text, tone, id: Date.now() });
+    setTimeout(() => setToast(t => (t && Date.now() - t.id >= 3900 ? null : t)), 4000);
+  }, []);
+
+  const inRoom = !!room && (phase === 'in_room' || phase === 'replaced');
+  const myFranchise = inRoom && participant?.franchiseId ? room.franchises[participant.franchiseId] : null;
+
+  const closeRoomUi = () => {
+    setIsSquadModalOpen(false);
+    setIsHistoryModalOpen(false);
+    setInspectFranchiseId(null);
+    setDismissedLot(null);
+  };
+
+  // ── room lifecycle ─────────────────────────────────────────
+  const handleCreateRoom = ({ hostName, maxSquadSize, maxOverseas }) =>
+    controller.createRoom({ hostName, maxSquadSize, maxOverseas }).then(() => closeRoomUi());
+  const handleJoinRoom = ({ participantName, roomCode }) =>
+    controller.joinRoom({ participantName, roomCode }).then(() => closeRoomUi());
+
+  const requestLeave = () => setConfirm({
+    title: 'Leave this room?',
+    body: room?.status === 'active' || room?.status === 'paused'
+      ? 'The auction keeps running. Your franchise stays yours and you can rejoin later with the room code on this device.'
+      : 'You can rejoin later with the room code on this device. Your franchise selection is kept.',
+    confirmLabel: 'Leave room',
+    tone: 'danger',
+    onConfirm: () => { closeRoomUi(); controller.leave(); }
+  });
+
+  const requestLogout = () => setConfirm({
+    title: 'Sign out on this device?',
+    body: 'This leaves the current room and forgets your name and device key. Rooms and results stay on the server, but this device will not be able to reclaim its franchises.',
+    confirmLabel: 'Sign out',
+    tone: 'danger',
+    onConfirm: () => { closeRoomUi(); controller.logout(); }
+  });
+
+  // ── actions (server validates every one) ───────────────────
+  const ack = (label) => (res) => { if (!res?.success) showToast(res?.errors?.join('\n') || res?.error || `${label} failed`); };
+  const handleSelectFranchise = (franchiseId) => controller.emit('select_franchise', { franchiseId }, ack('Franchise selection'));
+  const handleStartAuction = () => controller.emit('start_auction', {}, ack('Start auction'));
+  const handleUpdateConfig = (config) => controller.emit('update_config', { config }, ack('Saving settings'));
+  const handlePlaceBid = ({ franchiseId, bidAmount, expectedVersion }, callback) => {
+    controller.emit('place_bid', { franchiseId, bidAmount, expectedVersion }, (res) => {
+      if (!res?.success) controller.addActivity('rejected', `Your bid was rejected: ${res?.error || 'unknown reason'}`);
+      callback?.(res);
+    });
+  };
+  const handleAdvanceLot = () => controller.emit('advance_lot', {}, ack('Advance lot'));
+  const handleSkipSet = (cb) => controller.emit('skip_set', {}, (res) => { ack('Skip set')(res); cb?.(res); });
+  const handlePauseResume = () => controller.emit(room?.status === 'paused' ? 'resume_auction' : 'pause_auction', {}, ack('Pause/resume'));
+  const handleFinishAuction = () => setConfirm({
+    title: 'Conclude the auction?',
+    body: 'The current lot is closed, remaining players are not auctioned and final standings are calculated for every franchise. This cannot be undone.',
+    confirmLabel: 'Conclude auction',
+    tone: 'danger',
+    onConfirm: () => controller.emit('finish_auction', {}, ack('Finish auction'))
+  });
+  const handleRequestAiAnalysis = (force, callback) => controller.emit('request_ai_analysis', { force: !!force }, (res) => callback?.(res));
+  const handleUpdatePlayingXI = (payload, callback) => controller.emit('update_playing_xi', payload, (res) => callback?.(res));
 
   const openSquadModal = (franchiseId) => {
-    setInspectFranchiseId(franchiseId || myFranchise?.id);
+    setInspectFranchiseId(franchiseId || myFranchise?.id || null);
     setIsSquadModalOpen(true);
   };
+
+  const lastLot = state.lastLot && state.lastLot !== dismissedLot ? state.lastLot : null;
+  const busy = phase === 'restoring';
 
   return (
     <div className="min-h-screen bg-[#050a1b] text-slate-100 flex flex-col selection:bg-amber-400 selection:text-slate-950">
       <Navbar
-        room={room}
+        room={inRoom ? room : null}
         participant={participant}
         myFranchise={myFranchise}
+        playerName={identity?.name}
+        link={state.link}
         onOpenSquad={() => openSquadModal(myFranchise?.id)}
         onOpenHistory={() => setIsHistoryModalOpen(true)}
-        onOpenHostControls={() => {}}
-        onNavigateTab={(tab) => {
-          setActiveNavTab(tab);
-          if (tab === 'home' && room) {
-            // Optional: don't leave room, but can show toast or keep state
-          }
-        }}
+        onLeaveRoom={requestLeave}
+        onLogout={requestLogout}
+        onNavigateTab={setActiveNavTab}
       />
 
-      {sessionReplaced && (
-        <div role="alert" className="bg-amber-500/15 border-b border-amber-500/40 text-amber-200 text-sm px-4 py-2 flex items-center justify-center gap-3">
-          <span>This room was opened in another tab or device. This tab can no longer bid.</span>
-          <button
-            className="font-bold underline"
-            onClick={() => {
-              const s = sessionRef.current;
-              socket.emit('join_room', { roomCode: s.lastRoom, participantName: s.name, participantToken: s.token }, (res) => {
-                if (res?.success) { setSessionReplaced(false); setRoom(res.room); setParticipant(res.participant); }
-              });
-            }}
-          >
-            Use this tab
-          </button>
+      {phase === 'replaced' && (
+        <div role="alert" className="bg-amber-500/15 border-b border-amber-500/40 text-amber-200 text-sm px-4 py-2 flex flex-wrap items-center justify-center gap-3">
+          <span>This room was opened in another tab or window. This tab is paused and cannot bid.</span>
+          <button className="font-bold underline" onClick={() => controller.takeOver()}>Use this tab</button>
+          <button className="font-bold underline text-amber-300/80" onClick={() => controller.leave()}>Leave room here</button>
+        </div>
+      )}
+      {inRoom && phase === 'in_room' && state.link === 'reconnecting' && (
+        <div role="status" className="bg-slate-800/80 border-b border-slate-700 text-slate-200 text-xs px-4 py-1.5 flex items-center justify-center gap-2">
+          <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+          <span>Connection lost — reconnecting to room {state.roomCode}…</span>
         </div>
       )}
 
       <main className="flex-1">
-        {!room ? (
+        {busy ? (
+          <div className="max-w-md mx-auto px-4 py-28 text-center" data-testid="room-loading">
+            <Loader2 className="w-10 h-10 text-amber-400 mx-auto animate-spin" />
+            <p className="mt-4 text-slate-300 text-sm">
+              {phase === 'restoring' ? `Reconnecting to room ${state.roomCode}…` : 'Opening room…'}
+            </p>
+            <button onClick={() => controller.leave()} className="mt-6 text-xs text-slate-400 underline hover:text-white">Cancel</button>
+          </div>
+        ) : !inRoom ? (
           <LandingView
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}
             activeSection={activeNavTab}
             onCloseSection={() => setActiveNavTab('home')}
+            onCancelPending={() => controller.leave()}
+            defaultName={identity?.name || ''}
+            resumeRoomCode={controller.store.getUserSession().lastRoom}
+            notice={state.notice}
           />
         ) : room.status === 'lobby' ? (
           <LobbyView
@@ -409,7 +157,7 @@ export default function App() {
             room={room}
             participant={participant}
             onInspectSquad={openSquadModal}
-            onBackToLobby={() => setRoom(null)}
+            onBackToLobby={() => { closeRoomUi(); controller.leave(); }}
             onRequestAiAnalysis={handleRequestAiAnalysis}
           />
         ) : (
@@ -417,25 +165,24 @@ export default function App() {
             room={room}
             participant={participant}
             myFranchise={myFranchise}
+            activity={state.activity}
+            link={state.link}
+            canAct={phase === 'in_room'}
             onPlaceBid={handlePlaceBid}
             onAdvanceLot={handleAdvanceLot}
             onSkipSet={handleSkipSet}
             onPauseResume={handlePauseResume}
             onFinishAuction={handleFinishAuction}
-            onOpenSquad={() => openSquadModal(myFranchise?.id)}
+            onOpenSquad={openSquadModal}
           />
         )}
       </main>
 
-      {/* Modals & Overlays */}
+      {inRoom && (
+        <CinematicAuctionOverlay eventData={lastLot} onDismiss={() => setDismissedLot(state.lastLot)} />
+      )}
 
-
-      <CinematicAuctionOverlay
-        eventData={completedLotEvent}
-        onDismiss={() => setCompletedLotEvent(null)}
-      />
-
-      {room && (
+      {inRoom && (
         <>
           <FranchiseDashboardModal
             room={room}
@@ -444,17 +191,27 @@ export default function App() {
             initialFranchiseId={inspectFranchiseId || myFranchise?.id}
             myFranchise={myFranchise}
             participant={participant}
+            onUpdatePlayingXI={handleUpdatePlayingXI}
           />
-
-          <AuctionHistoryModal
-            room={room}
-            isOpen={isHistoryModalOpen}
-            onClose={() => setIsHistoryModalOpen(false)}
-          />
+          <AuctionHistoryModal room={room} isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} />
         </>
       )}
 
-      {/* Footer */}
+      <ConfirmDialog
+        open={!!confirm}
+        {...(confirm || {})}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => { const fn = confirm?.onConfirm; setConfirm(null); fn?.(); }}
+      />
+
+      {toast && (
+        <div role="alert" className={`fixed z-[70] left-1/2 -translate-x-1/2 bottom-24 lg:bottom-6 max-w-[92vw] px-4 py-2.5 rounded-xl text-sm shadow-2xl border ${
+          toast.tone === 'error' ? 'bg-red-950/95 border-red-500/50 text-red-100' : 'bg-slate-900/95 border-slate-600 text-slate-100'
+        }`}>
+          {toast.text}
+        </div>
+      )}
+
       <footer className="border-t border-slate-900 bg-[#040814] py-6 px-4 text-center text-xs text-slate-500">
         IPL Multiplayer Real-Time Auction Simulator • 409 Verified Candidate Players • Server-Authoritative Engine
       </footer>

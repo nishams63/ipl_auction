@@ -36,7 +36,8 @@ const SUITES = [
   'analysis.test.js',        // AI parts use MOCKED Anthropic responses
   'analysisApi.test.js',     // real servers + local MOCK Anthropic API
   'cricketMastermind.test.js', // Cricket Mastermind IPL Auction Verdict suite
-  'arenaBridge.test.js',     // Stage 4 Unity bridge: mapping, SIMULATED browser/Unity, real-server sync
+  'sessionLifecycle.test.js',  // P1 old-room restoration regression: session store, controller, WS adapter
+  'doSecurityRules.test.js',   // Durable Object security + auction rules in local workerd
   'pgMapper.test.js',        // unit (no database)
   'pgSchema.test.js',        // real PostgreSQL from here on
   'pgPersistence.test.js',

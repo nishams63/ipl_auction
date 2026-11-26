@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url';
 import { makeRunner, tempStorageFile, mockIo } from './helpers/harness.js';
 import { lobbyRoom, liveRoom, bid } from './helpers/auctionRooms.js';
 import { RoomManager, shuffleWithinSets } from '../server/roomManager.js';
-import { toArenaState, ARENA_PROTOCOL_VERSION } from '../client/src/utils/arenaState.js';
 import { toLakh } from '../server/money.js';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
@@ -214,18 +213,17 @@ await t.it('16. Catalogue serializes and deserializes cleanly without losing pre
   assert.strictEqual(parsed[0].basePrice, 2);
 });
 
-// 17. Unity arena synchronization
-await t.it('17. Unity arena state mapper generates valid protocol v1 payload with 409 lots', () => {
-  const rm = new RoomManager(mockIo(), { storageFile: tempStorageFile('test_arena_sync') });
+// 17. Live lot carries the fields the React auction stage renders (Unity removed)
+await t.it('17. First live lot exposes stage fields (lot 1 of 409, name, base price)', () => {
+  const rm = new RoomManager(mockIo(), { storageFile: tempStorageFile('test_stage_sync') });
   const { room } = liveRoom(rm);
-  const arenaState = toArenaState(room);
-  assert.strictEqual(arenaState.v, ARENA_PROTOCOL_VERSION);
-  assert.strictEqual(arenaState.status, 'active');
-  assert.strictEqual(arenaState.hasLot, true);
-  assert.strictEqual(arenaState.lot.total, 409);
-  assert.strictEqual(arenaState.lot.number, 1);
-  assert.ok(typeof arenaState.lot.name === 'string' && arenaState.lot.name.length > 0);
-  assert.ok(typeof arenaState.lot.basePrice === 'number' && arenaState.lot.basePrice > 0);
+  assert.strictEqual(room.status, 'active');
+  assert.ok(room.currentLot && room.currentLot.player);
+  assert.strictEqual(room.playersCatalog.length, 409);
+  assert.strictEqual(room.currentLot.lotNumber || room.currentLot.number, 1);
+  assert.ok(typeof room.currentLot.player.name === 'string' && room.currentLot.player.name.length > 0);
+  const base = room.currentLot.basePrice ?? room.currentLot.player.basePrice;
+  assert.ok(typeof base === 'number' && base > 0);
 });
 
 // 18. Frontend production build

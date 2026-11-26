@@ -2,12 +2,16 @@
 // Used by BOTH room creation (RoomManager.createRoom / POST /api/rooms)
 // and lobby updates (RoomManager.updateConfig / update_config).
 //
-// Purse, squad limits, overseas cap and minimum keepers are FIXED IPL rules (FIXED_RULES).
-// Host-adjustable: timer 10–90 s (default 15), delay between lots, minimum participants.
+// Purse, minimum squad size, minimum keepers and 15s bid timer are FIXED IPL rules (FIXED_RULES).
+// Room creator / host-adjustable at room creation: total squad size (maxSquadSize) & overseas player limit (maxOverseas),
+// plus delay between lots, minimum participants, floor price.
 // Settings with no UI control (minParticipants, minPlayerPrice, autoAdvanceDelay, minWKs)
 // keep their defaults unless set at creation, and are still range-checked.
 
 // Approved defaults (16 Nov 2026): ₹120 Cr flat purse, squad 15–25, 8 overseas, 15 s timer.
+export const SQUAD_SIZE_OPTIONS = Object.freeze([15, 18, 20, 22, 25]);
+export const OVERSEAS_LIMIT_OPTIONS = Object.freeze([4, 5, 6, 7, 8]);
+
 export const DEFAULT_CONFIG = Object.freeze({
   basePurse: 120.0,
   maxFranchises: 10,
@@ -27,7 +31,7 @@ export const CONFIG_RULES = Object.freeze({
   minParticipants:  { kind: 'int',    min: 1,   max: 10,  label: 'Minimum participants' },
   minSquadSize:     { kind: 'int',    min: 5,   max: 25,  label: 'Minimum squad size' },
   maxSquadSize:     { kind: 'int',    min: 15,  max: 30,  label: 'Maximum squad size' },
-  maxOverseas:      { kind: 'int',    min: 4,   max: 10,  label: 'Maximum overseas players' },
+  maxOverseas:      { kind: 'int',    min: 4,   max: 8,   label: 'Maximum overseas players' },
   minWKs:           { kind: 'int',    min: 0,   max: 3,   label: 'Minimum wicketkeepers' },
   minPlayerPrice:   { kind: 'money',  min: 0.1, max: 2,   label: 'Minimum player price (₹ Cr)' },
   timerDuration:    { kind: 'int',    min: 10,  max: 90,  label: 'Bid timer (seconds)' },
@@ -37,10 +41,60 @@ export const CONFIG_RULES = Object.freeze({
 // Fixed by the game itself (10 IPL franchises); never client-settable
 const IMMUTABLE_KEYS = ['maxFranchises'];
 
-// IPL auction rules (Stage 2): fixed for every room. Sending the same value is accepted (older
-// clients send them); any other value is rejected. Only the timer, the delay between lots and
-// the participant minimum remain host settings.
-export const FIXED_RULES = Object.freeze({ basePurse: 120, minSquadSize: 15, maxSquadSize: 25, maxOverseas: 8, minWKs: 1 });
+// IPL auction rules: fixed for every new room. Sending the same value is accepted (older
+// clients send them); any other value is rejected. maxSquadSize and maxOverseas are
+// customizable by the room creator (within CONFIG_RULES and maxOverseas <= maxSquadSize).
+export const FIXED_RULES = Object.freeze({ basePurse: 120, minSquadSize: 15, minWKs: 1, timerDuration: 15 });
+
+const CONFIG_KEY_ALIASES = Object.freeze({
+  max_squad_size: 'maxSquadSize',
+  max_overseas_players: 'maxOverseas'
+});
+
+/**
+ * Resolve effective squad and overseas limits for any room or config object.
+ * Provides sensible fallback defaults for legacy rooms (15 total players, 8 overseas).
+ */
+export function getRoomSquadLimits(roomOrConfig) {
+  const isRoom = roomOrConfig && typeof roomOrConfig === 'object' && ('config' in roomOrConfig || 'max_squad_size' in roomOrConfig || 'franchises' in roomOrConfig);
+  const cfg = isRoom ? (roomOrConfig.config || {}) : (roomOrConfig || {});
+  const rawMaxSquad = cfg.maxSquadSize ?? cfg.max_squad_size ?? roomOrConfig?.max_squad_size;
+  const rawMaxOverseas = cfg.maxOverseas ?? cfg.max_overseas_players ?? roomOrConfig?.max_overseas_players;
+  const maxSquadSize = Number.isInteger(Number(rawMaxSquad)) && Number(rawMaxSquad) > 0 ? Number(rawMaxSquad) : 15;
+  const maxOverseas = Number.isInteger(Number(rawMaxOverseas)) && Number(rawMaxOverseas) >= 0 ? Number(rawMaxOverseas) : 8;
+  const minSquadSize = Number.isInteger(Number(cfg.minSquadSize)) && Number(cfg.minSquadSize) > 0
+    ? Math.min(Number(cfg.minSquadSize), maxSquadSize)
+    : Math.min(15, maxSquadSize);
+  return { minSquadSize, maxSquadSize, maxOverseas };
+}
+
+/**
+ * Compute live squad composition & remaining slot breakdown for a franchise.
+ */
+export function getFranchiseSlotStats(franchise, roomOrConfig) {
+  const { maxSquadSize, maxOverseas } = getRoomSquadLimits(roomOrConfig);
+  const squad = Array.isArray(franchise?.squad) ? franchise.squad : [];
+  const squadCount = squad.length;
+  const overseasCount = Number.isFinite(franchise?.overseasCount)
+    ? franchise.overseasCount
+    : squad.filter(p => p?.isOverseas === true).length;
+  const indianCount = Math.max(0, squadCount - overseasCount);
+  const totalRemainingSlots = Math.max(0, maxSquadSize - squadCount);
+  const remainingOverseasSlots = Math.min(totalRemainingSlots, Math.max(0, maxOverseas - overseasCount));
+  const remainingIndianSlots = totalRemainingSlots;
+  return {
+    maxSquadSize,
+    maxOverseas,
+    squadCount,
+    overseasCount,
+    indianCount,
+    totalRemainingSlots,
+    remainingOverseasSlots,
+    remainingIndianSlots,
+    isSquadFull: squadCount >= maxSquadSize,
+    isOverseasFull: overseasCount >= maxOverseas
+  };
+}
 
 function checkValue(key, raw) {
   const rule = CONFIG_RULES[key];
@@ -92,9 +146,19 @@ export function validateConfig(changes, base = DEFAULT_CONFIG) {
   }
   const errors = [];
   const merged = { ...DEFAULT_CONFIG, ...base };
+  const normalizedChanges = {};
 
-  for (const [key, raw] of Object.entries(changes)) {
+  for (const [rawKey, raw] of Object.entries(changes)) {
     if (raw === undefined) continue;
+    const key = CONFIG_KEY_ALIASES[rawKey] || rawKey;
+    if (key in normalizedChanges && Number(normalizedChanges[key]) !== Number(raw)) {
+      errors.push(`Conflicting values provided for ${CONFIG_RULES[key]?.label || key}`);
+      continue;
+    }
+    normalizedChanges[key] = raw;
+  }
+
+  for (const [key, raw] of Object.entries(normalizedChanges)) {
     if (IMMUTABLE_KEYS.includes(key)) {
       if (Number(raw) !== merged[key]) errors.push(`${key} cannot be changed`);
       continue;

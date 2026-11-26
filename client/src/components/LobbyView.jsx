@@ -1,36 +1,33 @@
 import React, { useState } from 'react';
-import { Copy, Check, Play, Settings, Users, Shield, Sparkles, AlertCircle, Trophy } from 'lucide-react';
-import { IPL_FRANCHISES } from '../../../server/data/franchises';
+import { Copy, Check, Play, Settings, Users, Shield, Sparkles, Trophy } from 'lucide-react';
+import { getRoomSquadLimits } from '../../../server/config';
 
 export default function LobbyView({
   room,
   participant,
   onSelectFranchise,
   onStartAuction,
-  onUpdateConfig,
   onOpenSquad
 }) {
   const [copied, setCopied] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
 
   // Configuration state
-  // Purse, squad limits and overseas cap are fixed IPL rules (server-enforced); shown read-only.
-  // Only the bid timer is adjustable.
+  // Room configuration rules (resolved cleanly including legacy room defaults)
   const basePurse = room.config.basePurse ?? 120;
-  const [timerDuration, setTimerDuration] = useState(room.config.timerDuration || 15);
-  const minSquadSize = room.config.minSquadSize ?? 15;
-  const maxSquadSize = room.config.maxSquadSize ?? 25;
-  const maxOverseas = room.config.maxOverseas ?? 8;
+  const timerDuration = room.config.timerDuration ?? 15;
+  const { minSquadSize, maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
 
-  const copyRoomCode = () => {
-    navigator.clipboard.writeText(room.roomCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyRoomCode = async () => {
+    try {
+      await navigator.clipboard.writeText(room.roomCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard unavailable (insecure context) */ }
   };
 
   const handleSaveConfig = (e) => {
     e.preventDefault();
-    onUpdateConfig({ timerDuration: Number(timerDuration) });
     setShowConfig(false);
   };
 
@@ -88,12 +85,12 @@ export default function LobbyView({
         {/* Dynamic Purse Banner */}
         <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass-card rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Purse Per Franchise</span>
-            <div className="text-sm text-slate-200 font-mono mt-1 font-bold">
-              Flat ₹{room.config.basePurse} Cr for every franchise
+            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Room Rules &amp; Limits</span>
+            <div className="text-sm text-slate-200 font-mono mt-1 font-bold" data-testid="lobby-rules-summary">
+              Max Squad: {maxSquadSize} · Max Overseas: {maxOverseas}
             </div>
             <div className="text-xs text-amber-300/90 mt-1">
-              Squad {room.config.minSquadSize}–{room.config.maxSquadSize} · max {room.config.maxOverseas} overseas · min {room.config.minWKs ?? 1} WK
+              ₹{room.config.basePurse} Cr purse · Squad {minSquadSize}–{maxSquadSize} · Max {maxOverseas} OS · Min {room.config.minWKs ?? 1} WK · 15s timer
             </div>
           </div>
 
@@ -138,7 +135,7 @@ export default function LobbyView({
             <h3 className="font-bold text-lg text-white flex items-center gap-2">
               <Settings className="w-5 h-5 text-amber-400" /> Configure Auction Rules
             </h3>
-            <span className="text-xs text-amber-400/80 font-medium">Purse, squad and overseas limits are fixed IPL rules · timer locks once the auction begins</span>
+            <span className="text-xs text-amber-400/80 font-medium">₹{basePurse} Cr purse · Max {maxSquadSize} players · Max {maxOverseas} overseas · 15s fixed lot timer</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
@@ -154,14 +151,13 @@ export default function LobbyView({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-400 block mb-1">Bid Timer (Seconds)</label>
+              <label className="text-xs font-semibold text-slate-400 block mb-1">Bid Timer (Fixed 15s)</label>
               <input
                 type="number"
-                min="10"
-                max="90"
                 value={timerDuration}
-                onChange={e => setTimerDuration(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 outline-none"
+                readOnly
+                disabled
+                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 font-mono text-sm cursor-not-allowed"
               />
             </div>
             <div>
@@ -203,15 +199,9 @@ export default function LobbyView({
             <button
               type="button"
               onClick={() => setShowConfig(false)}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
               className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-lg shadow-amber-500/20"
             >
-              Save Configuration
+              Close
             </button>
           </div>
         </form>
@@ -226,7 +216,7 @@ export default function LobbyView({
               Only one real participant can own each franchise.
             </p>
           </div>
-          <div className="text-xs font-bold text-slate-400">
+          <div className="text-xs font-bold text-slate-400" data-testid="claimed-count">
             {activeCount} / 10 Franchises Claimed
           </div>
         </div>
@@ -239,6 +229,8 @@ export default function LobbyView({
             return (
               <div
                 key={f.id}
+                data-testid={`lobby-franchise-${f.id}`}
+                data-owner={f.ownerName || ''}
                 className={`relative rounded-2xl p-4 transition duration-200 border flex flex-col justify-between min-h-[195px] shadow-lg ${
                   isMine
                     ? 'border-amber-400 bg-slate-900/90 shadow-amber-500/20 ring-2 ring-amber-400/60'
@@ -307,6 +299,7 @@ export default function LobbyView({
                     </div>
                   ) : (
                     <button
+                      data-testid={`claim-${f.id}`}
                       onClick={() => onSelectFranchise(f.id)}
                       className="w-full py-2 rounded-xl bg-slate-800/80 hover:bg-amber-400 hover:text-slate-950 text-slate-200 text-xs font-bold border border-white/10 transition cursor-pointer"
                     >
@@ -353,6 +346,7 @@ export default function LobbyView({
 
         {participant?.isHost ? (
           <button
+            data-testid="start-auction"
             onClick={onStartAuction}
             disabled={!canStart}
             className={`px-8 py-3.5 rounded-full font-black text-sm flex items-center gap-2 transition shadow-xl ${

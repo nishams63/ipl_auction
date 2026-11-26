@@ -1,3 +1,5 @@
+> **Historical document (superseded 2026-11-26).** Unity was removed from the project; any Unity/WebGL references below describe the former architecture. Current architecture: `README.md`, `docs/CLOUDFLARE_ARCHITECTURE.md`, `docs/SESSION_LIFECYCLE.md`.
+
 # IPL Multiplayer Auction Simulator: Stage 0 Upgrade Audit
 
 **Date:** 16 Nov 2026

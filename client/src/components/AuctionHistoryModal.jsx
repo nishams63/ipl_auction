@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Search, Filter, History, CheckCircle, XCircle, Shield } from 'lucide-react';
+import { X, Search, History } from 'lucide-react';
 
 export default function AuctionHistoryModal({
   room,

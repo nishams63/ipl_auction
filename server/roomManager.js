@@ -22,32 +22,29 @@ import {
   evaluateFranchiseSquad,
   rankFranchises
 } from './auctionEngine.js';
-import { validateConfig, ConfigValidationError, FIXED_RULES } from './config.js';
+import { validateConfig, ConfigValidationError, FIXED_RULES, getRoomSquadLimits } from './config.js';
 import { stableStringify } from './persistence/roomMapper.js';
 import { toLakh, fromLakh } from './money.js';
 import { evaluateAuction } from './analysis/evaluation.js';
 import { aiConfig, generateAiAnalysis } from './analysis/aiAnalysis.js';
 import { hashKeyOf, isHashKey } from './persistence/tokenHash.js';
+import {
+  PLAYING_XI_FORBIDDEN,
+  FINAL_PLAYER_STATUSES,
+  getOwnedPlayers,
+  validateAndBuildPlayingXI,
+  appendAuditEntry,
+  shuffleWithinSets,
+  applyFixedRulesToLobbyRoom
+} from './roomRules.js';
 
-/**
- * Players a franchise has PURCHASED, from authoritative server state (shared by live lineup
- * validation and legacy cleanup so the two can never disagree).
- * Source of truth: franchise.squad (written only when a lot is SOLD, see closeCurrentLot).
- * Each entry must also match the catalogue's sale record (status 'sold', soldTo this
- * franchise), so a corrupted or hand-edited squad entry can't make a player eligible.
- * Read-only: never modifies the saved squad.
- */
-export function getOwnedPlayers(room, franchiseId) {
-  const owned = new Map();
-  const franchise = room?.franchises?.[franchiseId];
-  if (!franchise) return owned;
-  const catalogById = new Map((room.playersCatalog || []).map(p => [p.id, p]));
-  for (const p of franchise.squad || []) {
-    const sale = catalogById.get(p?.id);
-    if (sale && sale.status === 'sold' && sale.soldTo === franchiseId) owned.set(p.id, p);
-  }
-  return owned;
-}
+export {
+  PLAYING_XI_FORBIDDEN,
+  getOwnedPlayers,
+  appendAuditEntry,
+  shuffleWithinSets,
+  applyFixedRulesToLobbyRoom
+};
 
 const ROOM_STATUSES = ['lobby', 'active', 'paused', 'completed'];
 const isPlainObject = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -151,9 +148,6 @@ export function planLegacyLineupCleanup(room) {
   return plan;
 }
 
-// Single, consistent authorization error for Playing XI changes
-export const PLAYING_XI_FORBIDDEN = 'Only the owner of this franchise can update its Playing XI';
-
 // Fields on a franchise that must never leave the server
 const PRIVATE_FRANCHISE_FIELDS = ['ownerToken', 'ownerSocketId'];
 
@@ -183,16 +177,6 @@ export function toSelfParticipant(p) {
 
 // ── restore helpers shared by the JSON loader, the PostgreSQL store and the JSON importer ──
 
-// Append one audit entry. seq is a per-room, never-reused sequence number (the database keeps
-// every entry by seq; memory keeps the newest 200).
-export function appendAuditEntry(room, type, message) {
-  if (!Array.isArray(room.auditLog)) room.auditLog = [];
-  const seq = (Number.isInteger(room.auditSeq) ? room.auditSeq : 0) + 1;
-  room.auditSeq = seq;
-  room.auditLog.unshift({ seq, timestamp: new Date().toISOString(), type, message });
-  if (room.auditLog.length > 200) room.auditLog.pop();
-}
-
 // Rooms saved before audit sequence numbers existed: number the entries oldest-first
 export function backfillAuditSeq(room) {
   if (!Array.isArray(room.auditLog)) return;
@@ -205,42 +189,7 @@ export function backfillAuditSeq(room) {
   room.auditSeq = max;
 }
 
-const FINAL_PLAYER_STATUSES = ['sold', 'unsold', 'SKIPPED'];
-
-/**
- * Shuffle the room's catalogue copy WITHIN each player set (contiguous runs of the same
- * categorySet), keeping the set order, then renumber the per-room lot fields (overallLot,
- * lotInSet) to the new order. Uses crypto.randomInt. Called once, when the auction starts; the
- * resulting order is part of the persisted room and never regenerated.
- * The catalogue file itself is never touched (each room has its own copy).
- */
-export function shuffleWithinSets(catalog, randomInt = crypto.randomInt) {
-  const key = p => (p && (p.categorySet || p.setName)) || null;
-  let i = 0;
-  while (i < catalog.length) {
-    const k = key(catalog[i]);
-    let j = i + 1;
-    while (j < catalog.length && key(catalog[j]) === k) j++;
-    if (k !== null) {
-      for (let a = j - 1; a > i; a--) {
-        const b = i + randomInt(a - i + 1);
-        [catalog[a], catalog[b]] = [catalog[b], catalog[a]];
-      }
-    }
-    i = j;
-  }
-  const inSet = new Map();
-  catalog.forEach((p, idx) => {
-    if (!p) return;
-    p.overallLot = idx + 1;
-    const k = key(p);
-    if (k !== null) {
-      inSet.set(k, (inSet.get(k) || 0) + 1);
-      p.lotInSet = inSet.get(k);
-    }
-  });
-  return catalog;
-}
+// Queue helpers use FINAL_PLAYER_STATUSES and shuffleWithinSets imported from ./roomRules.js
 
 /**
  * After a JSON restore, currentLot.player and history[].player are separate COPIES of catalogue
@@ -355,34 +304,7 @@ export function applyLegacyLineupCleanupTo(code, room) {
   return true;
 }
 
-/**
- * Rooms created before the IPL rules were fixed may carry other squad/purse limits (older
- * defaults were squad 11–15). A room still in the LOBBY is brought to the fixed rules (nothing
- * has been bought yet, so this is safe). A room whose auction already started keeps the rules
- * it started with: changing squad limits mid-auction could instantly make franchises
- * ineligible. Returns the list of changed keys.
- */
-export function applyFixedRulesToLobbyRoom(room) {
-  if (!isPlainObject(room) || room.status !== 'lobby' || !isPlainObject(room.config)) return [];
-  const changed = [];
-  for (const [key, value] of Object.entries(FIXED_RULES)) {
-    if (room.config[key] !== value) {
-      changed.push(`${key} ${room.config[key] ?? 'unset'}→${value}`);
-      room.config[key] = value;
-    }
-  }
-  if (changed.some(c => c.startsWith('basePurse'))) { // lobby franchises show the purse they will start with
-    for (const f of Object.values(room.franchises || {})) {
-      if (isPlainObject(f) && Array.isArray(f.squad) && f.squad.length === 0) {
-        f.initialPurse = FIXED_RULES.basePurse;
-        f.remainingPurse = FIXED_RULES.basePurse;
-        f.totalSpent = 0;
-      }
-    }
-  }
-  if (changed.length) appendAuditEntry(room, 'RULES_NORMALIZED', `Room brought to the fixed IPL auction rules before the auction: ${changed.join(', ')}`);
-  return changed;
-}
+// Lobby fixed-rule normalization lives in ./roomRules.js (applyFixedRulesToLobbyRoom)
 
 /**
  * Completed auctions get ONE deterministic evaluation snapshot (room.analysis). Rooms completed
@@ -881,6 +803,8 @@ export class RoomManager {
       hostName,
       status: 'lobby', // 'lobby' | 'active' | 'paused' | 'completed'
       config,
+      max_squad_size: config.maxSquadSize,
+      max_overseas_players: config.maxOverseas,
       playersCatalog: catalog,
       currentPlayerIndex: -1,
       currentLot: null,
@@ -1095,123 +1019,23 @@ export class RoomManager {
       return { success: false, error: PLAYING_XI_FORBIDDEN, code: 'FORBIDDEN' };
     }
     const franchise = room.franchises[franchiseId];
-
-    const reject = (error, code = 'INVALID_LINEUP') => ({ success: false, error, code });
-
-    // Shape checks (the socket layer checks too; repeated here so no caller can skip them)
-    if (!Array.isArray(playingXI) || !playingXI.every(id => typeof id === 'string')) {
-      return reject('Playing XI must be a list of player ids');
-    }
-    for (const [label, id] of [['Captain', captainId], ['Vice-Captain', viceCaptainId], ['Wicketkeeper', wicketKeeperId], ['Impact player', impactPlayerId]]) {
-      if (id !== null && id !== undefined && typeof id !== 'string') return reject(`${label} must be a player id`);
-    }
-
-    // Max 11 players in Playing XI
-    if (playingXI.length > 11) {
-      return reject('Playing XI cannot have more than 11 players');
-    }
-
-    // The same player may not be listed twice
-    if (new Set(playingXI).size !== playingXI.length) {
-      return reject('Duplicate player: the same player cannot appear twice in the Playing XI', 'DUPLICATE_PLAYER');
-    }
-
-    // SQUAD OWNERSHIP: only players this franchise has purchased are eligible. Ownership is read
-    // from authoritative server state on every update; nothing the browser sends about squads,
-    // sale status or owners is consulted.
-    const owned = this.getOwnedPlayers(room, franchiseId);
-    const notOwned = id => {
-      const p = (room.playersCatalog || []).find(c => c.id === id);
-      return reject(`${p ? p.name : 'Selected player'} is not in ${franchise.name}'s purchased squad`, 'PLAYER_NOT_IN_SQUAD');
-    };
-    for (const pid of playingXI) {
-      if (!owned.has(pid)) return notOwned(pid);
-    }
-
-    // Overseas limit in Playing XI (Max 4 overseas)
-    const overseasInXI = playingXI.filter(pid => owned.get(pid).isOverseas).length;
-    if (overseasInXI > 4) {
-      return reject(`Maximum 4 overseas players allowed in Playing XI (Current: ${overseasInXI})`);
-    }
-
-    // Impact Player validation: must be a purchased squad player, not in starting XI
-    if (impactPlayerId) {
-      if (!owned.has(impactPlayerId)) return notOwned(impactPlayerId);
-      if (playingXI.includes(impactPlayerId)) {
-        return reject('Impact player cannot also be in the starting Playing XI');
-      }
-    }
-
-    // A player can only ever be in one franchise's lineup. Squad ownership already implies this;
-    // this guards against inconsistent restored data (e.g. a player duplicated into two squads).
-    // An entry in another lineup only counts if that franchise really has the player in its
-    // squad: stale lineups saved before the squad rule (lobby picks of catalogue players) must
-    // not block the franchise that actually bought the player.
-    const chosen = new Set([...playingXI, ...(impactPlayerId ? [impactPlayerId] : [])]);
-    for (const [otherId, other] of Object.entries(room.franchises)) {
-      if (otherId === franchiseId) continue;
-      const cfg = room.playingXIConfigurations?.[otherId];
-      const theirSquad = new Set((other.squad || []).map(p => p.id));
-      const theirs = [...(other.playingXI || []), ...(cfg?.playingXI || []), other.impactPlayerId, cfg?.impactPlayerId]
-        .filter(id => id && theirSquad.has(id));
-      const clash = theirs.find(id => chosen.has(id));
-      if (clash) {
-        return reject(`${owned.get(clash)?.name || 'A selected player'} is already in ${other.name}'s Playing XI`, 'PLAYER_IN_OTHER_LINEUP');
-      }
-    }
-
-    // Captain and Vice-Captain assignment checks
-    if (captainId && !playingXI.includes(captainId)) {
-      return reject('Captain must be selected from the Playing XI');
-    }
-    if (viceCaptainId && !playingXI.includes(viceCaptainId)) {
-      return reject('Vice-Captain must be selected from the Playing XI');
-    }
-    if (captainId && viceCaptainId && captainId === viceCaptainId) {
-      return reject('Captain and Vice-Captain must be two distinct players');
-    }
-
-    // A designated wicketkeeper must be a WK in this Playing XI (previously stored unchecked)
-    if (wicketKeeperId && (!playingXI.includes(wicketKeeperId) || owned.get(wicketKeeperId)?.category !== 'WK')) {
-      return reject('Designated wicketkeeper must be a wicketkeeper in the Playing XI');
-    }
-
-    // If XI is fully populated (11 players), enforce mandatory roles
-    if (playingXI.length === 11) {
-      const wkCount = playingXI.filter(pid => owned.get(pid).category === 'WK').length;
-      if (wkCount < 1) {
-        return reject('Playing XI must have at least 1 Wicketkeeper');
-      }
-      if (!captainId) {
-        return reject('Playing XI must have exactly 1 Captain assigned');
-      }
-      if (!viceCaptainId) {
-        return reject('Playing XI must have exactly 1 Vice-Captain assigned');
-      }
-    }
+    const validated = validateAndBuildPlayingXI(room, franchiseId, {
+      playingXI, captainId, viceCaptainId, wicketKeeperId, impactPlayerId, isConfirmed
+    });
+    if (!validated.success) return validated;
 
     // Update franchise state
-    franchise.playingXI = [...playingXI];
-    franchise.captainId = captainId;
-    franchise.viceCaptainId = viceCaptainId;
-    franchise.wicketKeeperId = wicketKeeperId || (playingXI.find(pid => owned.get(pid).category === 'WK') || null);
-    franchise.impactPlayerId = impactPlayerId;
-    franchise.isConfirmed = !!isConfirmed;
+    Object.assign(franchise, validated.cleaned);
 
     // Independent persistent data structure
     if (!room.playingXIConfigurations) room.playingXIConfigurations = {};
     room.playingXIConfigurations[franchiseId] = {
       franchiseId,
-      playingXI: [...playingXI],
-      captainId,
-      viceCaptainId,
-      wicketKeeperId: franchise.wicketKeeperId,
-      impactPlayerId,
-      isConfirmed: !!isConfirmed,
+      ...validated.cleaned,
       confirmedAt: new Date().toISOString()
     };
 
-    this.addAuditLog(room, 'PLAYING_XI_UPDATED', `${franchise.name} confirmed their Playing XI (${playingXI.length}/11)`);
+    this.addAuditLog(room, 'PLAYING_XI_UPDATED', `${franchise.name} confirmed their Playing XI (${validated.cleaned.playingXI.length}/11)`);
     this.saveToStorage(room);
     this.broadcastRoomState(room, 'state_updated');
 
@@ -1234,6 +1058,8 @@ export class RoomManager {
       return { success: false, error: checked.errors.join('; '), errors: checked.errors };
     }
     room.config = checked.config;
+    room.max_squad_size = checked.config.maxSquadSize;
+    room.max_overseas_players = checked.config.maxOverseas;
 
     this.recalculateLobbyPurses(room);
     this.addAuditLog(room, 'CONFIG_UPDATED', `Host updated auction configuration.`);
@@ -1530,15 +1356,36 @@ export class RoomManager {
     lot.closed = true;
 
     const player = lot.player;
+    const winningFranchise = lot.highestBidderFranchiseId ? room.franchises[lot.highestBidderFranchiseId] : null;
+    const { maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
+    let canFinalizeSale = !!(winningFranchise && lot.highestBid > 0);
+    let invariantFailure = null;
+    if (canFinalizeSale) {
+      if (winningFranchise.isEliminated) {
+        canFinalizeSale = false;
+        invariantFailure = 'Franchise is financially eliminated';
+      } else if ((winningFranchise.squad || []).length >= maxSquadSize) {
+        canFinalizeSale = false;
+        invariantFailure = 'Squad limit reached!';
+      } else if ((winningFranchise.squad || []).some(p => p.id === player.id)) {
+        canFinalizeSale = false;
+        invariantFailure = 'Player already in franchise squad';
+      } else if (player.isOverseas && (winningFranchise.overseasCount || 0) >= maxOverseas) {
+        canFinalizeSale = false;
+        invariantFailure = 'Overseas player limit reached!';
+      } else if (toLakh(winningFranchise.remainingPurse) < toLakh(lot.highestBid)) {
+        canFinalizeSale = false;
+        invariantFailure = 'Insufficient purse balance';
+      }
+    }
 
-    if (lot.highestBidderFranchiseId && lot.highestBid > 0) {
+    if (canFinalizeSale) {
       // SOLD!
       lot.hammerStatus = 'SOLD';
       player.status = 'sold';
       player.soldTo = lot.highestBidderFranchiseId;
       player.soldPrice = lot.highestBid;
 
-      const winningFranchise = room.franchises[lot.highestBidderFranchiseId];
       // Exact (integer lakhs); deducted exactly once (this block runs once per lot, see isLotOpen)
       winningFranchise.remainingPurse = fromLakh(toLakh(winningFranchise.remainingPurse) - toLakh(lot.highestBid));
       winningFranchise.totalSpent = fromLakh(toLakh(winningFranchise.totalSpent || 0) + toLakh(lot.highestBid));
@@ -1614,7 +1461,9 @@ export class RoomManager {
 
       room.history.unshift(historyEntry);
 
-      this.addAuditLog(room, 'PLAYER_UNSOLD', `${player.name} went UNSOLD at base price ₹${player.basePrice} Cr`);
+      this.addAuditLog(room, 'PLAYER_UNSOLD', invariantFailure
+        ? `Prevented invalid sale of ${player.name}: ${invariantFailure}`
+        : `${player.name} went UNSOLD at base price ₹${player.basePrice} Cr`);
       this.scheduleSave(room); // persist: UNSOLD result
 
       this.emitToRoom(room, 'lot_completed', {
@@ -1813,11 +1662,14 @@ export class RoomManager {
   }
 
   getPublicRoomState(room) {
+    const { maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
     return {
       roomCode: room.roomCode,
       status: room.status,
       hostName: room.hostName,
       config: room.config,
+      max_squad_size: maxSquadSize,
+      max_overseas_players: maxOverseas,
       franchises: toPublicFranchises(room.franchises),
       playingXIConfigurations: room.playingXIConfigurations || {},
       currentLot: room.currentLot,

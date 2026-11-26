@@ -1,11 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import confetti from 'canvas-confetti';
-import UnityArena from './UnityArena';
-import {
-  Trophy, ArrowLeft, Users, GitCompare, CheckCircle2, XCircle,
-  MinusCircle, AlertTriangle, Shield, Wallet, Gavel, Info,
-  Swords, Award, AlertOctagon, TrendingUp, Layers
-} from 'lucide-react';
+import { Trophy, ArrowLeft, Users, CheckCircle2, XCircle, MinusCircle, AlertTriangle, Shield, Wallet, Info, Swords, Award, AlertOctagon, TrendingUp } from 'lucide-react';
+import { getRoomSquadLimits } from '../../../server/config';
 
 // CRICKET MASTERMIND — IPL AUCTION VERDICT
 // Professional post-auction strategic analysis.
@@ -83,6 +79,7 @@ function Stat({ label, value, sub }) {
 }
 
 export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }) {
+  const { maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
   const analysis = room.analysis;
   const [tab, setTab] = useState('verdict');
   const [selectedFranchiseId, setSelectedFranchiseId] = useState(null);
@@ -104,13 +101,14 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
     if (!analysis) return null;
     return {
       engineVersion: analysis.engineVersion || 'cricket-mastermind-v1',
+      // Never invent a winner or reasons: fall back to the server's rank 1 with no claims
       verdict: analysis.verdict || {
-        winnerFranchiseId: analysis.rankings?.[0]?.franchiseId || 'CSK',
-        winnerFranchiseName: analysis.rankings?.[0]?.franchiseName || 'Champion Franchise',
-        expertVerdict: 'Assembled the most complete and balanced squad during the auction.',
-        mainReasons: ['Secured reliable batting and bowling depth.', 'Met all squad composition rules.'],
-        keyAdvantages: ['Balanced overseas allocation.', 'Solid core depth.'],
-        vulnerabilities: ['Workload management over the season.']
+        winnerFranchiseId: analysis.rankings?.[0]?.franchiseId || null,
+        winnerFranchiseName: analysis.rankings?.[0]?.franchiseName || null,
+        expertVerdict: '',
+        mainReasons: [],
+        keyAdvantages: [],
+        vulnerabilities: []
       },
       rankings: analysis.rankings || [],
       franchises: analysis.franchises || {},
@@ -124,7 +122,7 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
   }, [analysis]);
 
   const winner = useMemo(() => {
-    if (!mastermind) return null;
+    if (!mastermind || !mastermind.verdict.winnerFranchiseId) return null;
     const winnerId = mastermind.verdict.winnerFranchiseId;
     return {
       id: winnerId,
@@ -145,7 +143,6 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
 
   const activeFocusId = selectedFranchiseId || rankedList[0]?.franchiseId || 'CSK';
   const focusEval = mastermind?.franchises[activeFocusId];
-  const focusFranchise = room?.franchises?.[activeFocusId];
 
   // Initialize comparison teams
   useEffect(() => {
@@ -176,7 +173,6 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
 
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6">
-      <UnityArena room={room} compact />
 
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between border-b border-slate-800 pb-5">
@@ -184,7 +180,7 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
           <button
             onClick={onBackToLobby}
             className="p-2 rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-amber-400/60 transition"
-            aria-label="Back to Lobby"
+            aria-label="Leave the results and return home" title="Leave room"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -202,7 +198,7 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
         </div>
 
         {winner && (
-          <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 px-4 py-2.5">
+          <div data-testid="results-winner" data-franchise={winner.id} className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 px-4 py-2.5">
             <Trophy className="w-6 h-6 text-amber-400 shrink-0" />
             <div>
               <div className="text-[10px] uppercase tracking-wider text-amber-300/90 font-bold">
@@ -218,7 +214,7 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
       </div>
 
       {/* Navigation Tabs */}
-      <nav className="flex gap-2 overflow-x-auto pb-1" role="tablist">
+      <nav role="tablist" aria-label="Results sections" className="flex gap-2 overflow-x-auto pb-1">
         {tabs.map(([id, label, Icon]) => (
           <button
             key={id}
@@ -360,6 +356,9 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
             {rankedList.map(r => (
               <div
                 key={r.franchiseId}
+                data-testid="ranking-row"
+                data-rank={r.rank}
+                data-franchise={r.franchiseId}
                 className={`rounded-2xl border transition p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                   r.rank === 1
                     ? 'border-amber-400/60 bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-900'
@@ -387,7 +386,7 @@ export default function FinalResultsView({ room, onInspectSquad, onBackToLobby }
                       <span className="font-black text-white text-base">{r.franchiseName}</span>
                       <EligibilityBadge eligibility={r.eval?.eligibility} />
                       <span className="text-xs text-slate-500">
-                        ({r.eval?.squadSize || 0} players · {r.eval?.counts?.overseas || 0} overseas)
+                        ({r.eval?.squadSize || 0}/{maxSquadSize} players · {r.eval?.counts?.overseas || 0}/{maxOverseas} overseas)
                       </span>
                     </div>
                     <p className="text-xs text-slate-300 leading-relaxed font-medium">

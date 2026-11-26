@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  X, Users, Shield, DollarSign, Award, ChevronUp, ChevronDown,
-  UserCheck, AlertCircle, CheckCircle2, Star, Plane, Crown, Flag,
-  Layers, Trophy
-} from 'lucide-react';
-import { socket } from '../utils/socket';
+import { X, Users, Shield, ChevronUp, ChevronDown, AlertCircle, CheckCircle2, Star, Trophy } from 'lucide-react';
+import { getRoomSquadLimits, getFranchiseSlotStats } from '../../../server/config';
 
 // Franchise logo/emblem badge
 function FranchiseBadge({ code, size = "md" }) {
@@ -39,8 +35,8 @@ export default function FranchiseDashboardModal({
   isOpen,
   onClose,
   initialFranchiseId,
-  myFranchise
-  // `participant` is still passed by App.jsx but no longer needed: editing is owner-only
+  myFranchise,
+  onUpdatePlayingXI
 }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'squad' | 'playing_xi'
   const [selectedFranchiseId, setSelectedFranchiseId] = useState(
@@ -99,7 +95,7 @@ export default function FranchiseDashboardModal({
           initialVC = parsed.viceCaptainId || null;
           initialIP = parsed.impactPlayerId || null;
         }
-      } catch (e) {}
+      } catch {}
     }
 
     const ownedIds = new Set((franchise.squad || []).map(p => p.id));
@@ -226,9 +222,9 @@ export default function FranchiseDashboardModal({
     if (!canEdit) return;
     setSaveError(null);
 
-    // The server identifies us by our joined session (socket binding); no token needed
-    socket.emit('update_playing_xi', {
-      roomCode: room.roomCode,
+    // The server identifies us by our joined session (connection binding); no token is sent
+    if (!onUpdatePlayingXI) return;
+    onUpdatePlayingXI({
       franchiseId: franchise.id,
       playingXI: playingXIIds,
       captainId,
@@ -244,7 +240,7 @@ export default function FranchiseDashboardModal({
             viceCaptainId,
             impactPlayerId
           }));
-        } catch (e) {}
+        } catch {}
         setSaveSuccess(true);
         setDroppedNotice(null);
         setTimeout(() => setSaveSuccess(false), 3500);
@@ -267,9 +263,14 @@ export default function FranchiseDashboardModal({
               <h2 className="text-base sm:text-lg font-black text-white tracking-wide uppercase">
                 SQUAD MANAGEMENT CENTER
               </h2>
-              <span className="text-[10px] text-slate-400">
-                10 IPL Franchises • ₹120 Cr Initial Purse • Max 15 Squad • Playing XI
-              </span>
+              {(() => {
+                const { maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
+                return (
+                  <span className="text-[10px] text-slate-400">
+                    10 IPL Franchises • ₹{room.config?.basePurse ?? 120} Cr Purse • Max {maxSquadSize} Squad • Max {maxOverseas} Overseas • Playing XI
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
@@ -296,6 +297,7 @@ export default function FranchiseDashboardModal({
               Individual Squad
             </button>
             <button
+              data-testid="tab-playing-xi"
               onClick={() => setActiveTab('playing_xi')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
                 activeTab === 'playing_xi'
@@ -310,6 +312,8 @@ export default function FranchiseDashboardModal({
 
           <button
             onClick={onClose}
+            aria-label="Close squad manager"
+            data-testid="squad-close"
             className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -335,9 +339,10 @@ export default function FranchiseDashboardModal({
                     <th className="py-3 px-3">Franchise</th>
                     <th className="py-3 px-3 text-right">Remaining Purse</th>
                     <th className="py-3 px-3 text-right">Total Spent</th>
-                    <th className="py-3 px-3 text-center">Squad</th>
+                    <th className="py-3 px-3 text-center">Current Squad</th>
                     <th className="py-3 px-3 text-center">IND</th>
-                    <th className="py-3 px-3 text-center">OS</th>
+                    <th className="py-3 px-3 text-center">Overseas</th>
+                    <th className="py-3 px-3 text-center">Remaining Slots</th>
                     <th className="py-3 px-3 text-center">BAT</th>
                     <th className="py-3 px-3 text-center">BOWL</th>
                     <th className="py-3 px-3 text-center">AR</th>
@@ -348,8 +353,7 @@ export default function FranchiseDashboardModal({
                 <tbody className="divide-y divide-white/5 bg-slate-950/60 font-medium">
                   {Object.values(room.franchises).map(f => {
                     const fSquad = f.squad || [];
-                    const indCount = fSquad.filter(p => !p.isOverseas).length;
-                    const osCount = fSquad.filter(p => p.isOverseas).length;
+                    const slots = getFranchiseSlotStats(f, room);
                     const batCount = fSquad.filter(p => p.category === 'BAT').length;
                     const bowlCount = fSquad.filter(p => p.category === 'BOWL' || p.category === 'FAST' || p.category === 'SP' || p.category === 'SPIN').length;
                     const arCount = fSquad.filter(p => p.category === 'AR').length;
@@ -392,12 +396,28 @@ export default function FranchiseDashboardModal({
                           ₹{f.totalSpent.toFixed(2)} Cr
                         </td>
 
-                        <td className="py-2.5 px-3 text-center font-mono font-bold text-white">
-                          {fSquad.length} <span className="text-slate-500 font-normal">/ 15</span>
+                        <td className="py-2.5 px-3 text-center font-mono font-bold">
+                          <span className={slots.isSquadFull ? 'text-rose-400' : 'text-white'}>
+                            {slots.squadCount} <span className="text-slate-500 font-normal">/ {slots.maxSquadSize}</span>
+                          </span>
+                          {slots.isSquadFull && (
+                            <span className="block text-[9px] font-black uppercase text-rose-300">FULL</span>
+                          )}
                         </td>
 
-                        <td className="py-2.5 px-3 text-center text-slate-300 font-mono">{indCount}</td>
-                        <td className="py-2.5 px-3 text-center text-blue-400 font-mono font-bold">{osCount} / 8</td>
+                        <td className="py-2.5 px-3 text-center text-slate-300 font-mono">{slots.indianCount}</td>
+                        <td className="py-2.5 px-3 text-center font-mono font-bold">
+                          <span className={slots.isOverseasFull ? 'text-rose-400' : 'text-blue-400'}>
+                            {slots.overseasCount} / {slots.maxOverseas}
+                          </span>
+                          {slots.isOverseasFull && (
+                            <span className="block text-[9px] font-black uppercase text-rose-300">MAXED</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-center font-mono text-[11px]" data-testid={`dashboard-slots-${f.id}`}>
+                          <span className="text-white font-bold block">{slots.totalRemainingSlots} Total</span>
+                          <span className="text-slate-400">IND {slots.remainingIndianSlots} · OS {slots.remainingOverseasSlots}</span>
+                        </td>
                         <td className="py-2.5 px-3 text-center text-slate-300 font-mono">{batCount}</td>
                         <td className="py-2.5 px-3 text-center text-slate-300 font-mono">{bowlCount}</td>
                         <td className="py-2.5 px-3 text-center text-slate-300 font-mono">{arCount}</td>
@@ -488,6 +508,37 @@ export default function FranchiseDashboardModal({
               </div>
             </div>
 
+            {/* Live Squad & Overseas Slot Breakdown */}
+            {(() => {
+              const slots = getFranchiseSlotStats(franchise, room);
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5" data-testid="individual-slot-breakdown">
+                  <div className={`p-3 rounded-xl border ${slots.isSquadFull ? 'bg-rose-500/10 border-rose-500/40' : 'bg-slate-900/70 border-slate-800'}`}>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Current Squad</span>
+                    <span className={`text-base font-black font-mono ${slots.isSquadFull ? 'text-rose-300' : 'text-white'}`}>{slots.squadCount} / {slots.maxSquadSize}</span>
+                    {slots.isSquadFull && <span className="block text-[10px] font-bold text-rose-300 mt-0.5">Squad limit reached!</span>}
+                  </div>
+                  <div className={`p-3 rounded-xl border ${slots.isOverseasFull ? 'bg-rose-500/10 border-rose-500/40' : 'bg-slate-900/70 border-slate-800'}`}>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Overseas Players</span>
+                    <span className={`text-base font-black font-mono ${slots.isOverseasFull ? 'text-rose-300' : 'text-blue-400'}`}>{slots.overseasCount} / {slots.maxOverseas}</span>
+                    {slots.isOverseasFull && <span className="block text-[10px] font-bold text-rose-300 mt-0.5">Overseas player limit reached!</span>}
+                  </div>
+                  <div className="p-3 rounded-xl border bg-slate-900/70 border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Remaining Indian Slots</span>
+                    <span className="text-base font-black font-mono text-emerald-400">{slots.remainingIndianSlots}</span>
+                  </div>
+                  <div className="p-3 rounded-xl border bg-slate-900/70 border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Remaining Overseas Slots</span>
+                    <span className={`text-base font-black font-mono ${slots.remainingOverseasSlots === 0 ? 'text-rose-300' : 'text-sky-400'}`}>{slots.remainingOverseasSlots}</span>
+                  </div>
+                  <div className="p-3 rounded-xl border bg-slate-900/70 border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Remaining Slots</span>
+                    <span className={`text-base font-black font-mono ${slots.totalRemainingSlots === 0 ? 'text-rose-300' : 'text-amber-300'}`}>{slots.totalRemainingSlots}</span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Squad List Grid */}
             {squad.length === 0 ? (
               <div className="text-center py-16 text-slate-500">
@@ -572,6 +623,7 @@ export default function FranchiseDashboardModal({
 
               {canEdit && (
                 <button
+                  data-testid="xi-save"
                   onClick={savePlayingXI}
                   disabled={!isXIComplete}
                   className={`px-4 py-1.5 rounded-xl font-black text-xs transition cursor-pointer shadow-md ${
@@ -587,7 +639,7 @@ export default function FranchiseDashboardModal({
 
             {/* Validation Feedback Messages */}
             {saveSuccess && (
-              <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1.5">
+              <div data-testid="xi-saved" className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                 <span>Playing XI saved and synchronized across all participants!</span>
               </div>
@@ -598,7 +650,7 @@ export default function FranchiseDashboardModal({
               </div>
             )}
             {saveError && (
-              <div className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-1.5">
+              <div data-testid="xi-error" className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
                 <span>{saveError}</span>
               </div>
@@ -691,6 +743,7 @@ export default function FranchiseDashboardModal({
                             {canEdit ? (
                               <div className="flex items-center gap-1">
                                 <button
+                                  data-testid={`xi-captain-${p.id}`}
                                   onClick={() => toggleCaptain(p.id)}
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-black transition cursor-pointer ${
                                     isC
@@ -702,6 +755,7 @@ export default function FranchiseDashboardModal({
                                   C
                                 </button>
                                 <button
+                                  data-testid={`xi-vc-${p.id}`}
                                   onClick={() => toggleViceCaptain(p.id)}
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-black transition cursor-pointer ${
                                     isVC
@@ -870,6 +924,7 @@ export default function FranchiseDashboardModal({
 
                           {canEdit && (
                             <button
+                              data-testid={`xi-add-${p.id}`}
                               onClick={() => addToXI(p)}
                               disabled={playingXIIds.length >= 11 || (p.isOverseas && overseasInXI >= 4)}
                               className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold text-[10px] transition cursor-pointer flex-shrink-0"

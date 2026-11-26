@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  Gavel, Clock, AlertTriangle, ArrowRight, Shield, Award,
-  Globe, User, CheckCircle2, XCircle, TrendingUp, Sparkles, Pause, Play,
+  Gavel, Clock, AlertTriangle, Shield,
+  CheckCircle2, TrendingUp, Pause, Play,
   Copy, Check, X, ChevronRight, Plane, Star, Radio,
-  Search, Filter, ArrowUp, RotateCcw, FastForward
+  Search, Filter, ArrowUp, RotateCcw, FastForward, Activity
 } from 'lucide-react';
-import { playGavel, playBidPing, playTick, playSoldFanfare, playUnsold } from '../utils/audio';
-import UnityArena from './UnityArena';
+import { playTick } from '../utils/audio';
+import { validateBid } from '../../../server/auctionEngine.js';
+import { getRoomSquadLimits, getFranchiseSlotStats } from '../../../server/config.js';
+import { franchiseBidStatus, hammerLabel } from '../utils/bidStatus.js';
 
 // Franchise logo/emblem badges generator
 function FranchiseBadge({ code, size = "md" }) {
@@ -94,11 +96,15 @@ export default function LiveAuctionView({
   onSkipSet,
   onPauseResume,
   onFinishAuction,
-  onOpenSquad
+  onOpenSquad,
+  activity = [],
+  link = 'online',
+  canAct = true
 }) {
   const lot = room.currentLot;
   const [submittingBid, setSubmittingBid] = useState(false);
   const [bidError, setBidError] = useState(null);
+  const [bidAccepted, setBidAccepted] = useState(false);
   const [pulseBid, setPulseBid] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -119,11 +125,12 @@ export default function LiveAuctionView({
   useEffect(() => {
     setImgError(false);
     setBidError(null);
+    setBidAccepted(false);
   }, [lot?.player?.id]);
 
   // All hooks run on every render (Rules of Hooks): they must stay ABOVE the early return below.
   // Complete catalogue & marquee list state (all ~300 players)
-  const catalog = room.playersCatalog || [];
+  const catalog = useMemo(() => room.playersCatalog || [], [room.playersCatalog]);
   const currentIdx = room.currentPlayerIndex >= 0 ? room.currentPlayerIndex : 0;
   const currentLotPlayerId = lot?.player?.id || (catalog[currentIdx]?.id);
   // The hammer has fallen (SOLD/UNSOLD): the lot stays on screen until the next one, but it is closed
@@ -138,6 +145,19 @@ export default function LiveAuctionView({
 
   const activePlayerCardRef = useRef(null);
   const marqueeContainerRef = useRef(null);
+
+  // Scroll only the marquee list (element.scrollIntoView would also scroll the page and hide the
+  // stage and host controls every time a new lot is presented)
+  const scrollCardIntoList = (mode) => {
+    const box = marqueeContainerRef.current;
+    const card = activePlayerCardRef.current;
+    if (!box || !card) return;
+    const top = card.offsetTop - box.offsetTop;
+    const target = mode === 'center'
+      ? top - box.clientHeight / 2 + card.clientHeight / 2
+      : (top < box.scrollTop ? top : top + card.clientHeight > box.scrollTop + box.clientHeight ? top + card.clientHeight - box.clientHeight : box.scrollTop);
+    box.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+  };
 
   // Quick lookup map of completed room history lots
   const historyMap = useMemo(() => {
@@ -238,9 +258,7 @@ export default function LiveAuctionView({
 
   // Auto-scroll to active player on lot transition (when no search query is active)
   useEffect(() => {
-    if (!searchQuery && activePlayerCardRef.current) {
-      activePlayerCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    if (!searchQuery && activePlayerCardRef.current) scrollCardIntoList('nearest');
   }, [currentLotPlayerId]);
 
   if (!lot || !lot.player) {
@@ -260,61 +278,39 @@ export default function LiveAuctionView({
     ? room.franchises[lot.highestBidderFranchiseId]
     : null;
 
-  // Feasibility & eligibility check
-  const isMyFranchiseHighest = myFranchise && lot.highestBidderFranchiseId === myFranchise.id;
-  const isEliminated = myFranchise?.isEliminated;
 
+  // The server decides; this mirrors its exact rules (same validateBid code) only to explain a
+  // disabled button. Money is compared in integer lakhs inside validateBid.
   let canBid = true;
   let cannotBidReason = null;
-
-  if (!myFranchise) {
+  if (!canAct) {
+    canBid = false;
+    cannotBidReason = "This tab is paused because the room is open in another tab";
+  } else if (link !== 'online') {
+    canBid = false;
+    cannotBidReason = "Reconnecting to the auction server…";
+  } else if (!myFranchise) {
     canBid = false;
     cannotBidReason = "You have not claimed a franchise";
-  } else if (room.status !== 'active') {
+  } else if (room.status === 'paused') {
     canBid = false;
-    cannotBidReason = "Auction is paused";
+    cannotBidReason = room.storageFailure?.message || "Auction is paused by the host";
   } else if (!lotOpen || lot.countdown <= 0) {
     canBid = false;
-    cannotBidReason = lot.hammerStatus === 'SOLD' ? "Player sold — next lot coming up" : "Bidding closed for this lot";
-  } else if (isMyFranchiseHighest) {
-    canBid = false;
-    cannotBidReason = "You already hold the highest bid";
-  } else if (isEliminated) {
-    canBid = false;
-    cannotBidReason = "Franchise is financially eliminated";
-  } else if (myFranchise.squad.length >= room.config.maxSquadSize) {
-    canBid = false;
-    cannotBidReason = `Max squad limit (${room.config.maxSquadSize}) reached`;
-  } else if (player.isOverseas && myFranchise.overseasCount >= room.config.maxOverseas) {
-    canBid = false;
-    cannotBidReason = `Max overseas slots (${room.config.maxOverseas}) filled`;
+    cannotBidReason = lot.hammerStatus === 'SOLD' ? "Player sold — next lot coming up" : lot.hammerStatus === 'UNSOLD' ? "Player unsold — next lot coming up" : "Bidding closed for this lot";
   } else {
-    // Mirrors the server's checks (the server decides; this only explains a disabled button).
-    // Money is compared in integer lakhs (1 Cr = 100 lakh) to avoid floating-point errors.
-    const lakh = v => Math.round(v * 100);
-    const keepersNeeded = Math.max(0, (room.config.minWKs ?? 1) - myFranchise.squad.filter(p => p.category === 'WK').length - (player.category === 'WK' ? 1 : 0));
-    const slotsLeftAfter = room.config.maxSquadSize - (myFranchise.squad.length + 1);
-    const projectedPurseLakh = lakh(myFranchise.remainingPurse) - lakh(lot.nextValidBid);
-    // Same floor as the server: configured minimum, never below the cheapest base price
-    const cheapestLakh = catalog.reduce((m, p) => (typeof p.basePrice === 'number' && p.basePrice > 0 ? Math.min(m, lakh(p.basePrice)) : m), Infinity);
-    const floorLakh = Math.max(lakh(room.config.minPlayerPrice || 0), Number.isFinite(cheapestLakh) ? cheapestLakh : 0);
-    const remainingSlots = Math.max(0, room.config.minSquadSize - (myFranchise.squad.length + 1));
-    if (keepersNeeded > slotsLeftAfter) {
+    const check = validateBid({ room, franchiseId: myFranchise.id });
+    if (!check.valid) {
       canBid = false;
-      cannotBidReason = "Keep a squad slot for a wicketkeeper";
-    } else if (projectedPurseLakh < 0) {
-      canBid = false;
-      cannotBidReason = "Insufficient purse balance";
-    } else if (projectedPurseLakh < remainingSlots * floorLakh) {
-      canBid = false;
-      cannotBidReason = `Must reserve ₹${(remainingSlots * floorLakh / 100).toFixed(2)} Cr for remaining ${remainingSlots} mandatory slots`;
+      cannotBidReason = check.error;
     }
   }
 
   const submitBid = (amount) => {
-    if (!myFranchise || submittingBid) return;
+    if (!myFranchise || submittingBid) return; // one request in flight at a time
     setSubmittingBid(true);
     setBidError(null);
+    setBidAccepted(false);
     setPulseBid(true);
     setTimeout(() => setPulseBid(false), 400);
 
@@ -326,6 +322,9 @@ export default function LiveAuctionView({
       setSubmittingBid(false);
       if (!res?.success) {
         setBidError(res?.error || "Bid could not be processed");
+      } else {
+        setBidAccepted(true);
+        setTimeout(() => setBidAccepted(false), 1800);
       }
     });
   };
@@ -338,18 +337,17 @@ export default function LiveAuctionView({
   // Handle Skip Set host action
   const handleConfirmSkipSet = () => {
     setIsSkipSetConfirmOpen(false);
-    if (!participant?.isHost) return;
+    if (!participant?.isHost || !onSkipSet) return;
     setIsSkippingSet(true);
-    if (onSkipSet) {
-      onSkipSet();
-    }
-    setTimeout(() => setIsSkippingSet(false), 1500);
+    onSkipSet(() => setIsSkippingSet(false));
   };
 
-  const copyRoomCode = () => {
-    navigator.clipboard.writeText(room.roomCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
+  const copyRoomCode = async () => {
+    try {
+      await navigator.clipboard.writeText(room.roomCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch { /* clipboard unavailable (insecure context) */ }
   };
 
   // Countdown timer calculations (server-authoritative; default 15 s)
@@ -361,6 +359,8 @@ export default function LiveAuctionView({
   const isUrgent = lot.countdown <= 6;
   const isCritical = lot.countdown <= 3;
   const timerColor = isCritical ? "#EF4444" : isUrgent ? "#F59E0B" : "#10B981";
+  const hammer = hammerLabel(room, lot);
+  const previousLot = (room.history || []).find(h => h.player?.id !== player.id) || null;
 
 
   // Navigation handlers
@@ -372,9 +372,7 @@ export default function LiveAuctionView({
       setStatusFilter('ALL');
     }
     setTimeout(() => {
-      if (activePlayerCardRef.current) {
-        activePlayerCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      scrollCardIntoList('center');
     }, 60);
   };
 
@@ -395,9 +393,7 @@ export default function LiveAuctionView({
   const nextThree = catalog.slice(currentIdx + 1, currentIdx + 4);
 
   return (
-    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-4 space-y-4">
-      {/* 0. Optional 3D arena (display only; hidden automatically if the build or WebGL is missing) */}
-      <UnityArena room={room} />
+    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-4 pb-28 lg:pb-4 space-y-4 overflow-x-hidden">
 
       {/* 1. TOP STADIUM ARENA BANNER (Matches Reference Image) */}
       <div className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-gradient-to-b from-[#0a153a] via-[#050b25] to-[#04081a]">
@@ -507,6 +503,7 @@ export default function LiveAuctionView({
           {participant?.isHost ? (
             <div className="flex items-center gap-2">
               <button
+                data-testid="host-pause"
                 onClick={onPauseResume}
                 className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 border transition cursor-pointer ${
                   room.status === 'paused'
@@ -519,15 +516,17 @@ export default function LiveAuctionView({
               </button>
 
               <button
+                data-testid="host-advance"
                 onClick={onAdvanceLot}
                 className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold flex items-center gap-1 border border-blue-400/40 transition shadow-md cursor-pointer"
-                title="Hammer down or close current lot"
+                title={lotOpen ? 'Bring the hammer down on this lot now (SOLD to the highest bidder, otherwise UNSOLD)' : 'Present the next player now'}
               >
-                <span>Advance Lot</span>
+                <span>{lotOpen ? 'Hammer Lot' : 'Next Lot'}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
 
               <button
+                data-testid="host-skip-set"
                 onClick={() => setIsSkipSetConfirmOpen(true)}
                 disabled={isSkippingSet}
                 className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold flex items-center gap-1.5 border border-amber-400/40 transition shadow-md cursor-pointer disabled:opacity-50"
@@ -538,6 +537,7 @@ export default function LiveAuctionView({
               </button>
 
               <button
+                data-testid="host-finish"
                 onClick={onFinishAuction}
                 className="px-3 py-1.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-bold border border-red-500/40 transition cursor-pointer shadow-md"
               >
@@ -551,6 +551,26 @@ export default function LiveAuctionView({
           )}
         </div>
       </div>
+
+      {room.storageFailure && (
+        <div
+          data-testid="storage-failure-banner"
+          className="px-4 py-2.5 rounded-2xl bg-red-500/15 border border-red-400/50 text-red-100 text-xs flex flex-wrap items-center justify-between gap-2 shadow-lg"
+        >
+          <span>
+            <strong className="uppercase tracking-wider text-red-300 mr-2">Storage Hold:</strong>
+            {room.storageFailure.message || 'Storage temporarily unavailable. Auction safely paused until storage recovers.'}
+          </span>
+          {participant?.isHost && (
+            <button
+              onClick={onPauseResume}
+              className="px-3 py-1 rounded-lg bg-red-500 hover:bg-red-400 text-slate-950 font-black cursor-pointer"
+            >
+              Retry & Resume
+            </button>
+          )}
+        </div>
+      )}
 
       {/* MOBILE PORTRAIT VIEWPORT SWITCHER (Visible only on mobile/tablet screens < lg) */}
       <div className="lg:hidden flex items-center justify-between bg-[#081235]/95 p-1 rounded-2xl border border-white/10 shadow-lg gap-1">
@@ -901,7 +921,11 @@ export default function LiveAuctionView({
                 </div>
 
                 {/* Team Logo (MI, CSK etc) */}
-                <FranchiseBadge code={highestBidderFranchise?.code || "MI"} size="md" />
+                {highestBidderFranchise ? (
+                  <FranchiseBadge code={highestBidderFranchise.code} size="md" />
+                ) : (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-900/80 border border-slate-700 px-2 py-1 rounded-lg">No bids yet</span>
+                )}
               </div>
 
               {/* Dynamic High-Resolution Player Image */}
@@ -929,7 +953,7 @@ export default function LiveAuctionView({
               {/* Player Identity & OVR Badge */}
               <div className="flex items-start justify-between mt-3 gap-2">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase leading-none">
+                  <h2 data-testid="stage-player-name" data-player-id={player.id} data-category={player.category} data-set={player.categorySet || player.setName || ''} data-overseas={player.isOverseas ? '1' : '0'} className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase leading-none">
                     {player.name}
                   </h2>
                   <div className="text-xs font-semibold text-slate-400 mt-1">
@@ -992,10 +1016,36 @@ export default function LiveAuctionView({
                 ₹{player.basePrice.toFixed(2)} Cr
               </span>
             </div>
+            {previousLot && (
+              <div className="mt-2 text-[11px] text-slate-400 truncate" data-testid="previous-lot">
+                Previous: <span className="text-slate-200 font-semibold">{previousLot.player?.name}</span>{' '}
+                {previousLot.status === 'SOLD'
+                  ? <span className="text-emerald-300">sold to {previousLot.winningFranchiseCode} for ₹{Number(previousLot.finalBid).toFixed(2)} Cr</span>
+                  : <span className="text-rose-300">{String(previousLot.status || '').toLowerCase()}</span>}
+              </div>
+            )}
           </div>
 
-          {/* CENTER-RIGHT: LIVE BIDDING INTERFACE */}
-          <div className="bg-[#0b1437]/90 border border-blue-800/40 rounded-2xl p-4 shadow-xl flex flex-col justify-between backdrop-blur-md space-y-4">
+          {/* CENTER-RIGHT: LIVE BIDDING INTERFACE (first on phones: bid + clock stay prominent) */}
+          <div className="order-first md:order-none bg-[#0b1437]/90 border border-blue-800/40 rounded-2xl p-4 shadow-xl flex flex-col justify-between backdrop-blur-md space-y-4">
+            {/* Hammer status ribbon (SOLD/UNSOLD from the server; GOING ONCE/TWICE from its deadline) */}
+            <div
+              data-testid="hammer-status"
+              data-hammer={hammer.key}
+              className={`rounded-xl px-3 py-2 text-center text-xs font-black tracking-[0.25em] border ${
+                hammer.key === 'sold' ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300'
+                : hammer.key === 'unsold' ? 'bg-rose-500/15 border-rose-400/50 text-rose-300'
+                : hammer.key === 'paused' ? 'bg-amber-500/15 border-amber-400/50 text-amber-300'
+                : hammer.key === 'once' || hammer.key === 'twice' || hammer.key === 'closing' ? 'bg-red-500/15 border-red-400/50 text-red-300 animate-pulse'
+                : 'bg-slate-900/80 border-slate-700 text-slate-300'
+              }`}
+            >
+              {hammer.text}
+              {hammer.key === 'sold' && highestBidderFranchise && (
+                <span className="tracking-normal font-bold text-white"> · {highestBidderFranchise.code} ₹{lot.highestBid.toFixed(2)} Cr</span>
+              )}
+            </div>
+
             {/* Top: Current Highest Bid with Gold Laurel Header */}
             <div className="bg-gradient-to-b from-slate-900/90 to-slate-950 p-4 rounded-xl border border-amber-500/30 text-center relative shadow-lg">
               <div className="flex items-center justify-center gap-2 mb-1">
@@ -1005,9 +1055,9 @@ export default function LiveAuctionView({
               </div>
 
               {/* Big Gold Bid Amount */}
-              <div className="text-3xl sm:text-4xl font-black text-amber-300 font-mono tracking-tight my-1 drop-shadow-md">
-                ₹{lot.highestBid > 0 ? lot.highestBid.toFixed(2) : player.basePrice.toFixed(2)}
-                <span className="text-xl font-bold ml-1 text-amber-400">Cr</span>
+              <div className="text-3xl sm:text-4xl font-black text-amber-300 font-mono tracking-tight my-1 drop-shadow-md" data-testid="highest-bid">
+                {lot.highestBid > 0 ? `₹${lot.highestBid.toFixed(2)}` : '—'}
+                {lot.highestBid > 0 && <span className="text-xl font-bold ml-1 text-amber-400">Cr</span>}
               </div>
 
               <div className="text-[11px] text-slate-400 truncate">
@@ -1016,7 +1066,7 @@ export default function LiveAuctionView({
                     Leader: {highestBidderFranchise.name} ({highestBidderFranchise.ownerName})
                   </span>
                 ) : (
-                  <span>Opening bid at player's base price</span>
+                  <span>No bids yet · opening bid is the base price ₹{player.basePrice.toFixed(2)} Cr</span>
                 )}
               </div>
             </div>
@@ -1046,11 +1096,12 @@ export default function LiveAuctionView({
                     className="transition-all duration-1000 ease-linear"
                   />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">TIME LEFT</span>
-                  <span className={`text-2xl font-black font-mono leading-none ${isCritical ? 'text-red-400 animate-pulse' : isUrgent ? 'text-amber-400' : 'text-white'}`}>
-                    {Math.max(0, lot.countdown)}s
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center" role="timer" aria-label={`${Math.max(0, lot.countdown)} seconds left`}>
+                  <span className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">{room.status === 'paused' ? 'PAUSED' : 'TIME LEFT'}</span>
+                  <span data-testid="countdown" className={`text-3xl font-black font-mono leading-none ${isCritical ? 'text-red-400 animate-pulse' : isUrgent ? 'text-amber-400' : 'text-white'}`}>
+                    {lotOpen ? Math.max(0, lot.countdown) : 0}
                   </span>
+                  <span className="text-[9px] text-slate-500 font-bold">sec</span>
                 </div>
               </div>
             </div>
@@ -1058,47 +1109,82 @@ export default function LiveAuctionView({
             {/* Main Action Buttons */}
             <div className="space-y-2">
               {bidError && (
-                <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[11px] flex items-center gap-1.5">
+                <div role="alert" data-testid="bid-error" className="p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-[11px] flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{bidError}</span>
+                  <span>Bid rejected: {bidError}</span>
+                </div>
+              )}
+              {bidAccepted && !bidError && (
+                <div role="status" data-testid="bid-accepted" className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>Bid accepted — you hold the highest bid</span>
                 </div>
               )}
 
               {/* NEXT VALID BID DISPLAY & CONFIGURED INCREMENT */}
-              <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                    NEXT VALID BID
-                  </span>
-                  <span className="text-xl font-black font-mono text-emerald-400">
-                    ₹{lot.nextValidBid.toFixed(2)} Cr
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block font-semibold">Configured Increment</span>
-                  <span className="text-xs font-mono font-bold text-amber-400">
-                    +₹{(lot.nextValidBid - (lot.highestBid > 0 ? lot.highestBid : 0)).toFixed(2)} Cr
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const displayNextBid = (typeof lot.nextValidBid === 'number' && Number.isFinite(lot.nextValidBid))
+                  ? lot.nextValidBid
+                  : (lot.highestBid > 0 ? (lot.highestBid + 0.25) : (player?.basePrice || 2.0));
+                return (
+                  <>
+                    <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                          NEXT VALID BID
+                        </span>
+                        <span className="text-xl font-black font-mono text-emerald-400">
+                          ₹{displayNextBid.toFixed(2)} Cr
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 block font-semibold">{lot.highestBid > 0 ? 'Increment' : 'Opening bid'}</span>
+                        <span className="text-xs font-mono font-bold text-amber-400">
+                          {lot.highestBid > 0 ? `+₹${(displayNextBid - lot.highestBid).toFixed(2)} Cr` : 'Base price'}
+                        </span>
+                      </div>
+                    </div>
 
-              {/* Authoritative Single Increment Bidding Button (Full Width) */}
-              <button
-                onClick={handleMainBidClick}
-                disabled={!canBid || submittingBid}
-                className={`w-full py-3.5 px-4 rounded-xl font-black text-sm sm:text-base tracking-wide transition flex items-center justify-center gap-2 shadow-xl relative cursor-pointer ${
-                  canBid
-                    ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 shadow-amber-500/30 active:scale-[0.98]'
-                    : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-70'
-                } ${pulseBid ? 'animate-bid-pulse ring-4 ring-amber-400' : ''}`}
-              >
-                <Gavel className="w-4 h-4 fill-current animate-hammer" />
-                <span>+ BID ₹{lot.nextValidBid.toFixed(2)} Cr</span>
-              </button>
+                    {/* Authoritative Single Increment Bidding Button (Full Width) */}
+                    <button
+                      onClick={handleMainBidClick}
+                      data-testid="bid-button"
+                      aria-describedby={!canBid ? 'bid-blocked-reason' : undefined}
+                      disabled={!canBid || submittingBid}
+                      className={`w-full py-3.5 px-4 rounded-xl font-black text-sm sm:text-base tracking-wide transition flex items-center justify-center gap-2 shadow-xl relative cursor-pointer ${
+                        canBid
+                          ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 shadow-amber-500/30 active:scale-[0.98]'
+                          : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-70'
+                      } ${pulseBid ? 'animate-bid-pulse ring-4 ring-amber-400' : ''}`}
+                    >
+                      <Gavel className="w-4 h-4 fill-current animate-hammer" />
+                      <span>{submittingBid ? 'Placing bid…' : `BID ₹${displayNextBid.toFixed(2)} Cr`}</span>
+                    </button>
+                  </>
+                );
+              })()}
+
+              {(() => {
+                const { maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
+                const mySlots = myFranchise ? getFranchiseSlotStats(myFranchise, room) : null;
+                return mySlots ? (
+                  <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono bg-slate-950/70 border border-slate-800 rounded-xl px-2.5 py-2" data-testid="my-slot-status">
+                    <span className={mySlots.isSquadFull ? 'text-rose-300 font-bold' : 'text-slate-300'}>
+                      Squad: <strong>{mySlots.squadCount}/{maxSquadSize}</strong>
+                    </span>
+                    <span className={`text-center ${mySlots.isOverseasFull ? 'text-rose-300 font-bold' : 'text-blue-300'}`}>
+                      OS: <strong>{mySlots.overseasCount}/{maxOverseas}</strong>
+                    </span>
+                    <span className="text-right text-emerald-300">
+                      Left: <strong>{mySlots.totalRemainingSlots}</strong>
+                    </span>
+                  </div>
+                ) : null;
+              })()}
 
               {!canBid && (
-                <div className="text-center text-[10px] text-slate-400 flex items-center justify-center gap-1 pt-1">
-                  <AlertTriangle className="w-3 h-3 text-amber-400" />
+                <div id="bid-blocked-reason" data-testid="bid-blocked-reason" className="text-center text-[11px] text-slate-300 flex items-center justify-center gap-1 pt-1">
+                  <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0" />
                   <span>{cannotBidReason}</span>
                 </div>
               )}
@@ -1106,142 +1192,185 @@ export default function LiveAuctionView({
 
             {/* Bidding Activity Table */}
             <div className="bg-slate-950/70 rounded-xl p-2.5 border border-white/5 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 px-1">
-                <span className="flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3 text-amber-400" />
-                  Bidding Activity
-                </span>
-                <span className="text-[10px] font-mono text-slate-500">
-                  {lot.bidHistory.length} bids
-                </span>
-              </div>
-
-              <div className="max-h-24 overflow-y-auto space-y-1 text-[11px]">
-                {lot.bidHistory.length === 0 ? (
-                  <div className="text-center text-slate-500 py-2 italic text-[11px]">
-                    Awaiting first bid...
-                  </div>
-                ) : (
-                  [...lot.bidHistory].reverse().slice(0, 5).map((b, i) => (
-                    <div key={b.bidId || i} className="flex items-center justify-between py-1 px-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px]">
-                      <span className="text-slate-500 font-mono w-4">#{lot.bidHistory.length - i}</span>
-                      <div className="flex items-center gap-1.5 font-bold">
-                        <FranchiseBadge code={b.franchiseCode} size="sm" />
-                        <span className="text-slate-200">{b.franchiseCode}</span>
-                      </div>
-                      <span className="font-mono font-bold text-emerald-400">
-                        ₹{b.bidAmount.toFixed(2)} Cr
+              {(() => {
+                const historyList = Array.isArray(lot.bidHistory) ? lot.bidHistory : [];
+                return (
+                  <>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 px-1">
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3 text-amber-400" />
+                        Bidding Activity
                       </span>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {historyList.length} bids
                       </span>
                     </div>
-                  ))
-                )}
-              </div>
+
+                    <div className="max-h-24 overflow-y-auto space-y-1 text-[11px]">
+                      {historyList.length === 0 ? (
+                        <div className="text-center text-slate-500 py-2 italic text-[11px]">
+                          Awaiting first bid...
+                        </div>
+                      ) : (
+                        [...historyList].reverse().slice(0, 5).map((b, i) => (
+                          <div key={b.bidId || b.id || i} className="flex items-center justify-between py-1 px-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px]">
+                            <span className="text-slate-500 font-mono w-4">#{historyList.length - i}</span>
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <FranchiseBadge code={b.franchiseCode} size="sm" />
+                              <span className="text-slate-200">{b.franchiseCode}</span>
+                            </div>
+                            <span className="font-mono font-bold text-emerald-400">
+                              ₹{(b.bidAmount ?? b.amount ?? 0).toFixed(2)} Cr
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              {b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN (20%): TEAMS OVERVIEW (10) */}
-        <div className={`lg:col-span-3 ${mobileTab === 'teams' ? 'flex' : 'hidden lg:flex'} bg-[#0a1333]/90 border border-blue-900/40 rounded-2xl p-3.5 shadow-xl flex-col justify-between backdrop-blur-md`}>
-          <div>
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-amber-400" />
-                <h3 className="text-xs font-black tracking-wider uppercase text-white">
-                  TEAMS OVERVIEW ({Object.keys(room.franchises).length})
-                </h3>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono">Purse / Squad</span>
+        {/* RIGHT COLUMN: ALL 10 FRANCHISES (live purse, squad, overseas, bid eligibility) */}
+        <div className={`lg:col-span-3 ${mobileTab === 'teams' ? 'flex' : 'hidden lg:flex'} bg-[#0a1333]/90 border border-blue-900/40 rounded-2xl p-3.5 shadow-xl flex-col gap-3 backdrop-blur-md`} data-testid="franchise-panel">
+          <div className="flex items-center justify-between pb-2 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-amber-400" />
+              <h3 className="text-xs font-black tracking-wider uppercase text-white">Franchises</h3>
             </div>
-
-            {/* Table Header */}
-            <div className="grid grid-cols-12 text-[10px] font-bold text-slate-400 px-2 py-1 uppercase tracking-wider">
-              <span className="col-span-5">Team</span>
-              <span className="col-span-4 text-right">Purse (Cr)</span>
-              <span className="col-span-3 text-right">Squad</span>
-            </div>
-
-            {/* All 10 Franchises Table */}
-            <div className="space-y-1 max-h-[510px] overflow-y-auto pr-1">
-              {Object.values(room.franchises).map(f => {
-                const isLeader = lot.highestBidderFranchiseId === f.id;
-                const isMe = myFranchise?.id === f.id;
-
-                return (
-                  <div
-                    key={f.id}
-                    onClick={() => onOpenSquad && onOpenSquad(f.id)}
-                    className={`grid grid-cols-12 items-center p-2 rounded-xl border transition cursor-pointer text-xs ${
-                      isLeader
-                        ? 'border-amber-400 bg-amber-500/15 shadow-sm'
-                        : isMe
-                        ? 'border-blue-500/60 bg-blue-500/10'
-                        : 'border-white/5 bg-slate-900/40 hover:bg-slate-800/40'
-                    }`}
-                  >
-                    {/* Team logo & short code */}
-                    <div className="col-span-5 flex items-center gap-1.5 min-w-0">
-                      {isLeader && <Gavel className="w-3 h-3 text-amber-400 fill-current animate-bounce" />}
-                      <FranchiseBadge code={f.code} size="sm" />
-                      <span className={`font-black truncate ${isMe ? 'text-amber-300' : 'text-white'}`}>
-                        {f.code}
-                      </span>
-                    </div>
-
-                    {/* Remaining Purse */}
-                    <div className="col-span-4 text-right font-mono font-bold text-emerald-400">
-                      {f.isEliminated ? (
-                        <span className="text-[10px] text-red-400">OUT</span>
-                      ) : (
-                        `₹${f.remainingPurse.toFixed(2)}`
-                      )}
-                    </div>
-
-                    {/* Squad Count */}
-                    <div className="col-span-3 text-right font-mono text-[11px] text-slate-300">
-                      <strong>{f.squad.length}</strong>/{room.config.minSquadSize}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <span className="text-[10px] text-slate-400">Purse · Squad · OS</span>
           </div>
 
-          <div className="pt-3 mt-2 border-t border-white/10 text-[10px] text-slate-400 flex items-center justify-between">
-            <span>Base Purse: ₹{room.config.basePurse} Cr</span>
-            <span>Max OS: 8</span>
+          <ul className="space-y-1.5 max-h-[560px] overflow-y-auto pr-1" aria-label="Franchise status">
+            {Object.values(room.franchises).map(f => {
+              const st = franchiseBidStatus(room, f);
+              const isMe = myFranchise?.id === f.id;
+              const tone = {
+                leading: 'border-amber-400 bg-amber-500/15 ring-1 ring-amber-400/50',
+                eligible: 'border-emerald-500/30 bg-slate-900/50',
+                blocked: 'border-rose-500/25 bg-slate-900/40',
+                eliminated: 'border-red-500/30 bg-red-950/20 opacity-70',
+                unclaimed: 'border-white/5 bg-slate-950/40 opacity-50',
+                idle: 'border-white/10 bg-slate-900/40'
+              }[st.state];
+              const chip = {
+                leading: 'bg-amber-400 text-slate-950',
+                eligible: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+                blocked: 'bg-rose-500/10 text-rose-300 border border-rose-500/30',
+                eliminated: 'bg-red-500/15 text-red-300 border border-red-500/30',
+                unclaimed: 'bg-slate-800 text-slate-500',
+                idle: 'bg-slate-800 text-slate-300'
+              }[st.state];
+              return (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenSquad && onOpenSquad(f.id)}
+                    data-testid={`franchise-card-${f.id}`}
+                    data-bid-state={st.state}
+                    title={st.reason}
+                    className={`w-full text-left p-2 rounded-xl border transition hover:bg-slate-800/50 ${tone} ${isMe ? 'outline outline-1 outline-blue-400/60' : ''}`}
+                    style={{ borderLeftWidth: 4, borderLeftColor: f.primaryColor || '#334155' }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FranchiseBadge code={f.code} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-black text-xs ${isMe ? 'text-amber-300' : 'text-white'}`}>{f.code}</span>
+                          {isMe && <span className="text-[9px] font-black text-blue-300 bg-blue-500/15 px-1 rounded">YOU</span>}
+                          {st.state === 'leading' && <Gavel className="w-3 h-3 text-amber-400 fill-current" aria-hidden="true" />}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate">{f.isClaimed ? (f.ownerName || f.name) : f.name}</div>
+                      </div>
+                      <span className={`text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded ${chip}`}>{st.label}</span>
+                    </div>
+                    {(() => {
+                      const { minSquadSize, maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
+                      const slots = getFranchiseSlotStats(f, room);
+                      return (
+                        <div className="grid grid-cols-3 gap-1 mt-1.5 text-[10px] font-mono">
+                          <span className="text-emerald-400 font-bold" title="Remaining purse">₹{Number(f.remainingPurse || 0).toFixed(2)} Cr</span>
+                          <span className={`text-center ${slots.isSquadFull ? 'text-rose-300 font-bold' : 'text-slate-300'}`} title={`Squad size (min ${minSquadSize}, max ${maxSquadSize})`}>{slots.squadCount}/{maxSquadSize} sq</span>
+                          <span className={`text-right ${slots.isOverseasFull ? 'text-rose-300 font-bold' : 'text-slate-300'}`} title={`Overseas players (max ${maxOverseas})`}>{slots.overseasCount}/{maxOverseas} OS</span>
+                        </div>
+                      );
+                    })()}
+                    {st.state === 'blocked' && isMe && (
+                      <div className="text-[10px] text-rose-300 mt-1 leading-snug">{st.reason}</div>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Room-wide activity feed */}
+          <div className="border-t border-white/10 pt-2" data-testid="activity-feed">
+            <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1.5">
+              <Activity className="w-3.5 h-3.5 text-amber-400" /> Auction activity
+            </div>
+            {activity.length === 0 ? (
+              <p className="text-[11px] text-slate-500 italic py-2">Bids, sales and host actions will appear here.</p>
+            ) : (
+              <ol className="space-y-1 max-h-48 overflow-y-auto pr-1" aria-live="polite">
+                {activity.slice(0, 20).map(item => (
+                  <li key={item.id} className="flex items-start gap-1.5 text-[11px] leading-snug">
+                    <span className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      item.kind === 'sold' ? 'bg-emerald-400' : item.kind === 'unsold' ? 'bg-rose-400'
+                      : item.kind === 'rejected' ? 'bg-red-500' : item.kind === 'paused' ? 'bg-amber-400'
+                      : item.kind === 'resumed' ? 'bg-emerald-300' : item.kind === 'skipped' ? 'bg-orange-400'
+                      : item.kind === 'bid' ? 'bg-blue-400' : 'bg-slate-500'
+                    }`} />
+                    <span className={item.kind === 'rejected' ? 'text-red-300' : 'text-slate-300'}>{item.text}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
           </div>
         </div>
       </div>
 
-      {/* MOBILE PORTRAIT STICKY QUICK-BID PILL (When browsing Marquee or Teams tabs) */}
-      {mobileTab !== 'auction' && (
-        <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-[#071133]/95 border border-amber-400/60 rounded-2xl p-2.5 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 cursor-pointer" onClick={() => setMobileTab('auction')}>
-            <div className="w-9 h-9 rounded-full overflow-hidden border border-amber-400 flex-shrink-0 bg-slate-800">
-              <img src={player.imageUrl} alt={player.name} className="w-full h-full object-cover object-top" />
+      {/* PHONES/TABLETS: sticky bid bar (always reachable, above the browser's bottom UI) */}
+      <div
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 px-3 pt-2 bg-gradient-to-t from-[#050a1b] via-[#050a1b]/95 to-transparent"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        data-testid="mobile-bid-bar"
+      >
+        <div className="bg-[#071133]/95 border border-amber-400/50 rounded-2xl p-2.5 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-2">
+          <button type="button" className="flex items-center gap-2 min-w-0 text-left" onClick={() => setMobileTab('auction')}>
+            <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center font-mono font-black flex-shrink-0 border ${isCritical ? 'border-red-400 text-red-300' : isUrgent ? 'border-amber-400 text-amber-300' : 'border-emerald-500/50 text-white'}`} aria-label={`${lotOpen ? Math.max(0, lot.countdown) : 0} seconds left`}>
+              <span className="text-lg leading-none">{lotOpen ? Math.max(0, lot.countdown) : 0}</span>
+              <span className="text-[8px] text-slate-400 leading-none mt-0.5">SEC</span>
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-black text-white truncate flex items-center gap-1">
-                <span className="truncate">{player.name}</span>
-                <span className="text-[10px] text-amber-400">({player.category})</span>
+              <div className="text-xs font-black text-white truncate">{player.name}</div>
+              <div className="text-[11px] font-bold font-mono truncate">
+                {lot.highestBid > 0
+                  ? <span className="text-amber-300">₹{lot.highestBid.toFixed(2)} Cr · {highestBidderFranchise?.code}</span>
+                  : <span className="text-slate-400">Base ₹{player.basePrice.toFixed(2)} Cr</span>}
               </div>
-              <div className="text-[10px] text-emerald-400 font-bold font-mono">
-                Bid: ₹{lot.highestBid > 0 ? lot.highestBid.toFixed(2) : player.basePrice.toFixed(2)} Cr • <span className={isCritical ? 'text-red-400' : 'text-amber-400'}>{Math.max(0, lot.countdown)}s</span>
-              </div>
+              {!canBid && <div className="text-[10px] text-slate-400 truncate">{cannotBidReason}</div>}
             </div>
-          </div>
+          </button>
           <button
-            onClick={() => setMobileTab('auction')}
-            className="px-3.5 py-2 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg flex-shrink-0 flex items-center gap-1 cursor-pointer"
+            type="button"
+            onClick={handleMainBidClick}
+            disabled={!canBid || submittingBid}
+            data-testid="mobile-bid-button"
+            className={`min-h-[44px] px-4 rounded-xl font-black text-sm flex-shrink-0 flex items-center gap-1.5 ${
+              canBid ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-lg active:scale-[0.98]' : 'bg-slate-800 text-slate-500'
+            }`}
           >
-            <Gavel className="w-3.5 h-3.5 fill-current" />
-            <span>Bid Now</span>
+            <Gavel className="w-4 h-4 fill-current" />
+            <span>{submittingBid ? '…' : `₹${(typeof lot.nextValidBid === 'number' ? lot.nextValidBid : player.basePrice).toFixed(2)}`}</span>
           </button>
         </div>
-      )}
+      </div>
 
       {/* 4. BOTTOM AUCTION MARQUEE & RULES TICKER STRIP */}
       <div className="w-full bg-[#08102d]/95 border border-white/10 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg">
@@ -1269,15 +1398,20 @@ export default function LiveAuctionView({
         </div>
 
         {/* Right: Quick Rules Indicators */}
-        <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-shrink-0">
-          <span>👥 10 Teams</span>
-          <span className="text-slate-700">|</span>
-          <span>🏏 Min 15 Players</span>
-          <span className="text-slate-700">|</span>
-          <span>✈️ Max 8 Overseas</span>
-          <span className="text-slate-700">|</span>
-          <span>🧤 Min 1 Wicketkeeper</span>
-        </div>
+        {(() => {
+          const { minSquadSize, maxSquadSize, maxOverseas } = getRoomSquadLimits(room);
+          return (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+              <span>👥 10 Teams</span>
+              <span className="text-slate-700">|</span>
+              <span>🏏 Squad {minSquadSize}–{maxSquadSize} Players</span>
+              <span className="text-slate-700">|</span>
+              <span>✈️ Max {maxOverseas} Overseas</span>
+              <span className="text-slate-700">|</span>
+              <span>🧤 Min {room.config?.minWKs ?? 1} Wicketkeeper</span>
+            </div>
+          );
+        })()}
       </div>
 
       {/* SKIP CURRENT SET CONFIRMATION DIALOG (HOST ONLY) */}

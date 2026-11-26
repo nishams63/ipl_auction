@@ -86,10 +86,10 @@ try {
   });
 
   await t.it('bid racing the final second over real sockets: outcome is always consistent', async () => {
-    const { code, host, alice, lot } = await liveSocketRoom({ timerDuration: 10 });
+    const { code, host, alice, lot } = await liveSocketRoom();
     await emit(host, 'place_bid', { roomCode: code, franchiseId: 'CSK', bidAmount: lot.nextValidBid, expectedVersion: lot.stateVersion });
-    const completed = waitFor(alice, 'lot_completed', () => true, 15000);
-    const tick = await waitFor(alice, 'timer_tick', d => d.countdown === 1, 15000);
+    const completed = waitFor(alice, 'lot_completed', () => true, 20000);
+    const tick = await waitFor(alice, 'timer_tick', d => d.countdown === 1, 20000);
     const pub = await getRoom(code);
     const r = await emit(alice, 'place_bid', { roomCode: code, franchiseId: 'MI', bidAmount: pub.currentLot.nextValidBid, expectedVersion: tick.stateVersion });
     if (r.success) {
@@ -97,7 +97,7 @@ try {
       const after = await getRoom(code);
       assert.strictEqual(after.currentLot.highestBidderFranchiseId, 'MI');
       assert.strictEqual(after.currentLot.hammerStatus, 'OPEN');
-      assert.ok(after.currentLot.countdown >= 9, 'countdown not reset');
+      assert.ok(after.currentLot.countdown >= 14, 'countdown not reset');
       await emit(host, 'advance_lot', { roomCode: code });
       const done = await completed;
       assert.strictEqual(done.historyEntry.winningFranchiseId, 'MI');

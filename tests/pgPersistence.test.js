@@ -60,8 +60,8 @@ await t.it('P1: every important mutation is durable (verified by reading the dat
   let s = await saved();
   assert.ok(!s.franchises.RR.isClaimed && s.franchises.MI.isClaimed, 'franchise release/re-claim');
   rm.selectFranchise({ roomCode: code, participantToken: H, franchiseId: 'CSK' });
-  rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 25 } });
-  assert.strictEqual((await saved()).config.timerDuration, 25, 'config');
+  rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { autoAdvanceDelay: 7 } });
+  assert.strictEqual((await saved()).config.autoAdvanceDelay, 7, 'config');
   rm.startAuction({ roomCode: code, hostToken: H });
   s = await saved();
   assert.ok(s.status === 'active' && s.currentLot && s.currentLot.player.id === room.currentLot.player.id, 'start + first lot');
@@ -170,7 +170,7 @@ await t.it('P4: repeated and overlapping flushes never duplicate bids, results o
 await t.it('P5: the database keeps every audit entry; memory and restore keep the newest 200', async () => {
   const { rm } = await newManager();
   const { code, H } = lobbyRoom(rm);
-  for (let i = 0; i < 260; i++) rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 20 + (i % 3) } });
+  for (let i = 0; i < 260; i++) rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { autoAdvanceDelay: 2 + (i % 3) } });
   await rm.flushStorage();
   const room = rm.getRoom(code);
   assert.strictEqual(room.auditLog.length, 200);
@@ -185,13 +185,13 @@ await t.it('P6: two writers → the stale one gets a CONFLICT; the database copy
   await a.rm.flushStorage();
   const b = await newManager(); // second instance loads the same room
   b.rm.claimHashedSession(b.rm.getRoom(code), H);
-  b.rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 45 } });
+  b.rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { autoAdvanceDelay: 10 } });
   assert.strictEqual(await b.rm.flushStorage(), true);
-  a.rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { timerDuration: 15 } });
+  a.rm.updateConfig({ roomCode: code, hostToken: H, newConfig: { autoAdvanceDelay: 5 } });
   assert.strictEqual(await a.rm.flushStorage(), false, 'stale writer reported success');
   assert.deepStrictEqual(a.store.status.conflicts, [code]);
   assert.match(a.store.status.lastError, /CONFLICT/);
-  assert.strictEqual((await dbRoom(code)).config.timerDuration, 45, 'stale writer overwrote the database');
+  assert.strictEqual((await dbRoom(code)).config.autoAdvanceDelay, 10, 'stale writer overwrote the database');
   a.store.dirty.clear();
 });
 
